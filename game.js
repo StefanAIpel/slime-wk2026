@@ -15,19 +15,19 @@ const W = 900, H = 520;              // logische resolutie
 canvas.width = W; canvas.height = H;
 ctx.imageSmoothingEnabled = false;
 
-const GROUND   = H - 46;             // grondniveau (y van veld-oppervlak)
+const GROUND   = H - 44;             // grondniveau (y van veld-oppervlak)
 const CENTER   = W / 2;
-const SLIME_R  = 74;                 // straal slime (halve cirkel)
-const BALL_R   = 14;
-const GOAL_H   = 186;                // hoogte doelmond
-const GOAL_D   = 50;                 // diepte/breedte van het doel-net
+const SLIME_R  = 62;                 // straal slime (halve cirkel) — kleiner = meer veld
+const BALL_R   = 13;
+const GOAL_H   = 150;                // hoogte doelmond
+const GOAL_D   = 42;                 // diepte/breedte van het doel-net
 const BAR_Y    = GROUND - GOAL_H;    // y van de lat
-const BAR_TH   = 9;
+const BAR_TH   = 8;
 
 // physics-afstemming (per 60fps tick)
-const SLIME_SPEED = 6.4;
-const SLIME_JUMP  = 15.2;
-const SLIME_GRAV  = 0.74;
+const SLIME_SPEED = 6.3;
+const SLIME_JUMP  = 14.4;
+const SLIME_GRAV  = 0.72;
 const BALL_GRAV   = 0.34;
 const BALL_REST   = 0.86;            // demping bij muur/lat
 const BALL_MAX    = 22;              // snelheidslimiet
@@ -86,10 +86,12 @@ const store = {
   save(k, v){ try { localStorage.setItem('slimewk_'+k, JSON.stringify(v)); } catch(e){} }
 };
 const settings = {
-  sound:  store.load('sound', true),
-  crt:    store.load('crt', true),
-  toWin:  store.load('toWin', 5),
-  diff:   store.load('diff', 'normaal'),
+  sound:     store.load('sound', true),
+  crt:       store.load('crt', true),
+  matchMode: store.load('matchMode', 'goals'),   // 'goals' | 'time'
+  toWin:     store.load('toWin', 5),
+  matchMin:  store.load('matchMin', 2),           // speeltijd in minuten (tijd-modus)
+  diff:      store.load('diff', 'normaal'),
 };
 
 /* ----------------------------------------------------------------------------
@@ -101,7 +103,7 @@ const Audio = (() => {
     if (ac) return;
     try {
       ac = new (window.AudioContext || window.webkitAudioContext)();
-      master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination);
+      master = ac.createGain(); master.gain.value = 0.42; master.connect(ac.destination);
       startCrowd();
     } catch(e){ ac = null; }
   }
@@ -116,45 +118,65 @@ const Audio = (() => {
     crowd.connect(bp); bp.connect(crowdGain); crowdGain.connect(master);
     crowd.start();
   }
-  function tone(freq, t0, dur, type='square', vol=0.3, slideTo=null){
+  // --- bouwstenen (zacht, met lowpass tegen schelheid) ---
+  function osc(type, f, t0, dur, vol, slideTo, filterHz){
     if (!ac) return;
-    const o = ac.createOscillator(), g = ac.createGain();
-    o.type = type; o.frequency.setValueAtTime(freq, t0);
-    if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t0+dur);
-    g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(vol, t0+0.01);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
-    o.connect(g); g.connect(master); o.start(t0); o.stop(t0+dur+0.02);
+    const o=ac.createOscillator(), g=ac.createGain();
+    o.type=type; o.frequency.setValueAtTime(f,t0);
+    if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(1,slideTo), t0+dur);
+    g.gain.setValueAtTime(0.0001,t0);
+    g.gain.exponentialRampToValueAtTime(vol,t0+0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001,t0+dur);
+    if (filterHz){ const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=filterHz; o.connect(lp); lp.connect(g); }
+    else o.connect(g);
+    g.connect(master); o.start(t0); o.stop(t0+dur+0.03);
   }
-  function noise(t0, dur, vol=0.3){
+  function noiseHit(t0, dur, vol, type, hz){
     if (!ac) return;
-    const n = Math.floor(ac.sampleRate*dur);
-    const buf = ac.createBuffer(1, n, ac.sampleRate);
-    const d = buf.getChannelData(0);
-    for (let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
-    const s = ac.createBufferSource(); s.buffer = buf;
-    const g = ac.createGain(); g.gain.value = vol;
-    s.connect(g); g.connect(master); s.start(t0);
+    const n=Math.floor(ac.sampleRate*dur), buf=ac.createBuffer(1,n,ac.sampleRate), d=buf.getChannelData(0);
+    for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
+    const s=ac.createBufferSource(); s.buffer=buf;
+    const f=ac.createBiquadFilter(); f.type=type||'lowpass'; f.frequency.value=hz||1000;
+    const g=ac.createGain(); g.gain.value=vol;
+    s.connect(f); f.connect(g); g.connect(master); s.start(t0);
+  }
+  // trap = lage sinus-thump + korte contact-klik (voetbal-feel, geen piep)
+  function kickThump(t0, f, vol){
+    osc('sine', f, t0, 0.17, vol, f*0.55, 700);
+    osc('triangle', f*2, t0, 0.06, vol*0.3, f, 1100);
+    noiseHit(t0, 0.03, vol*0.45, 'highpass', 1600);
+  }
+  function hornNote(t0, f, dur, vol){
+    osc('sawtooth', f, t0, dur, vol, null, 1100);
+    osc('sawtooth', f*1.006, t0, dur, vol*0.65, null, 1100);   // detune = warmte
+  }
+  function crowdSwell(t, peak){
+    if (!crowdGain) return; const base=settings.sound?0.04:0;
+    crowdGain.gain.cancelScheduledValues(t);
+    crowdGain.gain.setValueAtTime(Math.max(0.0001,base),t);
+    crowdGain.gain.linearRampToValueAtTime(peak,t+0.18);
+    crowdGain.gain.exponentialRampToValueAtTime(Math.max(0.0001,base),t+2.6);
   }
   const api = {
     unlock(){ ensure(); if (ac && ac.state==='suspended') ac.resume(); },
-    kick(power){ if(!settings.sound||!ac) return; const t=ac.currentTime; const f=180+Math.min(360,power*16); tone(f,t,0.08,'square',0.32,f*0.6); },
-    wall(){ if(!settings.sound||!ac) return; const t=ac.currentTime; tone(150,t,0.06,'triangle',0.22,90); },
-    jump(){ if(!settings.sound||!ac) return; const t=ac.currentTime; tone(300,t,0.12,'square',0.16,560); },
-    post(){ if(!settings.sound||!ac) return; const t=ac.currentTime; tone(420,t,0.1,'square',0.28,200); noise(t,0.05,0.15); },
-    whistle(){ if(!settings.sound||!ac) return; const t=ac.currentTime; tone(2100,t,0.12,'square',0.18); tone(2300,t+0.13,0.16,'square',0.18); },
-    count(){ if(!settings.sound||!ac) return; const t=ac.currentTime; tone(660,t,0.1,'square',0.25); },
+    kick(power){ if(!settings.sound||!ac) return; const t=ac.currentTime; const f=115+Math.min(120,power*6); kickThump(t,f, Math.min(0.5, 0.3+power*0.012)); },
+    wall(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('sine',125,t,0.1,0.18,80,500); noiseHit(t,0.02,0.06,'lowpass',800); },
+    jump(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('sine',150,t,0.13,0.12,95,500); },
+    post(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('triangle',196,t,0.24,0.26,150,1400); osc('sine',300,t,0.12,0.12,180,1400); noiseHit(t,0.03,0.12,'highpass',1400); },
+    whistle(){ if(!settings.sound||!ac) return; const t=ac.currentTime;     // scheidsrechtersfluit-triller
+      for(let k=0;k<4;k++){ const tk=t+k*0.045; osc('triangle', k%2?2050:2250, tk, 0.04, 0.10, null, 3200); }
+      noiseHit(t,0.18,0.04,'highpass',2600); },
+    count(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('sine',740,t,0.09,0.16,640,900); },
     goal(){
       if(!settings.sound||!ac) return; const t=ac.currentTime;
-      const seq=[523,659,784,1047,1319]; seq.forEach((f,i)=>tone(f,t+i*0.09,0.16,'square',0.3));
-      if (crowdGain){ crowdGain.gain.cancelScheduledValues(t);
-        crowdGain.gain.setValueAtTime(0.04,t);
-        crowdGain.gain.linearRampToValueAtTime(0.34,t+0.15);
-        crowdGain.gain.exponentialRampToValueAtTime(0.04,t+2.4); }
+      hornNote(t,180,0.8,0.13); hornNote(t,226,0.8,0.11); hornNote(t+0.05,270,0.72,0.10);   // stadionhoorn
+      noiseHit(t,0.55,0.10,'bandpass',850);                                                  // gejuich
+      crowdSwell(t,0.4);
     },
     win(){ if(!settings.sound||!ac) return; const t=ac.currentTime;
-      const seq=[523,523,523,659,784,659,784,1047]; seq.forEach((f,i)=>tone(f,t+i*0.14,0.22,'square',0.28)); },
-    click(){ if(!ac) return; const t=ac.currentTime; tone(880,t,0.04,'square',0.12); },
+      [[262,0],[330,0.2],[392,0.4],[523,0.6],[523,0.95]].forEach(([f,dt])=>hornNote(t+dt,f,0.55,0.12));
+      noiseHit(t,1.0,0.11,'bandpass',850); crowdSwell(t,0.46); },
+    click(){ if(!ac) return; const t=ac.currentTime; osc('sine',520,t,0.03,0.07,null,1400); },
     setCrowd(on){ if (crowdGain) crowdGain.gain.value = on ? 0.04 : 0; },
   };
   return api;
@@ -236,6 +258,7 @@ function makeSlime(side, team){
     onGround:true,
     eyeX:0, eyeY:0,        // pupil-offset (kijkt naar bal)
     squash:0,              // animatie bij landen/springen
+    hang:0, penalty:0,     // anti-goal-hangen timer + straf-flash
     input:{left:false,right:false,jump:false},
   };
 }
@@ -251,6 +274,12 @@ const G = {
   p1: null, p2: null, ball: null,
   score:[0,0],
   toWin: settings.toWin,
+  matchMode: settings.matchMode,   // 'goals' | 'time'
+  matchMin: settings.matchMin,
+  matchTime: 0,                    // resterende frames (tijd-modus)
+  golden: false,                   // golden goal (sudden death) na gelijkspel op tijd
+  wkMode: false,                   // WK-toernooi actief
+  wk: null,                        // toernooi-state
   countdown: 0,            // frames
   goalTimer: 0,            // frames in GOAL-state
   lastScorer: 0,
@@ -420,8 +449,9 @@ function predictBallX(frames){
   }
   return x;
 }
+function effDiff(){ return (G.wkMode && G.wk) ? G.wk.diffs[G.wk.round] : settings.diff; }
 function computeAI(s){
-  const p = AI_LEVELS[settings.diff] || AI_LEVELS.normaal;
+  const p = AI_LEVELS[effDiff()] || AI_LEVELS.normaal;
   const b = G.ball;
   const onMySide = b.x > CENTER - 30;
   aiState.reactT--;
@@ -458,7 +488,12 @@ function resetPositions(){
 }
 function startMatch(){
   G.score=[0,0]; G.winner=0; G.particles=[]; G.lastScorer=0;
+  if (G.wkMode){ G.matchMode='time'; G.matchMin=2; }     // WK = altijd 2 min
+  else { G.matchMode=settings.matchMode; G.matchMin=settings.matchMin; }
   G.toWin = settings.toWin;
+  G.golden = false;
+  G.matchTime = G.matchMin * 3600;                        // minuten * 60s * 60fps
+  if (G.p1){ G.p1.hang=0; G.p1.penalty=0; } if (G.p2){ G.p2.hang=0; G.p2.penalty=0; }
   resetPositions();
   G.shake=0; G.flash=0;
   beginCountdown();
@@ -477,18 +512,20 @@ function score(who){
   G.flash = 16; G.shake = 16;
   spawnConfetti();
   Audio.goal();
-  if (G.score[who] >= G.toWin){
-    G.winner = who+1;
-    G.screen = SCREEN.OVER;
-    Audio.win();
-    showGameOver();
-  } else {
-    G.screen = SCREEN.GOAL;
-    G.goalTimer = 130;
-  }
+  if (G.golden){ endMatch(); }                                          // golden goal: eerste doelpunt beslist
+  else if (G.matchMode==='goals' && (G.score[0]>=G.toWin || G.score[1]>=G.toWin)){ endMatch(); }
+  else { G.screen = SCREEN.GOAL; G.goalTimer = 130; }
   // kritieke transitie meteen sturen (niet afhankelijk van de 30Hz-throttle):
   // anders mist de guest ~50% van de tijd het GOAL/OVER-signaal.
   if (G.mode==='host' && G.net) G.net.sendState();
+}
+function endMatch(){
+  G.winner = G.score[0]===G.score[1] ? 1 : (G.score[0]>G.score[1] ? 1 : 2);  // gelijk komt hier niet voor (golden goal)
+  G.screen = SCREEN.OVER;
+  Audio.win();
+  if (G.mode==='host' && G.net) G.net.sendState();
+  if (G.wkMode) wkMatchEnd(G.winner===1);
+  else showGameOver();
 }
 
 /* ----------------------------------------------------------------------------
@@ -499,6 +536,8 @@ function tick(){
   if (G.shake>0) G.shake*=0.9;
   if (G.flash>0) G.flash--;
   updateParticles();
+
+  if (G.paused) return;   // lokale pauze: alles bevroren (online kent geen pauze)
 
   // ---- ONLINE keepalive + watchdog (vangt ook harde drops zonder 'close') ----
   if ((G.mode==='host'||G.mode==='guest') && G.net && G.net.connected){
@@ -519,6 +558,8 @@ function tick(){
       G.score = t.score.slice(); G.screen = t.screen; G.winner=t.winner||0;
       if (typeof t.cd==='number') G.countdown = t.cd;             // synchrone aftelling
       if (typeof t.lastScorer==='number') G.lastScorer = t.lastScorer;
+      if (typeof t.mt==='number') G.matchTime = t.mt;             // synchrone speelklok
+      G.golden = !!t.golden;
       faceBall(G.p1); faceBall(G.p2);
     }
     if (G.screen===SCREEN.OVER && !overShown){ showGameOver(); }
@@ -547,12 +588,40 @@ function tick(){
   }
 
   // ---- PLAY ----
-  if (G.screen===SCREEN.PLAY && !G.paused){
+  if (G.screen===SCREEN.PLAY){
     assignInputs(false);
     updateSlime(G.p1); updateSlime(G.p2);
     updateBall();
+    if (G.screen===SCREEN.PLAY){ updateMatchTimer(); updateAntiCamp(); }   // updateBall kan al scoren
     sendStateMaybe();
   }
+}
+
+// tijd-modus: speelklok; op 0 -> einde, of golden goal bij gelijkspel
+function updateMatchTimer(){
+  if (G.matchMode!=='time' || G.golden) return;
+  G.matchTime--;
+  if (G.matchTime <= 0){
+    G.matchTime = 0;
+    if (G.score[0] === G.score[1]){ G.golden = true; G.flash = 12; Audio.whistle(); }
+    else endMatch();
+  }
+}
+
+// anti-goal-hangen: blijf je te lang in je eigen doelgebied -> weggestuurd + waarschuwing
+const CAMP_WARN = 150, CAMP_MAX = 264;     // ~2.5s waarschuwing, ~4.4s straf
+function inCampZone(s){ return s.side==='left' ? s.x < W*0.20 : s.x > W*0.80; }
+function updateAntiCamp(){
+  [G.p1, G.p2].forEach(s=>{
+    if (inCampZone(s)) s.hang++; else s.hang = Math.max(0, s.hang - 3);
+    if (s.hang >= CAMP_MAX){
+      s.hang = 0; s.penalty = 70;
+      s.x = s.side==='left' ? W*0.30 : W*0.70;     // weggestuurd naar eigen helft-midden
+      s.vy = -SLIME_JUMP*0.5; s.onGround = false;   // klein sprongetje
+      Audio.whistle();
+    }
+    if (s.penalty > 0) s.penalty--;
+  });
 }
 
 function assignInputs(frozen){
@@ -631,7 +700,7 @@ function makeNet(){
       if (!this.conn || !this.connected) return;
       this.conn.send({ t:'state',
         p1:packEnt(G.p1), p2:packEnt(G.p2), ball:packBall(G.ball),
-        score:G.score, screen:G.screen, winner:G.winner, cd:G.countdown, lastScorer:G.lastScorer });
+        score:G.score, screen:G.screen, winner:G.winner, cd:G.countdown, lastScorer:G.lastScorer, mt:G.matchTime, golden:G.golden });
     },
     close(){ this._closed=true; clearTimeout(this._retryT); try{ this.conn&&this.conn.close(); this.peer&&this.peer.destroy(); }catch(e){} }
   };
@@ -643,7 +712,7 @@ function sendStateMaybe(){ if (G.mode==='host' && G.net){ G.net._sendT++; if (G.
 
 let overShown=false;
 function applyNetState(d){
-  G.netTarget = { p1:d.p1, p2:d.p2, ball:d.ball, score:d.score, screen:d.screen, winner:d.winner, cd:d.cd, lastScorer:d.lastScorer };
+  G.netTarget = { p1:d.p1, p2:d.p2, ball:d.ball, score:d.score, screen:d.screen, winner:d.winner, cd:d.cd, lastScorer:d.lastScorer, mt:d.mt, golden:d.golden };
   if (d.screen!==SCREEN.OVER) overShown=false;
 }
 
@@ -709,7 +778,7 @@ function drawStadium(){
   // banner "WK 2026"
   ctx.fillStyle='#06060f'; ctx.fillRect(0,GROUND-22,W,22);
   ctx.fillStyle='#ff7a18'; ctx.font="10px 'Press Start 2P', monospace"; ctx.textAlign='left';
-  const msg='* WK 2026 * SLIME WORLD CUP * NEDERLAND * ';
+  const msg='* WORLD CUP SLIME * WK 2026 * NEDERLAND * HUP HOLLAND * ';
   const scroll=(G.frame*1.2)%(msg.length*12);
   ctx.fillText((msg+msg+msg).slice(0), 20-scroll, GROUND-7);
 }
@@ -773,6 +842,19 @@ function drawSlime(s){
   ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(eyeX, eyeYBase, 13, 0, 7); ctx.fill();
   ctx.fillStyle='#0a0a16';
   ctx.beginPath(); ctx.arc(eyeX + s.eyeX*5, eyeYBase + s.eyeY*5, 6, 0, 7); ctx.fill();
+
+  // anti-goal-hangen: waarschuwingsbalk + straf-melding
+  if (s.penalty > 0){
+    ctx.fillStyle = (G.frame>>2&1)?'#ff5470':'#ffae3b';
+    ctx.font="8px 'Press Start 2P', monospace"; ctx.textAlign='center';
+    ctx.fillText('NIET HANGEN!', s.x, s.y - r - 14);
+  } else if (s.hang > CAMP_WARN){
+    const frac = (s.hang - CAMP_WARN) / (CAMP_MAX - CAMP_WARN);
+    const bw = 54, by = s.y - r - 16;
+    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(s.x-bw/2, by, bw, 6);
+    ctx.fillStyle = frac>0.6 ? '#ff5470' : '#ffae3b';
+    ctx.fillRect(s.x-bw/2, by, bw*Math.min(1,frac), 6);
+  }
 }
 
 function drawBall(b){
@@ -819,8 +901,22 @@ function drawScoreboard(){
   // score
   ctx.fillStyle='#fff'; ctx.font="22px 'Press Start 2P', monospace";
   ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+36);
-  ctx.font="7px 'Press Start 2P', monospace"; ctx.fillStyle='#9a9ad0';
-  ctx.fillText('eerste bij '+G.toWin, CENTER, y+h+12);
+  // onderschrift: klok (tijd-modus) of doelpunten-doel
+  ctx.textAlign='center';
+  if (G.matchMode==='time'){
+    if (G.golden){
+      ctx.font="9px 'Press Start 2P', monospace"; ctx.fillStyle = (G.frame>>4&1)?'#ffae3b':'#ff5470';
+      ctx.fillText('GOLDEN GOAL', CENTER, y+h+13);
+    } else {
+      const sec=Math.max(0,Math.ceil(G.matchTime/60));
+      const txt=(sec/60|0)+':'+String(sec%60).padStart(2,'0');
+      ctx.font="11px 'Press Start 2P', monospace"; ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
+      ctx.fillText(txt, CENTER, y+h+14);
+    }
+  } else {
+    ctx.font="7px 'Press Start 2P', monospace"; ctx.fillStyle='#9a9ad0';
+    ctx.fillText('eerste bij '+G.toWin, CENTER, y+h+12);
+  }
 }
 
 function drawMiniFlag(team, x,y,w,h){
@@ -905,14 +1001,22 @@ const $ = id => document.getElementById(id);
 function hideAllOverlays(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 function showOverlay(id){ hideAllOverlays(); $(id).classList.add('show'); }
 function updateTouchVisibility(){
-  const showTouch = IS_TOUCH && (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL);
-  $('touch').classList.toggle('show', showTouch);
+  const inGame = (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL) && !G.paused;
+  $('touch').classList.toggle('show', IS_TOUCH && inGame);
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
-  $('playHint').style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH) ? 'block' : 'none';
+  $('playHint').style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
+  $('quitBtn').classList.toggle('show', inGame);
+  updateRotateHint();
+}
+function updateRotateHint(){
+  const portrait = matchMedia('(orientation:portrait)').matches;
+  const small = Math.min(innerWidth, innerHeight) < 760;
+  const inGame = [SCREEN.PLAY,SCREEN.COUNT,SCREEN.GOAL].indexOf(G.screen) >= 0;
+  $('rotate').classList.toggle('show', portrait && small && inGame);
 }
 
 // team-select state
-let pickStage=0, pickP1=null, pickP2=null;
+let pickStage=0, pickP1=null, pickP2=null, wkPending=false;
 function buildTeamGrid(){
   const grid=$('teamGrid'); grid.innerHTML='';
   TEAMS.forEach(t=>{
@@ -926,6 +1030,7 @@ function buildTeamGrid(){
 }
 function pickTeam(t,el){
   Audio.click();
+  if (wkPending){ wkPending=false; setupWK(t); return; }   // WK-toernooi: jouw land gekozen
   if (G.mode==='guest' && guestPickSent) return;     // niet 2x sturen (touch double-tap)
   document.querySelectorAll('.team').forEach(e=>e.classList.remove('sel'));
   el.classList.add('sel');
@@ -950,6 +1055,88 @@ function pickTeam(t,el){
 function launchLocal(){
   G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
   startMatch();
+}
+
+/* ---- WK-toernooi (knockout vanaf laatste 16; 2 min per duel; 4x winnen = kampioen) ---- */
+const WK_ROUNDS = ['Achtste finale','Kwartfinale','Halve finale','FINALE'];
+const WK_DIFFS  = ['normaal','moeilijk','moeilijk','wk'];
+function goWK(){ Audio.unlock(); wkPending=true; openTeamSelect('Kies <b>jouw</b> land voor het WK 🟧'); }
+function setupWK(team){
+  const pool = TEAMS.filter(x=>x!==team);
+  for (let i=pool.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp; }
+  G.wkMode = true;
+  G.wk = { team, round:0, opp: pool.slice(0,4), diffs: WK_DIFFS.slice(), results: [] };
+  showWKStage();
+}
+function wkBracketHTML(){
+  const wk=G.wk;
+  return WK_ROUNDS.map((rn,i)=>{
+    const opp=wk.opp[i]; let cls='wk-row', res='<span class="res" style="color:#9a9ad0">—</span>';
+    if (i<wk.round){ const r=wk.results[i]; cls+=' done'; res=`<span class="res">${r?(r.won?'✓ ':'✗ ')+r.sf+'-'+r.sa:''}</span>`; }
+    else if (i===wk.round){ cls+=' now'; res='<span class="res">nu</span>'; }
+    return `<div class="${cls}"><span class="rnd">${rn}</span>`+
+           `<span class="mt"><span class="wk-flag" style="background:${opp.flag}"></span>${opp.name}</span>${res}</div>`;
+  }).join('');
+}
+function showWKStage(){
+  const wk=G.wk; const opp=wk.opp[wk.round];
+  $('wkTitle').textContent = WK_ROUNDS[wk.round];
+  $('wkSub').innerHTML = `Jij: <b>${wk.team.name}</b> 🟧 · 2 min per duel · 4× winnen = kampioen`;
+  $('wkBracket').innerHTML = wkBracketHTML();
+  $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">▶ Speel vs ${opp.name}</button>`+
+                          `<button id="wkQuit" class="btn secondary">Hoofdmenu</button>`;
+  $('wkPlay').onclick = ()=>{ Audio.click(); wkStartMatch(); };
+  $('wkQuit').onclick = ()=>{ Audio.click(); backToMenu(); };
+  showOverlay('wkScreen');
+}
+function wkStartMatch(){
+  G.mode='1p';
+  pickP1=G.wk.team; pickP2=G.wk.opp[G.wk.round];
+  G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
+  startMatch();   // wkMode -> 2 min tijd-modus
+}
+function wkMatchEnd(won){
+  const wk=G.wk; if (!wk){ showGameOver(); return; }
+  wk.results[wk.round] = { opp:wk.opp[wk.round], won, sf:G.score[0], sa:G.score[1] };
+  if (!won){ wkShowResult(false); return; }
+  wk.round++;
+  if (wk.round >= WK_ROUNDS.length) wkShowResult(true);
+  else showWKStage();
+}
+function wkShowResult(champion){
+  const wk=G.wk;
+  let extra='';
+  if (champion){
+    spawnConfetti(); Audio.win();
+    $('wkTitle').textContent='🏆 KAMPIOEN!';
+    $('wkSub').innerHTML=`<b>${wk.team.name}</b> wint het WK 2026! 🟧🎉`;
+    if (window.Leaderboard && window.Leaderboard.enabled){
+      extra = `<div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
+        <input id="wkName" class="code-input" maxlength="20" placeholder="JOUW NAAM" value="${escapeHtml(store.load('lbname',''))}">
+        <button id="wkSubmit" class="btn small">🏆 Op de ranglijst</button>
+        <div class="status" id="wkStatus"></div></div>`;
+    }
+  } else {
+    $('wkTitle').textContent='Uitgeschakeld';
+    $('wkSub').innerHTML=`Verloren in de <b>${WK_ROUNDS[wk.round]}</b>. Volgende keer beter!`;
+  }
+  $('wkBracket').innerHTML = wkBracketHTML() + extra;
+  $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">Nieuw toernooi</button>`+
+                          `<button id="wkHome" class="btn secondary">Hoofdmenu</button>`;
+  $('wkAgain').onclick=()=>{ Audio.click(); setupWK(wk.team); };
+  $('wkHome').onclick=()=>{ Audio.click(); backToMenu(); };
+  const sb=$('wkSubmit'); if (sb) sb.onclick=submitWKChampion;
+  showOverlay('wkScreen');
+}
+async function submitWKChampion(){
+  if (!window.Leaderboard) return;
+  const name=($('wkName').value||'').trim()||'Anoniem';
+  store.save('lbname', name);
+  $('wkSubmit').disabled=true; $('wkStatus').textContent='Versturen...'; $('wkStatus').className='status';
+  const last=G.wk.results[G.wk.results.length-1] || {sf:0,sa:0};
+  const ok=await window.Leaderboard.submit({ name, team:G.wk.team.code, score_for:last.sf, score_against:last.sa, mode:'1p', difficulty:'WK' });
+  $('wkStatus').textContent = ok?'Geplaatst! 🟧':'Mislukt (offline?)'; $('wkStatus').className='status '+(ok?'ok':'err');
+  $('wkSubmit').textContent = ok?'✓ Geplaatst':'🏆 Op de ranglijst'; if(!ok) $('wkSubmit').disabled=false;
 }
 
 // ---- menu knoppen ----
@@ -1031,6 +1218,7 @@ function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else { sho
 function backToMenu(){
   if (G.net){ G.net.close(); G.net=null; }
   G.mode='1p'; G.screen=SCREEN.MENU; G.paused=false; overShown=false;
+  G.wkMode=false; G.wk=null; G.golden=false;
   guestMatchId=-1; guestPickSent=false;
   G.particles=[];
   showOverlay('menuScreen'); updateTouchVisibility();
@@ -1059,16 +1247,29 @@ function rematch(){
 function onEscape(){
   // actief (online) potje of online-overlay: terug naar menu (geen pauze online)
   if (G.mode==='host' || G.mode==='guest'){ backToMenu(); return; }
-  // lokaal spel: pauze togglen
-  if (G.screen===SCREEN.PLAY || G.paused){ G.paused=!G.paused; return; }
+  if (G.paused){ resumeGame(); return; }
+  // lokaal spel: pauzemenu openen
+  if (G.screen===SCREEN.PLAY || G.screen===SCREEN.COUNT || G.screen===SCREEN.GOAL){ openPause(); return; }
   // open submenu-overlay (team/online/settings/topscores) -> terug naar menu
   const open=document.querySelector('.overlay.show');
   if (open && open.id!=='menuScreen' && open.id!=='overScreen') backToMenu();
 }
+function openPause(){
+  if (G.mode==='host'||G.mode==='guest') return;
+  G.paused=true;
+  $('pauseSub').textContent = G.wkMode ? 'Opgeven = je verlaat het toernooi' : 'ESC om door te gaan';
+  showOverlay('pauseScreen'); updateTouchVisibility();
+}
+function resumeGame(){ G.paused=false; hideAllOverlays(); updateTouchVisibility(); }
+function quitButton(){
+  Audio.unlock();
+  if (G.mode==='host'||G.mode==='guest'){ backToMenu(); return; }   // online: direct opgeven
+  if (G.paused) resumeGame(); else openPause();
+}
 
 /* ---- Online flow ---- */
 let hostMatchId=0, guestMatchId=-1, guestPickSent=false;
-function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings.toWin, mid:hostMatchId }; }
+function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings.toWin, matchMode:G.matchMode, matchMin:G.matchMin, mid:hostMatchId }; }
 
 function hostGame(){
   Audio.unlock(); G.mode='host'; G.net=makeNet();
@@ -1076,11 +1277,32 @@ function hostGame(){
   $('hostCode').textContent='...';
   $('onlineStatus').textContent='Server verbinden...'; $('onlineStatus').className='status';
   G.net.host(
-    code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='Wacht op tegenstander. Deel de code.'; },
+    code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='Wacht op tegenstander. Deel de code of link.'; setupShare(code); },
     (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':'ok'); if(!err) $('hostStart').style.display='inline-block'; },
     null
   );
   $('hostStart').style.display='none';
+  $('shareRow').style.display='none';
+}
+function shareLink(code){ return `${location.origin}${location.pathname}?j=${code}`; }
+function setupShare(code){
+  const link = shareLink(code);
+  $('shareRow').style.display='flex';
+  $('waShare').onclick = ()=>{ Audio.click();
+    const txt = encodeURIComponent(`Daag me uit in World Cup Slime! ⚽🟧 Open deze link: ${link}`);
+    window.open('https://wa.me/?text='+txt, '_blank'); };
+  $('copyLink').onclick = async ()=>{ Audio.click();
+    try { await navigator.clipboard.writeText(link); $('onlineStatus').textContent='Link gekopieerd — plak in WhatsApp.'; $('onlineStatus').className='status ok'; }
+    catch(e){ $('onlineStatus').textContent=link; } };
+}
+// open via uitnodig-link ?j=CODE -> direct naar join
+function initFromURL(){
+  const m = (location.search||'').match(/[?&]j=([A-Za-z0-9]{4,6})/);
+  if (!m) return;
+  const code = m[1].toUpperCase();
+  try { history.replaceState(null,'',location.pathname); } catch(e){}
+  goOnline(); joinGame(); $('joinCode').value = code;
+  setTimeout(()=>{ try{ joinConnect(); }catch(e){} }, 500);
 }
 function hostStartMatch(){
   if (!G.net || !G.net.connected){ $('onlineStatus').textContent='Nog geen tegenstander verbonden.'; $('onlineStatus').className='status err'; return; }
@@ -1142,6 +1364,8 @@ function onGuestStart(d){
   if (typeof d.mid==='number'){ if (d.mid===guestMatchId) return; guestMatchId=d.mid; }  // negeer dubbele 'start'
   pickP1=teamByCode(d.p1); pickP2=teamByCode(d.p2);
   G.toWin=d.toWin||5;                         // niet de lokale settings muteren
+  G.matchMode=d.matchMode||'goals'; G.matchMin=d.matchMin||2;
+  G.matchTime=G.matchMin*3600; G.golden=false;
   G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
   G.score=[0,0]; G.winner=0; G.lastScorer=0; overShown=false;
   G.netTarget=null;                           // stale OVER-state weg (fix online revanche)
@@ -1154,22 +1378,34 @@ function openSettings(){ refreshToggles(); showOverlay('setScreen'); }
 function refreshToggles(){
   $('tSound').querySelector('.val').textContent = settings.sound?'AAN':'UIT';
   $('tCrt').querySelector('.val').textContent   = settings.crt?'AAN':'UIT';
-  $('tWin').querySelector('.val').textContent   = settings.toWin;
+  $('tMode').querySelector('.val').textContent  = settings.matchMode==='time'?'Speeltijd':'Doelpunten';
+  $('tWin').querySelector('.lbl').textContent   = settings.matchMode==='time'?'Speeltijd (min)':'Eerste bij';
+  $('tWin').querySelector('.val').textContent   = settings.matchMode==='time'?settings.matchMin:settings.toWin;
   $('tDiff').querySelector('.val').textContent  = AI_LEVELS[settings.diff].label;
 }
 function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setCrowd(settings.sound); refreshToggles(); }
 function toggleCrt(){ settings.crt=!settings.crt; store.save('crt',settings.crt); refreshToggles(); }
-function cycleWin(){ const opts=[3,5,7,10]; settings.toWin=opts[(opts.indexOf(settings.toWin)+1)%opts.length]; store.save('toWin',settings.toWin); G.toWin=settings.toWin; refreshToggles(); }
+function toggleMode(){ settings.matchMode = settings.matchMode==='time'?'goals':'time'; store.save('matchMode',settings.matchMode); refreshToggles(); }
+function cycleWin(){
+  if (settings.matchMode==='time'){ const o=[1,2,5]; settings.matchMin=o[(o.indexOf(settings.matchMin)+1)%o.length]; store.save('matchMin',settings.matchMin); }
+  else { const o=[3,5,7,10]; settings.toWin=o[(o.indexOf(settings.toWin)+1)%o.length]; store.save('toWin',settings.toWin); G.toWin=settings.toWin; }
+  refreshToggles();
+}
 function cycleDiff(){ const opts=Object.keys(AI_LEVELS); settings.diff=opts[(opts.indexOf(settings.diff)+1)%opts.length]; store.save('diff',settings.diff); refreshToggles(); }
 
 /* ----------------------------------------------------------------------------
    16. Knoppen koppelen + init
    ---------------------------------------------------------------------------- */
 function wire(id, fn){ const el=$(id); if(el) el.onclick=()=>{ Audio.click(); fn(); }; }
+wire('btnWK', goWK);
 wire('btn1p', go1p);
 wire('btn2p', go2p);
 wire('btnOnline', goOnline);
 wire('btnSettings', openSettings);
+wire('pauseResume', resumeGame);
+wire('pauseQuit', backToMenu);
+wire('tMode', toggleMode);
+{ const qb=$('quitBtn'); if (qb) qb.onclick = quitButton; }
 wire('teamBack', backToMenu);
 wire('onlineBack', backToMenu);
 wire('setBack', ()=>showOverlay('menuScreen'));
@@ -1200,8 +1436,10 @@ function checkPeer(){
 buildTeamGrid();
 showOverlay('menuScreen');
 updateTouchVisibility();
-$('rotate').classList.add('armed');
+addEventListener('resize', updateRotateHint);
+addEventListener('orientationchange', ()=>setTimeout(updateRotateHint, 200));
 setTimeout(checkPeer, 1500);
+initFromURL();   // uitnodig-link ?j=CODE
 
 // expose voor debug
 window.__G = G;
