@@ -50,9 +50,9 @@ const TEAMS = [
     flag:'linear-gradient(#d52b1e,#d52b1e) center/100% 26% no-repeat, linear-gradient(#d52b1e,#d52b1e) center/26% 100% no-repeat, #fff' },
   { code:'ESP', name:'Spain',       color:'#d52b1e', trim:'#ffd400', strength:88, stripes:['#aa151b','#f1bf00','#aa151b'],
     flag:'linear-gradient(#aa151b 25%,#f1bf00 25% 75%,#aa151b 75%)' },
-  { code:'GER', name:'Germany',     color:'#222222', trim:'#ffce00', strength:85, stripes:['#000000','#dd0000','#ffce00'],
+  { code:'GER', name:'Germany',     color:'#edeef2', trim:'#16161c', strength:85, stripes:['#000000','#dd0000','#ffce00'],
     flag:'linear-gradient(#000 33%,#dd0000 33% 66%,#ffce00 66%)' },
-  { code:'POR', name:'Portugal',    color:'#1f8f3a', trim:'#d52b1e', strength:86, stripes:['#006600','#006600','#ff0000'],
+  { code:'POR', name:'Portugal',    color:'#c8102e', trim:'#0a5c2e', strength:86, stripes:['#006600','#006600','#ff0000'],
     flag:'linear-gradient(90deg,#006600 40%,#ff0000 40%)' },
   { code:'ITA', name:'Italy',       color:'#1f7ae0', trim:'#ffffff', strength:83, stripes:['#009246','#ffffff','#ce2b37'],
     flag:'linear-gradient(90deg,#009246 33%,#fff 33% 66%,#ce2b37 66%)' },
@@ -60,7 +60,7 @@ const TEAMS = [
     flag:'linear-gradient(#ff0000 50%,#171796 50%)' },
   { code:'MAR', name:'Morocco',     color:'#c1272d', trim:'#1f8f3a', strength:80, stripes:['#c1272d','#c1272d','#006233'],
     flag:'linear-gradient(#c1272d,#c1272d)' },
-  { code:'JPN', name:'Japan',       color:'#ffffff', trim:'#bc002d', strength:78, stripes:['#ffffff','#bc002d','#ffffff'],
+  { code:'JPN', name:'Japan',       color:'#1f4fb0', trim:'#ffffff', strength:78, stripes:['#ffffff','#bc002d','#ffffff'],
     flag:'radial-gradient(circle at 50% 50%, #bc002d 22%, #fff 23%)' },
   { code:'MEX', name:'Mexico',      color:'#1f8f3a', trim:'#ffffff', strength:76, stripes:['#006847','#ffffff','#ce1126'],
     flag:'linear-gradient(90deg,#006847 33%,#fff 33% 66%,#ce1126 66%)' },
@@ -68,7 +68,7 @@ const TEAMS = [
     flag:'linear-gradient(#b22234 50%,#3c3b6e 50%)' },
   { code:'CAN', name:'Canada',      color:'#d52b1e', trim:'#ffffff', strength:72, stripes:['#d80621','#ffffff','#d80621'],
     flag:'linear-gradient(90deg,#d80621 28%,#fff 28% 72%,#d80621 72%)' },
-  { code:'BEL', name:'Belgium',     color:'#111111', trim:'#ffce00', strength:83, stripes:['#000000','#fdda24','#ef3340'],
+  { code:'BEL', name:'Belgium',     color:'#e2231a', trim:'#f3d02f', strength:83, stripes:['#000000','#fdda24','#ef3340'],
     flag:'linear-gradient(90deg,#000 33%,#fdda24 33% 66%,#ef3340 66%)' },
   { code:'URU', name:'Uruguay',     color:'#5aa0e0', trim:'#ffffff', strength:82, stripes:['#7bb0e0','#ffffff','#7bb0e0'],
     flag:'repeating-linear-gradient(#7bb0e0 0 11%, #fff 11% 22%)' },
@@ -106,6 +106,8 @@ const settings = {
   matchMin:  store.load('matchMin', 2),           // match length in minutes (time mode)
   diff:      normDiff(store.load('diff', 'normal')),
   volume:    clamp01(store.load('volume', 0.7)),   // master volume 0..1
+  wkMin:     store.load('wkMin', 2),               // World Cup: minutes per match
+  wkDiff:    store.load('wkDiff', 'rising'),        // World Cup: 'rising' | easy|normal|hard|worldcup
 };
 function clamp01(v){ v=+v; return isNaN(v)?0.7:(v<0?0:v>1?1:v); }
 
@@ -211,6 +213,8 @@ if (typeof document!=='undefined' && document.addEventListener){
   document.addEventListener('visibilitychange', ()=>{ if (document.hidden) Audio.pause(); else Audio.resume(); });
   addEventListener('pagehide', ()=>Audio.pause());
 }
+// light haptic feedback (mobile); no-op on desktop / unsupported
+function haptic(p){ try { if (typeof navigator!=='undefined' && navigator.vibrate) navigator.vibrate(p); } catch(e){} }
 
 /* ----------------------------------------------------------------------------
    4. Input  (toetsenbord + touch)
@@ -588,7 +592,7 @@ function attractBall(){
 function startMatch(){
   G.attract=false;
   G.score=[0,0]; G.winner=0; G.particles=[]; G.lastScorer=0;
-  if (G.wkMode){ G.matchMode='time'; G.matchMin=2; }     // World Cup = always 2 min
+  if (G.wkMode){ G.matchMode='time'; G.matchMin=(G.wk && G.wk.min) || settings.wkMin || 2; }   // World Cup: time mode, chosen length
   else { G.matchMode=settings.matchMode; G.matchMin=settings.matchMin; }
   G.toWin = settings.toWin;
   G.golden = false;
@@ -612,6 +616,7 @@ function score(who){
   G.flash = 16; G.shake = 16;
   spawnConfetti();
   Audio.goal();
+  haptic(35);                                                           // light buzz on every goal
   if (G.golden){ endMatch(); }                                          // golden goal: eerste doelpunt beslist
   else if (G.matchMode==='goals' && (G.score[0]>=G.toWin || G.score[1]>=G.toWin)){ endMatch(); }
   else { G.screen = SCREEN.GOAL; G.goalTimer = 130; }
@@ -623,6 +628,7 @@ function endMatch(){
   G.winner = G.score[0]===G.score[1] ? 1 : (G.score[0]>G.score[1] ? 1 : 2);  // tie can't happen here (golden goal)
   G.screen = SCREEN.OVER;
   Audio.endWhistle(); Audio.win();
+  haptic([60,40,120]);                                                  // celebratory buzz at full time
   if (G.mode==='host' && G.net) G.net.sendState();
   if (G.wkMode) wkMatchEnd(G.winner===1);
   else showGameOver();
@@ -1196,9 +1202,12 @@ function goWK(){ Audio.unlock(); wkPending=true; openTeamSelect('Pick <b>your</b
 
 // a match = { a, b, sa, sb, winner:0|1|null, played, user }
 function newMatch(a,b){ return { a, b, sa:0, sb:0, winner:null, played:false, user:(a===G.wk.team||b===G.wk.team) }; }
+function wkDiffsFor(mode){ return mode==='rising' ? WK_DIFFS.slice() : [mode,mode,mode,mode]; }
+function wkLevelLabel(mode){ return mode==='rising' ? 'Rising' : (AI_LEVELS[mode] ? AI_LEVELS[mode].label : 'Rising'); }
 function setupWK(team){
   G.wkMode = true;
-  G.wk = { team, round:0, diffs: WK_DIFFS.slice(), rounds:[], champion:null };
+  const diffMode = settings.wkDiff || 'rising';
+  G.wk = { team, round:0, min: settings.wkMin||2, diffMode, diffs: wkDiffsFor(diffMode), rounds:[], champion:null };
   const others = shuffleArr(TEAMS.filter(x=>x!==team)).slice(0,15);
   const field  = shuffleArr([team, ...others]);       // 16 teams, fully random seeding
   const r16=[]; for (let i=0;i<16;i+=2) r16.push(newMatch(field[i], field[i+1]));
@@ -1263,10 +1272,27 @@ function wkBracketHTML(){
   return `<div class="bracket">${cols}</div>`;
 }
 
+function wkAtStart(){ return G.wk && G.wk.round===0 && !G.wk.champion && G.wk.rounds[0] && !G.wk.rounds[0].some(m=>m.played); }
+function wkOptsHTML(){
+  const wk=G.wk;
+  const lens=[1,2,3,4].map(n=>`<button class="pill${wk.min===n?' active':''}" data-min="${n}">${n} min</button>`).join('');
+  const diffs=[['rising','Rising'],['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','WC']]
+    .map(([k,l])=>`<button class="pill${wk.diffMode===k?' active':''}" data-d="${k}">${l}</button>`).join('');
+  return `<div class="len-label">Match length</div><div class="len-row" id="wkLenRow">${lens}</div>`+
+         `<div class="len-label">Difficulty</div><div class="len-row" id="wkDiffRow">${diffs}</div>`;
+}
+function wireWkOpts(){
+  const lr=$('wkLenRow'), dr=$('wkDiffRow'); if(!lr||!dr) return;
+  lr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.min=+p.dataset.min; settings.wkMin=G.wk.min; store.save('wkMin',G.wk.min); showWKStage(); });
+  dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.diffMode=p.dataset.d; G.wk.diffs=wkDiffsFor(p.dataset.d); settings.wkDiff=p.dataset.d; store.save('wkDiff',p.dataset.d); showWKStage(); });
+}
 function showWKStage(){
   const wk=G.wk; const m=wkUserMatch(); const opp=m?wkOppOf(m):null;
   $('wkTitle').textContent = WK_ROUNDS[wk.round];
-  $('wkSub').innerHTML = `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · 2-min matches · win 4 rounds to lift the cup`;
+  const lvl = wkLevelLabel(wk.diffMode);
+  $('wkSub').innerHTML = `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · ${wk.min}-min matches · ${escapeHtml(lvl)} · win 4 rounds to lift the cup`;
+  $('wkOpts').innerHTML = wkAtStart() ? wkOptsHTML() : '';
+  if (wkAtStart()) wireWkOpts();
   $('wkBracket').innerHTML = wkBracketHTML();
   $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">▶ Play vs ${opp?escapeHtml(opp.name):'?'}</button>`+
                           `<button id="wkQuit" class="btn secondary">Main menu</button>`;
@@ -1340,7 +1366,8 @@ async function submitWKChampion(){
   $('wkSubmit').disabled=true; $('wkStatus').textContent='Submitting...'; $('wkStatus').className='status';
   const fm=(wk.rounds[WK_ROUNDS.length-1]||[]).find(x=>x.user) || {a:wk.team, sa:0, sb:0};
   const uf=(fm.a===wk.team)?fm.sa:fm.sb, ua=(fm.a===wk.team)?fm.sb:fm.sa;
-  const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf, score_against:ua, mode:'1p', difficulty:'World Cup' });
+  const level=('WC '+wkLevelLabel(wk.diffMode)).slice(0,12);   // e.g. "WC Rising", "WC World Cup"
+  const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf, score_against:ua, mode:'worldcup', difficulty:level });
   $('wkStatus').textContent = ok?'Submitted! ⚽':'Failed (offline?)'; $('wkStatus').className='status '+(ok?'ok':'err');
   $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit to leaderboard'; if(!ok) $('wkSubmit').disabled=false;
 }
@@ -1370,25 +1397,11 @@ function showGameOver(){
   updateTouchVisibility();
 }
 
-// ---- leaderboard: submit-blok op het game-over scherm ----
+// ---- leaderboard is World Cup-only: no submit on the regular game-over screen ----
+// (only winning the World Cup is a real achievement worth posting; see submitWKChampion)
 function setupLbSubmit(){
-  const box=$('lbSubmit'); if(!box) return;
-  const humanWon = (G.mode==='1p'&&G.winner===1) || (G.mode==='host'&&G.winner===1) || (G.mode==='guest'&&G.winner===2);
-  const lbOk = window.Leaderboard && window.Leaderboard.enabled;
-  if (!humanWon || !lbOk){ box.style.display='none'; G._lbEntry=null; return; }
-  const meIdx = (G.mode==='guest') ? 1 : 0;
-  const winTeam = G.winner===1?G.p1.team:G.p2.team;
-  G._lbEntry = {
-    team: winTeam.code,
-    score_for: G.score[meIdx],
-    score_against: G.score[1-meIdx],
-    mode: (G.mode==='host'||G.mode==='guest') ? 'online' : G.mode,
-    difficulty: G.mode==='1p' ? settings.diff : '',
-  };
-  $('lbName').value = store.load('lbname','');
-  $('lbStatus').textContent=''; $('lbStatus').className='status';
-  $('lbSend').disabled=false; $('lbSend').textContent='🏆 Submit';
-  box.style.display='flex';
+  const box=$('lbSubmit'); if(box) box.style.display='none';
+  G._lbEntry=null;
 }
 async function submitScore(){
   if (!G._lbEntry || !window.Leaderboard) return;
@@ -1698,3 +1711,4 @@ initFromURL();   // invite link ?j=CODE
 
 // expose for debugging / tests
 window.__G = G;
+window.__TEAMS = TEAMS;

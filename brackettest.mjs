@@ -160,5 +160,19 @@ try {
   ok(G.p1.catchCD>0, 'catch cooldown is set after release');
 } catch(e){ ok(false, 'catch mechanic threw — '+e.message); }
 
+// ---- 7. World Cup settings + corrected kit colours ------------------------
+console.log('World Cup settings + kits:');
+T.settings.wkMin = 3; T.settings.wkDiff = 'hard';
+setupWK(TEAMS[0]);
+ok(G.wk.min===3, 'World Cup uses the chosen match length (3 min)');
+ok(G.wk.diffs.length===4 && G.wk.diffs.every(d=>d==='hard'), 'a fixed difficulty applies to every round');
+T.settings.wkDiff = 'rising'; setupWK(TEAMS[0]);
+ok(JSON.stringify(G.wk.diffs)===JSON.stringify(['normal','hard','hard','worldcup']), 'rising difficulty uses the R16->Final curve');
+const kit = c => TEAMS.find(t=>t.code===c).color.toLowerCase();
+ok(kit('BEL').startsWith('#e2'), 'Belgium home kit is red (not black)');
+ok(kit('GER')==='#edeef2', 'Germany home kit is white');
+ok(kit('POR')==='#c8102e', 'Portugal home kit is red');
+ok(kit('JPN')==='#1f4fb0', 'Japan home kit is blue');
+
 console.log('\n' + (fails ? ('FAILED (' + fails + ')') : 'ALL TESTS PASSED'));
 process.exit(fails ? 1 : 0);

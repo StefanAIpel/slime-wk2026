@@ -327,6 +327,8 @@ html, body {
 .bk-team.you .nm { color: var(--oranje2); font-weight: 800; }
 .bk-tbd { color: #55557a; }
 .wk-champ { font-size: 15px; color: var(--oranje2); font-weight: 800; margin-top: 8px; }
+.wk-opts { display: flex; flex-direction: column; gap: 4px; align-items: center; margin: -2px 0 2px; }
+.wk-opts:empty { display: none; }
 
 .tag { font-size: 11px; color: var(--muted); letter-spacing: 3px; margin-top: 6px; font-family: var(--ui); font-weight: 600; text-transform: uppercase; }
 .flash-orange { color: var(--oranje); }
