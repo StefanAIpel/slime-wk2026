@@ -331,3 +331,25 @@ html, body {
 .tag { font-size: 11px; color: var(--muted); letter-spacing: 3px; margin-top: 6px; font-family: var(--ui); font-weight: 600; text-transform: uppercase; }
 .flash-orange { color: var(--oranje); }
 a { color: var(--oranje2); }
+
+/* subtle footer (year · version · credit) */
+.foot { font-size: 10px; color: #6a6a95; letter-spacing: .4px; margin-top: 2px; }
+.foot a { color: #8a8ac0; text-decoration: none; }
+.foot a:hover { color: var(--oranje2); text-decoration: underline; }
+
+/* volume slider row in Settings */
+.toggle.vol { cursor: default; gap: 12px; }
+.toggle.vol input[type=range] {
+  -webkit-appearance: none; appearance: none; height: 6px; flex: 1; max-width: 230px;
+  background: linear-gradient(90deg, var(--oranje), var(--oranje2)); border-radius: 999px; outline: none;
+}
+.toggle.vol input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: #fff; border: 2px solid var(--oranje); cursor: pointer; box-shadow: 0 1px 4px rgba(0,0,0,.5);
+}
+.toggle.vol input[type=range]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 2px solid var(--oranje); cursor: pointer;
+}
+
+/* leaderboard date/time line */
+.lb-row .when { display: block; font-size: 8px; color: var(--muted); margin-top: 2px; }

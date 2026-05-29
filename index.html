@@ -49,11 +49,14 @@
         <button class="pill" data-min="8">8 min</button>
       </div>
       <div class="btn-row">
+        <button id="btnSound" class="btn secondary small" aria-label="sound on/off">🔊</button>
+        <button id="btnShare" class="btn secondary small">📤 Share</button>
         <button id="btnLeaders" class="btn secondary small">🏆 High scores</button>
-        <button id="btnSettings" class="btn secondary small">Settings</button>
+        <button id="btnSettings" class="btn secondary small">⚙ Settings</button>
       </div>
     </div>
     <div class="tag">WORLD CUP 2026 · USA · MEXICO · CANADA</div>
+    <div class="foot">© 2026 · World Cup Slime v1.2 · <a href="https://feliro.nl" target="_blank" rel="noopener">Feliro.nl</a></div>
   </div>
 
   <!-- ======================= TEAM SELECT ======================= -->
@@ -100,6 +103,7 @@
     <h2 class="title small-title">SETTINGS</h2>
     <div class="toggles">
       <div class="toggle" id="tSound">Sound <span class="val">ON</span></div>
+      <div class="toggle vol"><span class="lbl">Volume</span><input type="range" id="volRange" min="0" max="100" step="5" aria-label="volume"></div>
       <div class="toggle" id="tCrt">CRT effect <span class="val">ON</span></div>
       <div class="toggle" id="tMode">Match type <span class="val">Goals</span></div>
       <div class="toggle" id="tWin"><span class="lbl">First to</span> <span class="val">5</span></div>

@@ -105,7 +105,9 @@ const settings = {
   toWin:     store.load('toWin', 5),
   matchMin:  store.load('matchMin', 2),           // match length in minutes (time mode)
   diff:      normDiff(store.load('diff', 'normal')),
+  volume:    clamp01(store.load('volume', 0.7)),   // master volume 0..1
 };
+function clamp01(v){ v=+v; return isNaN(v)?0.7:(v<0?0:v>1?1:v); }
 
 /* ----------------------------------------------------------------------------
    3. Audio
@@ -121,7 +123,7 @@ const Audio = (() => {
     if (ac) return;
     try {
       ac = new (window.AudioContext || window.webkitAudioContext)();
-      master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination);
+      master = ac.createGain(); master.gain.value = 0.6*settings.volume; master.connect(ac.destination);
       startCrowd();
     } catch(e){ ac = null; }
   }
@@ -129,8 +131,8 @@ const Audio = (() => {
   function media(){
     try {
       if (bgm || typeof window==='undefined' || !window.Audio) return;
-      bgm = new window.Audio('assets/audio/bg-music.mp3'); bgm.loop = true; bgm.preload = 'auto'; bgm.volume = 0.4;
-      sfxWhistle = new window.Audio('assets/audio/whistle.mp3'); sfxWhistle.preload = 'auto'; sfxWhistle.volume = 0.9;
+      bgm = new window.Audio('assets/audio/bg-music.mp3'); bgm.loop = true; bgm.preload = 'auto'; bgm.volume = 0.5*settings.volume;
+      sfxWhistle = new window.Audio('assets/audio/whistle.mp3'); sfxWhistle.preload = 'auto'; sfxWhistle.volume = 0.9*settings.volume;
     } catch(e){ bgm = null; sfxWhistle = null; }
   }
   function playMusic(){ musicWanted = true; if (bgm && settings.sound){ bgm.play().catch(()=>{}); } }
@@ -198,6 +200,7 @@ const Audio = (() => {
     endWhistle(){ if(!settings.sound) return; if(!sfxWhistle) media(); if(sfxWhistle){ try{ sfxWhistle.currentTime=0; sfxWhistle.play().catch(()=>{}); }catch(e){} } },
     click(){ if(!ac||!settings.sound) return; const t=ac.currentTime; osc('sine',520,t,0.03,0.06,null,1400); },
     setSound(on){ if(on) resumeMusic(); else pauseMusic(); },
+    setVolume(v){ if(master) master.gain.value = 0.6*v; if(bgm) bgm.volume = 0.5*v; if(sfxWhistle) sfxWhistle.volume = 0.9*v; },
     pause:pauseMusic, resume:resumeMusic,
     setCrowd:NOOP,                                  // kept for compatibility
   };
@@ -1409,12 +1412,14 @@ async function showLeaderboard(from){
     const t=teamByCode(r.team);
     return `<div class="lb-row${i<3?' top':''}">
       <span class="rank">${i+1}</span>
-      <span class="who">${escapeHtml(r.name)} <span class="tcode">${t.code}</span></span>
+      <span class="who">${escapeHtml(r.name)} <span class="tcode">${t.code}</span><span class="when">${fmtDate(r.created_at)}</span></span>
       <span class="sc">${r.score_for}-${r.score_against}</span>
-      <span class="tcode">${r.difficulty||r.mode||''}</span>
+      <span class="tcode">${escapeHtml(r.difficulty||r.mode||'')}</span>
     </div>`;
   }).join('');
 }
+function fmtDate(s){ if(!s) return ''; const d=new Date(s); if(isNaN(d.getTime())) return '';
+  return d.toLocaleDateString([], {day:'2-digit',month:'short'}) + ' · ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else { showOverlay('menuScreen'); } }
 
@@ -1587,8 +1592,22 @@ function refreshToggles(){
   $('tWin').querySelector('.lbl').textContent   = settings.matchMode==='time'?'Match length (min)':'First to';
   $('tWin').querySelector('.val').textContent   = settings.matchMode==='time'?settings.matchMin:settings.toWin;
   $('tDiff').querySelector('.val').textContent  = AI_LEVELS[settings.diff].label;
+  const vr=$('volRange'); if(vr) vr.value=Math.round(settings.volume*100);
 }
-function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setSound(settings.sound); refreshToggles(); }
+function updateSoundBtn(){ const b=$('btnSound'); if(b) b.textContent = settings.sound?'🔊':'🔇'; }
+function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setSound(settings.sound); updateSoundBtn(); refreshToggles(); }
+function setupVolume(){
+  const r=$('volRange'); if(!r) return;
+  r.value=Math.round(settings.volume*100);
+  r.oninput=()=>{ settings.volume=clamp01(r.value/100); store.save('volume',settings.volume); Audio.setVolume(settings.volume); if(settings.volume>0 && !settings.sound){ /* leave sound switch as-is */ } };
+}
+function shareGame(){
+  const url = location.origin + location.pathname;        // clean URL (no ?j= invite code)
+  if (navigator.share){ navigator.share({ title:'World Cup Slime', text:'Play World Cup Slime ⚽', url }).catch(()=>{}); return; }
+  const b=$('btnShare'), done=()=>{ if(b){ const t=b.dataset.t||b.textContent; b.dataset.t=t; b.textContent='✓ Copied'; setTimeout(()=>{ b.textContent=t; }, 1500); } };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(url).then(done).catch(()=>prompt('Copy this link:', url));
+  else prompt('Copy this link:', url);
+}
 function toggleCrt(){ settings.crt=!settings.crt; store.save('crt',settings.crt); refreshToggles(); }
 function toggleMode(){ settings.matchMode = settings.matchMode==='time'?'goals':'time'; store.save('matchMode',settings.matchMode); refreshToggles(); }
 function cycleWin(){
@@ -1641,6 +1660,8 @@ wire('hostStart', hostStartMatch);
 wire('joinGo', joinConnect);
 wire('overRematch', rematch);
 wire('overMenu', backToMenu);
+wire('btnSound', toggleSound);
+wire('btnShare', shareGame);
 wire('btnLeaders', ()=>showLeaderboard('menu'));
 wire('overLeaders', ()=>showLeaderboard('over'));
 wire('lbBack', lbBack);
@@ -1665,6 +1686,8 @@ addEventListener('pointerdown', firstGesture); addEventListener('keydown', first
 // init
 buildTeamGrid();
 setupMenuPills();
+setupVolume();
+updateSoundBtn();
 startAttract();
 showOverlay('menuScreen');
 updateTouchVisibility();
