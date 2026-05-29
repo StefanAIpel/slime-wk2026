@@ -33,50 +33,63 @@ const BALL_REST   = 0.86;            // demping bij muur/lat
 const BALL_MAX    = 22;              // snelheidslimiet
 
 /* ----------------------------------------------------------------------------
-   1. Teams  (Nederland voorop). stripes = mini-vlag (horizontaal, boven->onder)
+   1. Teams  (20-country pool; Netherlands featured/default).
+   stripes = mini-flag (horizontal bands top->bottom). strength = bracket-sim seed.
+   A tournament randomly draws 16 of these (your pick + 15 others).
    ---------------------------------------------------------------------------- */
 const TEAMS = [
-  { code:'NED', name:'Nederland',  color:'#ff7a18', trim:'#ffffff', stripes:['#ae1c28','#ffffff','#21468b'], featured:true,
+  { code:'NED', name:'Netherlands', color:'#ff7a18', trim:'#ffffff', strength:86, stripes:['#ae1c28','#ffffff','#21468b'], featured:true,
     flag:'linear-gradient(#ae1c28 33%,#fff 33% 66%,#21468b 66%)' },
-  { code:'ARG', name:'Argentinië', color:'#7cc0ee', trim:'#ffffff', stripes:['#74acdf','#ffffff','#74acdf'],
+  { code:'ARG', name:'Argentina',   color:'#7cc0ee', trim:'#ffffff', strength:92, stripes:['#74acdf','#ffffff','#74acdf'],
     flag:'linear-gradient(#74acdf 33%,#fff 33% 66%,#74acdf 66%)' },
-  { code:'BRA', name:'Brazilië',   color:'#ffd400', trim:'#1f8f3a', stripes:['#1f8f3a','#ffd400','#2a47a8'],
+  { code:'BRA', name:'Brazil',      color:'#ffd400', trim:'#1f8f3a', strength:90, stripes:['#1f8f3a','#ffd400','#2a47a8'],
     flag:'linear-gradient(135deg,#1f8f3a 40%,#ffd400 40% 60%,#1f8f3a 60%)' },
-  { code:'FRA', name:'Frankrijk',  color:'#3a6ec0', trim:'#ffffff', stripes:['#0055a4','#ffffff','#ef4135'],
+  { code:'FRA', name:'France',      color:'#3a6ec0', trim:'#ffffff', strength:91, stripes:['#0055a4','#ffffff','#ef4135'],
     flag:'linear-gradient(90deg,#0055a4 33%,#fff 33% 66%,#ef4135 66%)' },
-  { code:'ENG', name:'Engeland',   color:'#ededed', trim:'#d52b1e', stripes:['#ffffff','#d52b1e','#ffffff'],
+  { code:'ENG', name:'England',     color:'#ededed', trim:'#d52b1e', strength:87, stripes:['#ffffff','#d52b1e','#ffffff'],
     flag:'linear-gradient(#d52b1e,#d52b1e) center/100% 26% no-repeat, linear-gradient(#d52b1e,#d52b1e) center/26% 100% no-repeat, #fff' },
-  { code:'ESP', name:'Spanje',     color:'#d52b1e', trim:'#ffd400', stripes:['#aa151b','#f1bf00','#aa151b'],
+  { code:'ESP', name:'Spain',       color:'#d52b1e', trim:'#ffd400', strength:88, stripes:['#aa151b','#f1bf00','#aa151b'],
     flag:'linear-gradient(#aa151b 25%,#f1bf00 25% 75%,#aa151b 75%)' },
-  { code:'GER', name:'Duitsland',  color:'#222222', trim:'#ffce00', stripes:['#000000','#dd0000','#ffce00'],
+  { code:'GER', name:'Germany',     color:'#222222', trim:'#ffce00', strength:85, stripes:['#000000','#dd0000','#ffce00'],
     flag:'linear-gradient(#000 33%,#dd0000 33% 66%,#ffce00 66%)' },
-  { code:'POR', name:'Portugal',   color:'#1f8f3a', trim:'#d52b1e', stripes:['#006600','#006600','#ff0000'],
+  { code:'POR', name:'Portugal',    color:'#1f8f3a', trim:'#d52b1e', strength:86, stripes:['#006600','#006600','#ff0000'],
     flag:'linear-gradient(90deg,#006600 40%,#ff0000 40%)' },
-  { code:'ITA', name:'Italië',     color:'#1f7ae0', trim:'#ffffff', stripes:['#009246','#ffffff','#ce2b37'],
+  { code:'ITA', name:'Italy',       color:'#1f7ae0', trim:'#ffffff', strength:83, stripes:['#009246','#ffffff','#ce2b37'],
     flag:'linear-gradient(90deg,#009246 33%,#fff 33% 66%,#ce2b37 66%)' },
-  { code:'CRO', name:'Kroatië',    color:'#d52b1e', trim:'#ffffff', stripes:['#ff0000','#ffffff','#171796'],
+  { code:'CRO', name:'Croatia',     color:'#d52b1e', trim:'#ffffff', strength:82, stripes:['#ff0000','#ffffff','#171796'],
     flag:'linear-gradient(#ff0000 50%,#171796 50%)' },
-  { code:'MAR', name:'Marokko',    color:'#c1272d', trim:'#1f8f3a', stripes:['#c1272d','#c1272d','#006233'],
+  { code:'MAR', name:'Morocco',     color:'#c1272d', trim:'#1f8f3a', strength:80, stripes:['#c1272d','#c1272d','#006233'],
     flag:'linear-gradient(#c1272d,#c1272d)' },
-  { code:'JPN', name:'Japan',      color:'#ffffff', trim:'#bc002d', stripes:['#ffffff','#bc002d','#ffffff'],
+  { code:'JPN', name:'Japan',       color:'#ffffff', trim:'#bc002d', strength:78, stripes:['#ffffff','#bc002d','#ffffff'],
     flag:'radial-gradient(circle at 50% 50%, #bc002d 22%, #fff 23%)' },
-  { code:'MEX', name:'Mexico',     color:'#1f8f3a', trim:'#ffffff', stripes:['#006847','#ffffff','#ce1126'],
+  { code:'MEX', name:'Mexico',      color:'#1f8f3a', trim:'#ffffff', strength:76, stripes:['#006847','#ffffff','#ce1126'],
     flag:'linear-gradient(90deg,#006847 33%,#fff 33% 66%,#ce1126 66%)' },
-  { code:'USA', name:'V.S.',       color:'#3a4ea8', trim:'#ffffff', stripes:['#3c3b6e','#ffffff','#b22234'],
+  { code:'USA', name:'USA',         color:'#3a4ea8', trim:'#ffffff', strength:74, stripes:['#3c3b6e','#ffffff','#b22234'],
     flag:'linear-gradient(#b22234 50%,#3c3b6e 50%)' },
-  { code:'CAN', name:'Canada',     color:'#d52b1e', trim:'#ffffff', stripes:['#d80621','#ffffff','#d80621'],
+  { code:'CAN', name:'Canada',      color:'#d52b1e', trim:'#ffffff', strength:72, stripes:['#d80621','#ffffff','#d80621'],
     flag:'linear-gradient(90deg,#d80621 28%,#fff 28% 72%,#d80621 72%)' },
-  { code:'BEL', name:'België',     color:'#111111', trim:'#ffce00', stripes:['#000000','#fdda24','#ef3340'],
+  { code:'BEL', name:'Belgium',     color:'#111111', trim:'#ffce00', strength:83, stripes:['#000000','#fdda24','#ef3340'],
     flag:'linear-gradient(90deg,#000 33%,#fdda24 33% 66%,#ef3340 66%)' },
+  { code:'URU', name:'Uruguay',     color:'#5aa0e0', trim:'#ffffff', strength:82, stripes:['#7bb0e0','#ffffff','#7bb0e0'],
+    flag:'repeating-linear-gradient(#7bb0e0 0 11%, #fff 11% 22%)' },
+  { code:'SEN', name:'Senegal',     color:'#1f8f3a', trim:'#ffce00', strength:79, stripes:['#00853f','#fdef42','#e31b23'],
+    flag:'linear-gradient(90deg,#00853f 33%,#fdef42 33% 66%,#e31b23 66%)' },
+  { code:'SUI', name:'Switzerland', color:'#d52b1e', trim:'#ffffff', strength:77, stripes:['#d52b1e','#ffffff','#d52b1e'],
+    flag:'linear-gradient(#fff,#fff) center/100% 30% no-repeat, linear-gradient(#fff,#fff) center/30% 100% no-repeat, #d52b1e' },
+  { code:'COL', name:'Colombia',    color:'#fcd116', trim:'#003893', strength:80, stripes:['#fcd116','#003893','#ce1126'],
+    flag:'linear-gradient(#fcd116 50%,#003893 50% 75%,#ce1126 75%)' },
 ];
 const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 
 const AI_LEVELS = {
-  makkelijk: { label:'Makkelijk', speed:0.62, react:120, jump:0.018, predict:14, mistake:0.30 },
-  normaal:   { label:'Normaal',   speed:0.82, react:60,  jump:0.05,  predict:24, mistake:0.14 },
-  moeilijk:  { label:'Moeilijk',  speed:0.96, react:28,  jump:0.10,  predict:34, mistake:0.05 },
-  wk:        { label:'WK-niveau', speed:1.06, react:10,  jump:0.16,  predict:46, mistake:0.0  },
+  easy:     { label:'Easy',      speed:0.62, react:120, jump:0.018, predict:14, mistake:0.30 },
+  normal:   { label:'Normal',    speed:0.82, react:60,  jump:0.05,  predict:24, mistake:0.14 },
+  hard:     { label:'Hard',      speed:0.96, react:28,  jump:0.10,  predict:34, mistake:0.05 },
+  worldcup: { label:'World Cup', speed:1.06, react:10,  jump:0.16,  predict:46, mistake:0.0  },
 };
+// migrate older saved difficulty keys (Dutch) -> English
+const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
+function normDiff(d){ return AI_LEVELS[d] ? d : (DIFF_MIGRATE[d] || 'normal'); }
 
 /* ----------------------------------------------------------------------------
    2. Settings (localStorage)
@@ -90,8 +103,8 @@ const settings = {
   crt:       store.load('crt', true),
   matchMode: store.load('matchMode', 'goals'),   // 'goals' | 'time'
   toWin:     store.load('toWin', 5),
-  matchMin:  store.load('matchMin', 2),           // speeltijd in minuten (tijd-modus)
-  diff:      store.load('diff', 'normaal'),
+  matchMin:  store.load('matchMin', 2),           // match length in minutes (time mode)
+  diff:      normDiff(store.load('diff', 'normal')),
 };
 
 /* ----------------------------------------------------------------------------
@@ -278,8 +291,9 @@ const G = {
   matchMin: settings.matchMin,
   matchTime: 0,                    // resterende frames (tijd-modus)
   golden: false,                   // golden goal (sudden death) na gelijkspel op tijd
-  wkMode: false,                   // WK-toernooi actief
-  wk: null,                        // toernooi-state
+  wkMode: false,                   // World Cup tournament active
+  wk: null,                        // tournament state
+  attract: false,                  // menu "attract mode": two slimes idling on the pitch
   countdown: 0,            // frames
   goalTimer: 0,            // frames in GOAL-state
   lastScorer: 0,
@@ -451,7 +465,7 @@ function predictBallX(frames){
 }
 function effDiff(){ return (G.wkMode && G.wk) ? G.wk.diffs[G.wk.round] : settings.diff; }
 function computeAI(s){
-  const p = AI_LEVELS[effDiff()] || AI_LEVELS.normaal;
+  const p = AI_LEVELS[effDiff()] || AI_LEVELS.normal;
   const b = G.ball;
   const onMySide = b.x > CENTER - 30;
   aiState.reactT--;
@@ -486,9 +500,41 @@ function resetPositions(){
   // bal richting de speler die net tegen kreeg
   G.ball.x = G.lastScorer===0 ? W*0.32 : W*0.68;
 }
+/* ---- Menu attract mode (two CPU slimes knock the ball about; no scoring) ---- */
+function startAttract(){
+  const home = TEAMS.find(t=>t.featured) || TEAMS[0];
+  const away = shuffleArr(TEAMS.filter(t=>t!==home))[0] || TEAMS[1];
+  G.p1 = makeSlime('left', home); G.p2 = makeSlime('right', away); G.ball = makeBall();
+  G.attract = true;
+}
+function attractAI(s){
+  const b=G.ball, left=s.side==='left';
+  const onSide = left ? b.x < CENTER+50 : b.x > CENTER-50;
+  const target = onSide ? b.x : (left ? W*0.25 : W*0.75);
+  const inp={left:false,right:false,jump:false};
+  if (s.x < target-14) inp.right=true; else if (s.x > target+14) inp.left=true;
+  const horiz=Math.abs(b.x-s.x), ballAbove=b.y < s.y-70;
+  if (s.onGround && ballAbove && horiz<SLIME_R+40 && b.vy>-2 && Math.random()<0.06) inp.jump=true;
+  s.input=inp;
+}
+function attractBall(){
+  const b=G.ball;
+  b.vy+=BALL_GRAV;
+  const sp=Math.hypot(b.vx,b.vy); if(sp>BALL_MAX){ b.vx*=BALL_MAX/sp; b.vy*=BALL_MAX/sp; }
+  b.x+=b.vx; b.y+=b.vy; b.spin+=b.vx*0.03;
+  if(!reflectOffSlime(b,G.p1)) reflectOffSlime(b,G.p2);
+  collideBar(b,true); collideBar(b,false);
+  if(b.y<BALL_R){ b.y=BALL_R; b.vy=-b.vy*BALL_REST; }
+  if(b.y>GROUND-BALL_R){ b.y=GROUND-BALL_R; b.vy=-b.vy*BALL_REST; b.vx*=0.985; }
+  if(b.x<BALL_R){ b.x=BALL_R; b.vx=-b.vx*BALL_REST; }            // bounce off side walls — no goals in attract
+  if(b.x>W-BALL_R){ b.x=W-BALL_R; b.vx=-b.vx*BALL_REST; }
+  if(Math.hypot(b.vx,b.vy)<0.6 && b.y>GROUND-BALL_R-2){ b.vx=(Math.random()-0.5)*8; b.vy=-9-Math.random()*4; }  // re-serve if it stalls
+}
+
 function startMatch(){
+  G.attract=false;
   G.score=[0,0]; G.winner=0; G.particles=[]; G.lastScorer=0;
-  if (G.wkMode){ G.matchMode='time'; G.matchMin=2; }     // WK = altijd 2 min
+  if (G.wkMode){ G.matchMode='time'; G.matchMin=2; }     // World Cup = always 2 min
   else { G.matchMode=settings.matchMode; G.matchMin=settings.matchMin; }
   G.toWin = settings.toWin;
   G.golden = false;
@@ -537,7 +583,13 @@ function tick(){
   if (G.flash>0) G.flash--;
   updateParticles();
 
-  if (G.paused) return;   // lokale pauze: alles bevroren (online kent geen pauze)
+  // ---- MENU attract mode: two slimes knock the ball about behind the menu ----
+  if (G.screen===SCREEN.MENU){
+    if (G.attract && G.p1 && G.p2 && G.ball){ attractAI(G.p1); attractAI(G.p2); updateSlime(G.p1); updateSlime(G.p2); attractBall(); }
+    return;
+  }
+
+  if (G.paused) return;   // local pause: everything frozen (online has no pause)
 
   // ---- ONLINE keepalive + watchdog (vangt ook harde drops zonder 'close') ----
   if ((G.mode==='host'||G.mode==='guest') && G.net && G.net.connected){
@@ -659,33 +711,33 @@ function makeNet(){
       const code = randomCode();
       this.code = code;
       try { this.peer = new Peer('SLWK'+code, { debug:1 }); }
-      catch(e){ onStatus('PeerJS niet geladen — check internet', true); return; }
+      catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=> onCode(code));
       this.peer.on('error', err=>{
-        if (String(err).includes('unavailable')) { onStatus('Code bezet, nieuwe code...', true); this.code=randomCode(); this.peer.destroy(); this._retryT=setTimeout(()=>{ if(this._closed) return; this.host(onCode,onStatus,onStart); },300); }
-        else onStatus('Fout: '+err, true);
+        if (String(err).includes('unavailable')) { onStatus('Code taken, getting a new one...', true); this.code=randomCode(); this.peer.destroy(); this._retryT=setTimeout(()=>{ if(this._closed) return; this.host(onCode,onStatus,onStart); },300); }
+        else onStatus('Error: '+err, true);
       });
       this.peer.on('connection', c=>{
         if (this.conn){ try{ c.close(); }catch(_){} return; }   // max. 1 tegenstander
         this.conn=c;
-        c.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Tegenstander verbonden!', false); });
+        c.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Opponent connected!', false); });
         c.on('data', d=>this._recv(d));
-        c.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Verbinding verbroken', true); });
+        c.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Connection lost', true); });
       });
       this._onStart = onStart;
     },
     join(code, onStatus, onStart){
       this.isHost=false;
       try { this.peer = new Peer({ debug:1 }); }
-      catch(e){ onStatus('PeerJS niet geladen — check internet', true); return; }
+      catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=>{
-        onStatus('Verbinden...', false);
+        onStatus('Connecting...', false);
         this.conn = this.peer.connect('SLWK'+code, { reliable:true });
-        this.conn.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Verbonden! Wacht op host...', false); });
+        this.conn.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Connected! Waiting for host...', false); });
         this.conn.on('data', d=>this._recv(d));
-        this.conn.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Verbinding verbroken', true); });
+        this.conn.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Connection lost', true); });
       });
-      this.peer.on('error', err=> onStatus('Kan niet verbinden: '+err, true));
+      this.peer.on('error', err=> onStatus('Cannot connect: '+err, true));
       this._onStart = onStart;
     },
     _recv(d){
@@ -722,6 +774,9 @@ function applyNetState(d){
 let crowdSeed = [];
 for (let i=0;i<160;i++) crowdSeed.push({ x:Math.random(), y:Math.random(), c:(Math.random()*6)|0, f:Math.random()*6.28 });
 
+// modern in-canvas type (sporty broadcast look) — replaces the old pixel font
+function FONT(px, w){ return (w||800)+' '+px+"px Rubik, system-ui, -apple-system, sans-serif"; }
+
 function render(){
   ctx.save();
   // screen shake
@@ -735,7 +790,7 @@ function render(){
   if (G.p1) drawSlime(G.p1);
   if (G.p2) drawSlime(G.p2);
   drawParticles();
-  if (G.p1 && G.p2) drawScoreboard();
+  if (G.p1 && G.p2 && G.screen!==SCREEN.MENU) drawScoreboard();
 
   if (G.screen===SCREEN.COUNT) drawCountdown();
   if (G.screen===SCREEN.GOAL)  drawGoalText();
@@ -775,12 +830,13 @@ function drawStadium(){
     ctx.fillStyle='#2a2a44'; ctx.fillRect(fx-3,18,6,46);
   }
 
-  // banner "WK 2026"
+  // scrolling banner (tiled by measured width so the loop is seamless in any font)
   ctx.fillStyle='#06060f'; ctx.fillRect(0,GROUND-22,W,22);
-  ctx.fillStyle='#ff7a18'; ctx.font="10px 'Press Start 2P', monospace"; ctx.textAlign='left';
-  const msg='* WORLD CUP SLIME * WK 2026 * NEDERLAND * HUP HOLLAND * ';
-  const scroll=(G.frame*1.2)%(msg.length*12);
-  ctx.fillText((msg+msg+msg).slice(0), 20-scroll, GROUND-7);
+  ctx.fillStyle='#ff7a18'; ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  const msg='WORLD CUP SLIME   •   KNOCKOUT 2026   •   USA · MEXICO · CANADA   •   ';
+  const mw=ctx.measureText(msg).width || 1;
+  const scroll=(G.frame*1.1)%mw;
+  for (let x=-scroll; x<W; x+=mw) ctx.fillText(msg, x, GROUND-7);
 }
 
 function drawPitch(){
@@ -843,11 +899,11 @@ function drawSlime(s){
   ctx.fillStyle='#0a0a16';
   ctx.beginPath(); ctx.arc(eyeX + s.eyeX*5, eyeYBase + s.eyeY*5, 6, 0, 7); ctx.fill();
 
-  // anti-goal-hangen: waarschuwingsbalk + straf-melding
+  // anti-goal-camping: warning bar + penalty message
   if (s.penalty > 0){
     ctx.fillStyle = (G.frame>>2&1)?'#ff5470':'#ffae3b';
-    ctx.font="8px 'Press Start 2P', monospace"; ctx.textAlign='center';
-    ctx.fillText('NIET HANGEN!', s.x, s.y - r - 14);
+    ctx.font=FONT(12,800); ctx.textAlign='center';
+    ctx.fillText('NO CAMPING!', s.x, s.y - r - 14);
   } else if (s.hang > CAMP_WARN){
     const frac = (s.hang - CAMP_WARN) / (CAMP_MAX - CAMP_WARN);
     const bw = 54, by = s.y - r - 16;
@@ -888,34 +944,35 @@ function drawParticles(){
 }
 
 function drawScoreboard(){
-  const w=232, h=52, x=CENTER-w/2, y=14;
-  ctx.fillStyle='rgba(6,6,16,0.85)'; roundRect(x,y,w,h,8); ctx.fill();
-  ctx.strokeStyle='#2c2c55'; ctx.lineWidth=2; roundRect(x,y,w,h,8); ctx.stroke();
-  // vlaggen
-  drawMiniFlag(G.p1.team, x+10, y+12, 40, 28);
-  drawMiniFlag(G.p2.team, x+w-50, y+12, 40, 28);
+  const w=244, h=54, x=CENTER-w/2, y=14;
+  ctx.fillStyle='rgba(6,6,16,0.85)'; roundRect(x,y,w,h,10); ctx.fill();
+  ctx.strokeStyle='#2c2c55'; ctx.lineWidth=2; roundRect(x,y,w,h,10); ctx.stroke();
+  // flags
+  drawMiniFlag(G.p1.team, x+10, y+11, 40, 27);
+  drawMiniFlag(G.p2.team, x+w-50, y+11, 40, 27);
   // codes
-  ctx.font="8px 'Press Start 2P', monospace"; ctx.textAlign='center';
+  ctx.textBaseline='alphabetic';
+  ctx.font=FONT(12,800); ctx.textAlign='center';
   ctx.fillStyle=G.p1.team.color; ctx.fillText(G.p1.team.code, x+30, y+50);
   ctx.fillStyle=G.p2.team.color; ctx.fillText(G.p2.team.code, x+w-30, y+50);
   // score
-  ctx.fillStyle='#fff'; ctx.font="22px 'Press Start 2P', monospace";
-  ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+36);
-  // onderschrift: klok (tijd-modus) of doelpunten-doel
+  ctx.fillStyle='#fff'; ctx.font=FONT(28,900);
+  ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+38);
+  // sub-line: match clock (time mode) or goal target
   ctx.textAlign='center';
   if (G.matchMode==='time'){
     if (G.golden){
-      ctx.font="9px 'Press Start 2P', monospace"; ctx.fillStyle = (G.frame>>4&1)?'#ffae3b':'#ff5470';
-      ctx.fillText('GOLDEN GOAL', CENTER, y+h+13);
+      ctx.font=FONT(12,800); ctx.fillStyle = (G.frame>>4&1)?'#ffae3b':'#ff5470';
+      ctx.fillText('GOLDEN GOAL', CENTER, y+h+14);
     } else {
       const sec=Math.max(0,Math.ceil(G.matchTime/60));
       const txt=(sec/60|0)+':'+String(sec%60).padStart(2,'0');
-      ctx.font="11px 'Press Start 2P', monospace"; ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
-      ctx.fillText(txt, CENTER, y+h+14);
+      ctx.font=FONT(16,800); ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
+      ctx.fillText(txt, CENTER, y+h+15);
     }
   } else {
-    ctx.font="7px 'Press Start 2P', monospace"; ctx.fillStyle='#9a9ad0';
-    ctx.fillText('eerste bij '+G.toWin, CENTER, y+h+12);
+    ctx.font=FONT(11,700); ctx.fillStyle='#9a9ad0';
+    ctx.fillText('FIRST TO '+G.toWin, CENTER, y+h+13);
   }
 }
 
@@ -931,11 +988,11 @@ function drawCountdown(){
   if (n>0){
     const s = 1 + (1-(G.countdown%60)/60)*0.6;
     ctx.save(); ctx.translate(CENTER,H*0.42); ctx.scale(s,s);
-    ctx.fillStyle='#ff7a18'; ctx.font="64px 'Press Start 2P', monospace";
+    ctx.fillStyle='#ff7a18'; ctx.font=FONT(78,900);
     ctx.fillText(String(n),0,0);
     ctx.restore();
   } else {
-    ctx.fillStyle='#34d17a'; ctx.font="54px 'Press Start 2P', monospace";
+    ctx.fillStyle='#34d17a'; ctx.font=FONT(64,900);
     ctx.fillText('GO!',CENTER,H*0.42);
   }
 }
@@ -943,19 +1000,19 @@ function drawGoalText(){
   ctx.textAlign='center';
   const wob=Math.sin(G.frame*0.4)*6;
   ctx.save(); ctx.translate(CENTER,H*0.4); ctx.rotate(wob*0.004);
-  ctx.fillStyle='#fff'; ctx.font="58px 'Press Start 2P', monospace";
+  ctx.fillStyle='#fff'; ctx.font=FONT(66,900);
   ctx.fillText('GOAL!',0,wob);
   const scorerTeam = G.lastScorer===0?G.p1.team:G.p2.team;
-  ctx.fillStyle=scorerTeam.color; ctx.font="14px 'Press Start 2P', monospace";
-  ctx.fillText(scorerTeam.name.toUpperCase()+' SCOORT', 0, 40);
+  ctx.fillStyle=scorerTeam.color; ctx.font=FONT(18,800);
+  ctx.fillText(scorerTeam.name.toUpperCase()+' SCORES', 0, 42);
   ctx.restore();
 }
 function drawPaused(){
   ctx.fillStyle='rgba(6,6,16,0.6)'; ctx.fillRect(0,0,W,H);
-  ctx.textAlign='center'; ctx.fillStyle='#fff'; ctx.font="34px 'Press Start 2P', monospace";
-  ctx.fillText('PAUZE',CENTER,H*0.42);
-  ctx.font="9px 'Press Start 2P', monospace"; ctx.fillStyle='#9a9ad0';
-  ctx.fillText('ESC = verder',CENTER,H*0.52);
+  ctx.textAlign='center'; ctx.fillStyle='#fff'; ctx.font=FONT(42,900);
+  ctx.fillText('PAUSED',CENTER,H*0.42);
+  ctx.font=FONT(13,700); ctx.fillStyle='#9a9ad0';
+  ctx.fillText('ESC to resume',CENTER,H*0.52);
 }
 
 function drawCRT(){
@@ -1045,7 +1102,7 @@ function pickTeam(t,el){
       // host kiest eigen team, gast kiest later
       pickP2=null; waitForGuestTeam();
     } else { // 2p
-      pickStage=1; $('pickLabel').innerHTML='Speler <b>2</b> (rechts): kies je land';
+      pickStage=1; $('pickLabel').innerHTML='Player <b>2</b> (right): pick your country';
       setTimeout(()=>document.querySelectorAll('.team').forEach(e=>e.classList.remove('sel')),120);
     }
   } else { // 2p tweede keuze
@@ -1057,72 +1114,154 @@ function launchLocal(){
   startMatch();
 }
 
-/* ---- WK-toernooi (knockout vanaf laatste 16; 2 min per duel; 4x winnen = kampioen) ---- */
-const WK_ROUNDS = ['Achtste finale','Kwartfinale','Halve finale','FINALE'];
-const WK_DIFFS  = ['normaal','moeilijk','moeilijk','wk'];
-function goWK(){ Audio.unlock(); wkPending=true; openTeamSelect('Kies <b>jouw</b> land voor het WK 🟧'); }
+/* ---- World Cup knockout — real, randomly-seeded 16-team bracket --------------
+   Each tournament randomly draws 16 of the 20 pool teams (your pick + 15 others)
+   and seeds them into the bracket — so the draw is never fixed in advance. You
+   play your own match every round; the other matches are auto-simulated from team
+   strength, so right after your match you see who advanced and who you face next.
+   Win 4 rounds (R16 -> QF -> SF -> Final) to be crowned champion. 2-min matches.
+   ------------------------------------------------------------------------------ */
+const WK_ROUNDS = ['Round of 16','Quarter-final','Semi-final','Final'];
+const WK_HEAD   = ['R16','QF','SF','FINAL'];          // compact bracket column heads
+const WK_DIFFS  = ['normal','hard','hard','worldcup'];// AI level per round
+const WK_COUNTS = [8,4,2,1];                          // matches per round
+
+function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+function goWK(){ Audio.unlock(); wkPending=true; openTeamSelect('Pick <b>your</b> country for the World Cup ⚽'); }
+
+// a match = { a, b, sa, sb, winner:0|1|null, played, user }
+function newMatch(a,b){ return { a, b, sa:0, sb:0, winner:null, played:false, user:(a===G.wk.team||b===G.wk.team) }; }
 function setupWK(team){
-  const pool = TEAMS.filter(x=>x!==team);
-  for (let i=pool.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp; }
   G.wkMode = true;
-  G.wk = { team, round:0, opp: pool.slice(0,4), diffs: WK_DIFFS.slice(), results: [] };
+  G.wk = { team, round:0, diffs: WK_DIFFS.slice(), rounds:[], champion:null };
+  const others = shuffleArr(TEAMS.filter(x=>x!==team)).slice(0,15);
+  const field  = shuffleArr([team, ...others]);       // 16 teams, fully random seeding
+  const r16=[]; for (let i=0;i<16;i+=2) r16.push(newMatch(field[i], field[i+1]));
+  G.wk.rounds=[r16];
   showWKStage();
 }
-function wkBracketHTML(){
-  const wk=G.wk;
-  return WK_ROUNDS.map((rn,i)=>{
-    const opp=wk.opp[i]; let cls='wk-row', res='<span class="res" style="color:#9a9ad0">—</span>';
-    if (i<wk.round){ const r=wk.results[i]; cls+=' done'; res=`<span class="res">${r?(r.won?'✓ ':'✗ ')+r.sf+'-'+r.sa:''}</span>`; }
-    else if (i===wk.round){ cls+=' now'; res='<span class="res">nu</span>'; }
-    return `<div class="${cls}"><span class="rnd">${rn}</span>`+
-           `<span class="mt"><span class="wk-flag" style="background:${opp.flag}"></span>${opp.name}</span>${res}</div>`;
-  }).join('');
+function wkUserMatch(){ const r=G.wk.rounds[G.wk.round]; return r ? r.find(m=>m.user) : null; }
+function wkOppOf(m){ return m.a===G.wk.team ? m.b : m.a; }
+function wkWinner(m){ return m.winner===0 ? m.a : m.b; }
+
+// simulate an AI-vs-AI knockout result from team strength (no draws — golden goal decides)
+function wkSim(a,b){
+  const pa=(a.strength||75)/((a.strength||75)+(b.strength||75));
+  let ga=0, gb=0, shots=4+((Math.random()*4)|0);
+  for (let i=0;i<shots;i++){ if (Math.random()<pa*0.55) ga++; if (Math.random()<(1-pa)*0.55) gb++; }
+  if (ga===gb){ if (Math.random()<pa) ga++; else gb++; }
+  return [ga,gb];
 }
+function wkPlayOut(m){ if (m.played) return; const [ga,gb]=wkSim(m.a,m.b); m.sa=ga; m.sb=gb; m.winner=ga>gb?0:1; m.played=true; }
+function wkBuildNextRound(r){
+  const cur=G.wk.rounds[r], next=[];
+  for (let i=0;i<cur.length;i+=2) next.push(newMatch(wkWinner(cur[i]), wkWinner(cur[i+1])));
+  G.wk.rounds[r+1]=next;
+}
+
+// ---- bracket rendering (responsive columns, horizontally scrollable on mobile) ----
+function wkRow(team, score, win, lose){
+  if (!team) return `<div class="bk-team"><span class="flag" style="background:#15152e"></span><span class="nm bk-tbd">TBD</span></div>`;
+  const you=team===G.wk.team;
+  const cls='bk-team'+(win?' win':'')+(lose?' lose':'')+(you?' you':'');
+  const sc=(score==null)?'':`<span class="sc">${score}</span>`;
+  return `<div class="${cls}"><span class="flag" style="background:${team.flag}"></span>`+
+         `<span class="nm">${escapeHtml(team.name)}${you?' (you)':''}</span>${sc}</div>`;
+}
+function wkMatchHTML(m, isNow){
+  if (!m) return `<div class="bk-match">${wkRow(null)}${wkRow(null)}</div>`;
+  const aWin=m.played&&m.winner===0, bWin=m.played&&m.winner===1;
+  const cls='bk-match'+(m.user?' user':'')+(isNow?' now':'');
+  return `<div class="${cls}">`+
+    wkRow(m.a, m.played?m.sa:null, aWin, m.played&&!aWin)+
+    wkRow(m.b, m.played?m.sb:null, bWin, m.played&&!bWin)+
+  `</div>`;
+}
+function wkBracketHTML(){
+  const wk=G.wk; let cols='';
+  for (let r=0;r<4;r++){
+    const round=wk.rounds[r], n=round?round.length:WK_COUNTS[r];
+    const nowCol=(r===wk.round && !wk.champion);
+    let matches='';
+    for (let i=0;i<n;i++){
+      const m=round?round[i]:null;
+      matches+=wkMatchHTML(m, nowCol && m && m.user && !m.played);
+    }
+    cols+=`<div class="bk-col"><div class="bk-head">${WK_HEAD[r]}</div>${matches}</div>`;
+  }
+  if (wk.champion){
+    const c=wk.champion;
+    cols+=`<div class="bk-col"><div class="bk-head">🏆</div>`+
+      `<div class="bk-match user"><div class="bk-team win${c===wk.team?' you':''}">`+
+      `<span class="flag" style="background:${c.flag}"></span><span class="nm">${escapeHtml(c.name)}</span></div></div></div>`;
+  }
+  return `<div class="bracket">${cols}</div>`;
+}
+
 function showWKStage(){
-  const wk=G.wk; const opp=wk.opp[wk.round];
+  const wk=G.wk; const m=wkUserMatch(); const opp=m?wkOppOf(m):null;
   $('wkTitle').textContent = WK_ROUNDS[wk.round];
-  $('wkSub').innerHTML = `Jij: <b>${wk.team.name}</b> 🟧 · 2 min per duel · 4× winnen = kampioen`;
+  $('wkSub').innerHTML = `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · 2-min matches · win 4 rounds to lift the cup`;
   $('wkBracket').innerHTML = wkBracketHTML();
-  $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">▶ Speel vs ${opp.name}</button>`+
-                          `<button id="wkQuit" class="btn secondary">Hoofdmenu</button>`;
+  $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">▶ Play vs ${opp?escapeHtml(opp.name):'?'}</button>`+
+                          `<button id="wkQuit" class="btn secondary">Main menu</button>`;
   $('wkPlay').onclick = ()=>{ Audio.click(); wkStartMatch(); };
   $('wkQuit').onclick = ()=>{ Audio.click(); backToMenu(); };
   showOverlay('wkScreen');
 }
 function wkStartMatch(){
+  const m=wkUserMatch(); if(!m){ wkResolveAndAdvance(true); return; }
   G.mode='1p';
-  pickP1=G.wk.team; pickP2=G.wk.opp[G.wk.round];
+  pickP1=G.wk.team; pickP2=wkOppOf(m);                 // you always play the LEFT slime
   G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
-  startMatch();   // wkMode -> 2 min tijd-modus
+  startMatch();   // wkMode -> 2-min time mode
 }
 function wkMatchEnd(won){
-  const wk=G.wk; if (!wk){ showGameOver(); return; }
-  wk.results[wk.round] = { opp:wk.opp[wk.round], won, sf:G.score[0], sa:G.score[1] };
-  if (!won){ wkShowResult(false); return; }
-  wk.round++;
-  if (wk.round >= WK_ROUNDS.length) wkShowResult(true);
-  else showWKStage();
+  const wk=G.wk; if(!wk){ showGameOver(); return; }
+  const m=wkUserMatch();
+  if (m){                                              // record from the user's view (G.p1 = you)
+    const uf=G.score[0], ua=G.score[1];
+    if (m.a===wk.team){ m.sa=uf; m.sb=ua; m.winner=won?0:1; }
+    else              { m.sb=uf; m.sa=ua; m.winner=won?1:0; }
+    m.played=true;
+  }
+  wkResolveAndAdvance(won);
+}
+// after your match: simulate the rest of the round, then continue or finish the tournament
+function wkResolveAndAdvance(userWon){
+  const wk=G.wk;
+  wk.rounds[wk.round].forEach(wkPlayOut);              // play out the other matches this round
+  if (userWon){
+    if (wk.round >= WK_ROUNDS.length-1){ wk.champion=wk.team; wkShowResult(true); return; }
+    wkBuildNextRound(wk.round); wk.round++;
+    showWKStage();                                     // shows who advanced + your next opponent
+  } else {
+    let r=wk.round;                                    // eliminated: play the bracket out to a champion
+    while (r < WK_ROUNDS.length-1){ wkBuildNextRound(r); wk.rounds[r+1].forEach(wkPlayOut); r++; }
+    wk.champion = wkWinner(wk.rounds[WK_ROUNDS.length-1][0]);
+    wkShowResult(false);
+  }
 }
 function wkShowResult(champion){
-  const wk=G.wk;
-  let extra='';
+  const wk=G.wk; let extra='';
   if (champion){
     spawnConfetti(); Audio.win();
-    $('wkTitle').textContent='🏆 KAMPIOEN!';
-    $('wkSub').innerHTML=`<b>${wk.team.name}</b> wint het WK 2026! 🟧🎉`;
+    $('wkTitle').textContent='🏆 CHAMPIONS!';
+    $('wkSub').innerHTML=`<b>${escapeHtml(wk.team.name)}</b> win the World Cup! ⚽🎉`;
     if (window.Leaderboard && window.Leaderboard.enabled){
-      extra = `<div style="margin-top:10px; display:flex; flex-direction:column; gap:8px;">
-        <input id="wkName" class="code-input" maxlength="20" placeholder="JOUW NAAM" value="${escapeHtml(store.load('lbname',''))}">
-        <button id="wkSubmit" class="btn small">🏆 Op de ranglijst</button>
+      extra = `<div style="margin:12px auto 0; display:flex; flex-direction:column; gap:8px; max-width:320px;">
+        <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
+        <button id="wkSubmit" class="btn small">🏆 Submit to leaderboard</button>
         <div class="status" id="wkStatus"></div></div>`;
     }
   } else {
-    $('wkTitle').textContent='Uitgeschakeld';
-    $('wkSub').innerHTML=`Verloren in de <b>${WK_ROUNDS[wk.round]}</b>. Volgende keer beter!`;
+    $('wkTitle').textContent='Knocked out';
+    const champTxt = wk.champion ? ` Champions: <b>${escapeHtml(wk.champion.name)}</b>.` : '';
+    $('wkSub').innerHTML=`You went out in the <b>${WK_ROUNDS[wk.round]}</b>.${champTxt} Try again!`;
   }
   $('wkBracket').innerHTML = wkBracketHTML() + extra;
-  $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">Nieuw toernooi</button>`+
-                          `<button id="wkHome" class="btn secondary">Hoofdmenu</button>`;
+  $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">New tournament</button>`+
+                          `<button id="wkHome" class="btn secondary">Main menu</button>`;
   $('wkAgain').onclick=()=>{ Audio.click(); setupWK(wk.team); };
   $('wkHome').onclick=()=>{ Audio.click(); backToMenu(); };
   const sb=$('wkSubmit'); if (sb) sb.onclick=submitWKChampion;
@@ -1130,18 +1269,20 @@ function wkShowResult(champion){
 }
 async function submitWKChampion(){
   if (!window.Leaderboard) return;
-  const name=($('wkName').value||'').trim()||'Anoniem';
+  const wk=G.wk;
+  const name=($('wkName').value||'').trim()||'Anonymous';
   store.save('lbname', name);
-  $('wkSubmit').disabled=true; $('wkStatus').textContent='Versturen...'; $('wkStatus').className='status';
-  const last=G.wk.results[G.wk.results.length-1] || {sf:0,sa:0};
-  const ok=await window.Leaderboard.submit({ name, team:G.wk.team.code, score_for:last.sf, score_against:last.sa, mode:'1p', difficulty:'WK' });
-  $('wkStatus').textContent = ok?'Geplaatst! 🟧':'Mislukt (offline?)'; $('wkStatus').className='status '+(ok?'ok':'err');
-  $('wkSubmit').textContent = ok?'✓ Geplaatst':'🏆 Op de ranglijst'; if(!ok) $('wkSubmit').disabled=false;
+  $('wkSubmit').disabled=true; $('wkStatus').textContent='Submitting...'; $('wkStatus').className='status';
+  const fm=(wk.rounds[WK_ROUNDS.length-1]||[]).find(x=>x.user) || {a:wk.team, sa:0, sb:0};
+  const uf=(fm.a===wk.team)?fm.sa:fm.sb, ua=(fm.a===wk.team)?fm.sb:fm.sa;
+  const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf, score_against:ua, mode:'1p', difficulty:'World Cup' });
+  $('wkStatus').textContent = ok?'Submitted! ⚽':'Failed (offline?)'; $('wkStatus').className='status '+(ok?'ok':'err');
+  $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit to leaderboard'; if(!ok) $('wkSubmit').disabled=false;
 }
 
 // ---- menu knoppen ----
-function go1p(){ Audio.unlock(); G.mode='1p'; openTeamSelect('Kies <b>jouw</b> land'); }
-function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openTeamSelect('Speler <b>1</b> (links): kies je land'); }
+function go1p(){ Audio.unlock(); G.mode='1p'; openTeamSelect('Pick <b>your</b> country'); }
+function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openTeamSelect('Player <b>1</b> (left): pick your country'); }
 function openTeamSelect(label){ pickStage=0; pickP1=pickP2=null; G.screen=SCREEN.TEAM; $('pickLabel').innerHTML=label; buildTeamGrid(); showOverlay('teamScreen'); }
 
 function goOnline(){ Audio.unlock(); G.screen=SCREEN.ONLINE; showOverlay('onlineScreen'); $('onlineStatus').textContent=''; $('hostArea').style.display='none'; $('joinArea').style.display='none'; }
@@ -1150,13 +1291,13 @@ function showGameOver(){
   overShown=true;
   const winTeam = G.winner===1?G.p1.team:G.p2.team;
   let who;
-  if (G.mode==='1p') who = G.winner===1?'JIJ WINT!':'COMPUTER WINT';
-  else if (G.mode==='2p') who = 'SPELER '+G.winner+' WINT!';
-  else { const meWon = (G.mode==='host' && G.winner===1)||(G.mode==='guest' && G.winner===2); who = meWon?'JIJ WINT!':'TEGENSTANDER WINT'; }
+  if (G.mode==='1p') who = G.winner===1?'YOU WIN!':'COMPUTER WINS';
+  else if (G.mode==='2p') who = 'PLAYER '+G.winner+' WINS!';
+  else { const meWon = (G.mode==='host' && G.winner===1)||(G.mode==='guest' && G.winner===2); who = meWon?'YOU WIN!':'OPPONENT WINS'; }
   $('overTitle').textContent=who;
-  let sub=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${winTeam.name} — ${G.score[0]} : ${G.score[1]}`;
-  // online: alleen de host kan revanche starten
-  if (G.mode==='guest'){ $('overRematch').style.display='none'; sub+='<div class="status">Wacht tot de host opnieuw start…</div>'; }
+  let sub=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${escapeHtml(winTeam.name)} — ${G.score[0]} : ${G.score[1]}`;
+  // online: only the host can start a rematch
+  if (G.mode==='guest'){ $('overRematch').style.display='none'; sub+='<div class="status">Waiting for the host to restart…</div>'; }
   else { $('overRematch').style.display=''; }
   $('overSub').innerHTML=sub;
   setupLbSubmit();
@@ -1181,27 +1322,27 @@ function setupLbSubmit(){
   };
   $('lbName').value = store.load('lbname','');
   $('lbStatus').textContent=''; $('lbStatus').className='status';
-  $('lbSend').disabled=false; $('lbSend').textContent='🏆 Plaatsen';
+  $('lbSend').disabled=false; $('lbSend').textContent='🏆 Submit';
   box.style.display='flex';
 }
 async function submitScore(){
   if (!G._lbEntry || !window.Leaderboard) return;
-  const name=($('lbName').value||'').trim() || 'Anoniem';
+  const name=($('lbName').value||'').trim() || 'Anonymous';
   store.save('lbname', name);
-  $('lbSend').disabled=true; $('lbStatus').textContent='Versturen...'; $('lbStatus').className='status';
+  $('lbSend').disabled=true; $('lbStatus').textContent='Submitting...'; $('lbStatus').className='status';
   const ok = await window.Leaderboard.submit(Object.assign({name}, G._lbEntry));
-  if (ok){ $('lbStatus').textContent='Geplaatst! 🟧'; $('lbStatus').className='status ok'; $('lbSend').textContent='✓ Geplaatst'; }
-  else { $('lbStatus').textContent='Mislukt (offline?)'; $('lbStatus').className='status err'; $('lbSend').disabled=false; }
+  if (ok){ $('lbStatus').textContent='Submitted! ⚽'; $('lbStatus').className='status ok'; $('lbSend').textContent='✓ Submitted'; }
+  else { $('lbStatus').textContent='Failed (offline?)'; $('lbStatus').className='status err'; $('lbSend').disabled=false; }
 }
 let lbFrom='menu';
 async function showLeaderboard(from){
   lbFrom = from || 'menu';
   showOverlay('lbScreen');
-  const list=$('lbList'); list.innerHTML='laden…';
-  if (!window.Leaderboard){ list.textContent='Leaderboard niet beschikbaar.'; return; }
+  const list=$('lbList'); list.innerHTML='loading…';
+  if (!window.Leaderboard){ list.textContent='Leaderboard not available.'; return; }
   const rows = await window.Leaderboard.top(12);
-  if (!rows){ list.innerHTML='<div class="status err">Kon ranglijst niet laden (offline?).</div>'; return; }
-  if (!rows.length){ list.innerHTML='<div class="status">Nog geen scores — wees de eerste! 🟧</div>'; return; }
+  if (!rows){ list.innerHTML='<div class="status err">Could not load leaderboard (offline?).</div>'; return; }
+  if (!rows.length){ list.innerHTML='<div class="status">No scores yet — be the first! ⚽</div>'; return; }
   list.innerHTML = rows.map((r,i)=>{
     const t=teamByCode(r.team);
     return `<div class="lb-row${i<3?' top':''}">
@@ -1221,6 +1362,7 @@ function backToMenu(){
   G.wkMode=false; G.wk=null; G.golden=false;
   guestMatchId=-1; guestPickSent=false;
   G.particles=[];
+  startAttract();
   showOverlay('menuScreen'); updateTouchVisibility();
 }
 function onConnectionLost(){
@@ -1230,7 +1372,7 @@ function onConnectionLost(){
   $('hostArea').style.display='none'; $('joinArea').style.display='none';
   const hs=$('hostStart'); if(hs) hs.style.display='none';
   showOverlay('onlineScreen');
-  $('onlineStatus').textContent='Verbinding verbroken.'; $('onlineStatus').className='status err';
+  $('onlineStatus').textContent='Connection lost.'; $('onlineStatus').className='status err';
   updateTouchVisibility();
 }
 function rematch(){
@@ -1257,7 +1399,7 @@ function onEscape(){
 function openPause(){
   if (G.mode==='host'||G.mode==='guest') return;
   G.paused=true;
-  $('pauseSub').textContent = G.wkMode ? 'Opgeven = je verlaat het toernooi' : 'ESC om door te gaan';
+  $('pauseSub').textContent = G.wkMode ? 'Quitting leaves the tournament' : 'Press ESC to resume';
   showOverlay('pauseScreen'); updateTouchVisibility();
 }
 function resumeGame(){ G.paused=false; hideAllOverlays(); updateTouchVisibility(); }
@@ -1275,9 +1417,9 @@ function hostGame(){
   Audio.unlock(); G.mode='host'; G.net=makeNet();
   $('hostArea').style.display='block'; $('joinArea').style.display='none';
   $('hostCode').textContent='...';
-  $('onlineStatus').textContent='Server verbinden...'; $('onlineStatus').className='status';
+  $('onlineStatus').textContent='Connecting to server...'; $('onlineStatus').className='status';
   G.net.host(
-    code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='Wacht op tegenstander. Deel de code of link.'; setupShare(code); },
+    code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='Waiting for an opponent. Share the code or link.'; setupShare(code); },
     (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':'ok'); if(!err) $('hostStart').style.display='inline-block'; },
     null
   );
@@ -1289,10 +1431,10 @@ function setupShare(code){
   const link = shareLink(code);
   $('shareRow').style.display='flex';
   $('waShare').onclick = ()=>{ Audio.click();
-    const txt = encodeURIComponent(`Daag me uit in World Cup Slime! ⚽🟧 Open deze link: ${link}`);
+    const txt = encodeURIComponent(`Challenge me in World Cup Slime! ⚽ Open this link: ${link}`);
     window.open('https://wa.me/?text='+txt, '_blank'); };
   $('copyLink').onclick = async ()=>{ Audio.click();
-    try { await navigator.clipboard.writeText(link); $('onlineStatus').textContent='Link gekopieerd — plak in WhatsApp.'; $('onlineStatus').className='status ok'; }
+    try { await navigator.clipboard.writeText(link); $('onlineStatus').textContent='Link copied — paste it in WhatsApp.'; $('onlineStatus').className='status ok'; }
     catch(e){ $('onlineStatus').textContent=link; } };
 }
 // open via uitnodig-link ?j=CODE -> direct naar join
@@ -1305,17 +1447,17 @@ function initFromURL(){
   setTimeout(()=>{ try{ joinConnect(); }catch(e){} }, 500);
 }
 function hostStartMatch(){
-  if (!G.net || !G.net.connected){ $('onlineStatus').textContent='Nog geen tegenstander verbonden.'; $('onlineStatus').className='status err'; return; }
-  // host kiest eigen land; daarna vraagt de host de gast om een land (waitForGuestTeam)
+  if (!G.net || !G.net.connected){ $('onlineStatus').textContent='No opponent connected yet.'; $('onlineStatus').className='status err'; return; }
+  // host picks their own country, then asks the guest to pick (waitForGuestTeam)
   openOnlineTeamPick();
 }
 function openOnlineTeamPick(){
   G.mode='host'; G.screen=SCREEN.TEAM;
-  $('pickLabel').innerHTML='Host: kies <b>jouw</b> land (links)';
+  $('pickLabel').innerHTML='Host: pick <b>your</b> country (left)';
   buildTeamGrid(); showOverlay('teamScreen');
 }
 function waitForGuestTeam(){
-  $('pickLabel').innerHTML='Wacht op landkeuze tegenstander...';
+  $('pickLabel').innerHTML='Waiting for opponent to pick a country...';
   // vraag gast om team; gast stuurt 'pick'
   // host: zodra gast team stuurt -> start
   G.net.conn.send({t:'needTeam'});
@@ -1346,19 +1488,19 @@ function joinGame(){
 }
 function joinConnect(){
   const code=$('joinCode').value.trim().toUpperCase();
-  if (code.length<4){ $('onlineStatus').textContent='Voer de 4-letter code in.'; $('onlineStatus').className='status err'; return; }
-  $('onlineStatus').textContent='Verbinden...'; $('onlineStatus').className='status';
+  if (code.length<4){ $('onlineStatus').textContent='Enter the 4-letter code.'; $('onlineStatus').className='status err'; return; }
+  $('onlineStatus').textContent='Connecting...'; $('onlineStatus').className='status';
   G.net.join(code, (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':'ok'); }, null);
   patchNetForTeams();
 }
 function showGuestTeamPick(){
   G.mode='guest'; G.screen=SCREEN.TEAM; guestPickSent=false;
-  $('pickLabel').innerHTML='Kies <b>jouw</b> land (rechts)';
+  $('pickLabel').innerHTML='Pick <b>your</b> country (right)';
   buildTeamGrid(); showOverlay('teamScreen');
 }
 function sendGuestTeamAndWait(){
   G.net.conn.send({t:'pick', code:pickP2.code});
-  $('pickLabel').innerHTML='Verstuurd! Wacht op host...';
+  $('pickLabel').innerHTML='Sent! Waiting for host...';
 }
 function onGuestStart(d){
   if (typeof d.mid==='number'){ if (d.mid===guestMatchId) return; guestMatchId=d.mid; }  // negeer dubbele 'start'
@@ -1376,10 +1518,10 @@ function onGuestStart(d){
 /* ---- Settings ---- */
 function openSettings(){ refreshToggles(); showOverlay('setScreen'); }
 function refreshToggles(){
-  $('tSound').querySelector('.val').textContent = settings.sound?'AAN':'UIT';
-  $('tCrt').querySelector('.val').textContent   = settings.crt?'AAN':'UIT';
-  $('tMode').querySelector('.val').textContent  = settings.matchMode==='time'?'Speeltijd':'Doelpunten';
-  $('tWin').querySelector('.lbl').textContent   = settings.matchMode==='time'?'Speeltijd (min)':'Eerste bij';
+  $('tSound').querySelector('.val').textContent = settings.sound?'ON':'OFF';
+  $('tCrt').querySelector('.val').textContent   = settings.crt?'ON':'OFF';
+  $('tMode').querySelector('.val').textContent  = settings.matchMode==='time'?'Match time':'Goals';
+  $('tWin').querySelector('.lbl').textContent   = settings.matchMode==='time'?'Match length (min)':'First to';
   $('tWin').querySelector('.val').textContent   = settings.matchMode==='time'?settings.matchMin:settings.toWin;
   $('tDiff').querySelector('.val').textContent  = AI_LEVELS[settings.diff].label;
 }
@@ -1434,12 +1576,13 @@ function checkPeer(){
 
 // init
 buildTeamGrid();
+startAttract();
 showOverlay('menuScreen');
 updateTouchVisibility();
 addEventListener('resize', updateRotateHint);
 addEventListener('orientationchange', ()=>setTimeout(updateRotateHint, 200));
 setTimeout(checkPeer, 1500);
-initFromURL();   // uitnodig-link ?j=CODE
+initFromURL();   // invite link ?j=CODE
 
-// expose voor debug
+// expose for debugging / tests
 window.__G = G;

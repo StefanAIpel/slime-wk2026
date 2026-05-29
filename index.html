@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0a0a16">
-  <meta name="description" content="World Cup Slime — retro slime soccer voor het WK 2026. Nederland centraal. Vs computer, 2 spelers of online.">
-  <title>World Cup Slime ⚽🟧</title>
+  <meta name="description" content="World Cup Slime — retro slime soccer in a modern kit. Knockout tournament, vs computer, 2 players or online.">
+  <title>World Cup Slime ⚽</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/app-icon-32.png">
@@ -22,23 +22,23 @@
 </head>
 <body>
 
-  <!-- speelveld -->
+  <!-- pitch -->
   <div id="stage">
     <canvas id="game"></canvas>
   </div>
 
   <!-- ======================= MENU ======================= -->
   <div id="menuScreen" class="overlay">
-    <h1 class="title">WORLD CUP<span class="accent">SLIME · WK 2026</span></h1>
-    <div class="subtitle">Retro slime soccer · Hup Holland Hup 🟧</div>
+    <h1 class="title">WORLD CUP<span class="accent">SLIME</span></h1>
+    <div class="subtitle">Retro slime soccer · modern kit ⚽</div>
     <div class="menu-card">
-      <button id="btnWK" class="btn hero">🏆 WK-toernooi</button>
-      <button id="btn1p" class="btn">1 speler · vs computer</button>
-      <button id="btn2p" class="btn">2 spelers · zelfde pc</button>
-      <button id="btnOnline" class="btn">Online · daag een vriend uit</button>
+      <button id="btnWK" class="btn hero">🏆 World Cup · knockout</button>
+      <button id="btn1p" class="btn">1 Player · vs computer</button>
+      <button id="btn2p" class="btn">2 Players · same screen</button>
+      <button id="btnOnline" class="btn">Online · challenge a friend</button>
       <div class="btn-row">
-        <button id="btnLeaders" class="btn secondary small">🏆 Topscores</button>
-        <button id="btnSettings" class="btn secondary small">Instellingen</button>
+        <button id="btnLeaders" class="btn secondary small">🏆 High scores</button>
+        <button id="btnSettings" class="btn secondary small">Settings</button>
       </div>
     </div>
     <div class="tag">WORLD CUP 2026 · USA · MEXICO · CANADA</div>
@@ -46,101 +46,101 @@
 
   <!-- ======================= TEAM SELECT ======================= -->
   <div id="teamScreen" class="overlay">
-    <div class="pick-label" id="pickLabel">Kies je land</div>
+    <div class="pick-label" id="pickLabel">Pick your country</div>
     <div class="team-grid" id="teamGrid"></div>
-    <button id="teamBack" class="btn secondary small">‹ Terug</button>
+    <button id="teamBack" class="btn secondary small">‹ Back</button>
   </div>
 
   <!-- ======================= ONLINE ======================= -->
   <div id="onlineScreen" class="overlay">
-    <h2 class="title" style="font-size:clamp(18px,4vw,34px)">ONLINE</h2>
-    <div class="subtitle">P2P-verbinding · geen account nodig</div>
+    <h2 class="title small-title">ONLINE</h2>
+    <div class="subtitle">P2P connection · no account needed</div>
     <div class="online-box">
       <div class="btn-row">
-        <button id="btnHost" class="btn small">SPEL STARTEN (host)</button>
-        <button id="btnJoin" class="btn small secondary">CODE INVOEREN (join)</button>
+        <button id="btnHost" class="btn small">START GAME (host)</button>
+        <button id="btnJoin" class="btn small secondary">ENTER CODE (join)</button>
       </div>
 
       <div id="hostArea" style="display:none">
-        <div class="subtitle">Code voor je tegenstander:</div>
+        <div class="subtitle">Code for your opponent:</div>
         <div class="code-display" id="hostCode">…</div>
         <div class="btn-row" id="shareRow" style="display:none">
           <button id="waShare" class="btn small">📲 WhatsApp</button>
-          <button id="copyLink" class="btn small secondary">🔗 Kopieer link</button>
+          <button id="copyLink" class="btn small secondary">🔗 Copy link</button>
         </div>
-        <button id="hostStart" class="btn small" style="display:none; margin-top:10px;">▶ Kies team & start</button>
+        <button id="hostStart" class="btn small" style="display:none; margin-top:10px;">▶ Pick team & start</button>
       </div>
 
       <div id="joinArea" style="display:none">
-        <div class="subtitle">Voer de code van de host in:</div>
+        <div class="subtitle">Enter the host's code:</div>
         <input id="joinCode" class="code-input" maxlength="4" placeholder="????" autocomplete="off" autocapitalize="characters">
-        <button id="joinGo" class="btn small">Verbinden</button>
+        <button id="joinGo" class="btn small">Connect</button>
       </div>
 
       <div class="status" id="onlineStatus"></div>
-      <div class="status err" id="onlinePeerWarn" style="display:none">⚠ Online vereist internet (PeerJS kon niet laden). Lokale modi werken wel.</div>
+      <div class="status err" id="onlinePeerWarn" style="display:none">⚠ Online needs internet (PeerJS failed to load). Local modes still work.</div>
     </div>
-    <button id="onlineBack" class="btn secondary small">‹ Terug</button>
+    <button id="onlineBack" class="btn secondary small">‹ Back</button>
   </div>
 
   <!-- ======================= SETTINGS ======================= -->
   <div id="setScreen" class="overlay">
-    <h2 class="title" style="font-size:clamp(18px,4vw,34px)">INSTELLINGEN</h2>
+    <h2 class="title small-title">SETTINGS</h2>
     <div class="toggles">
-      <div class="toggle" id="tSound">Geluid <span class="val">AAN</span></div>
-      <div class="toggle" id="tCrt">CRT-beeld <span class="val">AAN</span></div>
-      <div class="toggle" id="tMode">Spelvorm <span class="val">Doelpunten</span></div>
-      <div class="toggle" id="tWin"><span class="lbl">Eerste bij</span> <span class="val">5</span></div>
-      <div class="toggle" id="tDiff">Computer-niveau <span class="val">Normaal</span></div>
+      <div class="toggle" id="tSound">Sound <span class="val">ON</span></div>
+      <div class="toggle" id="tCrt">CRT effect <span class="val">ON</span></div>
+      <div class="toggle" id="tMode">Match type <span class="val">Goals</span></div>
+      <div class="toggle" id="tWin"><span class="lbl">First to</span> <span class="val">5</span></div>
+      <div class="toggle" id="tDiff">Computer level <span class="val">Normal</span></div>
     </div>
-    <button id="setBack" class="btn secondary small">‹ Terug</button>
+    <button id="setBack" class="btn secondary small">‹ Back</button>
   </div>
 
   <!-- ======================= GAME OVER ======================= -->
   <div id="overScreen" class="overlay">
-    <h2 class="title" id="overTitle" style="font-size:clamp(20px,4.5vw,38px)">WINNAAR</h2>
+    <h2 class="title" id="overTitle" style="font-size:clamp(20px,4.5vw,38px)">WINNER</h2>
     <div class="subtitle" id="overSub"></div>
     <div id="lbSubmit" class="online-box" style="display:none; max-width:380px;">
-      <div class="subtitle" style="margin:0">Zet je naam op de ranglijst:</div>
-      <input id="lbName" class="code-input" maxlength="20" placeholder="JOUW NAAM" autocomplete="off">
-      <button id="lbSend" class="btn small">🏆 Plaatsen</button>
+      <div class="subtitle" style="margin:0">Put your name on the leaderboard:</div>
+      <input id="lbName" class="code-input" maxlength="20" placeholder="YOUR NAME" autocomplete="off">
+      <button id="lbSend" class="btn small">🏆 Submit</button>
       <div class="status" id="lbStatus"></div>
     </div>
     <div class="btn-row">
-      <button id="overRematch" class="btn">Revanche</button>
-      <button id="overLeaders" class="btn secondary">Topscores</button>
-      <button id="overMenu" class="btn secondary">Hoofdmenu</button>
+      <button id="overRematch" class="btn">Rematch</button>
+      <button id="overLeaders" class="btn secondary">High scores</button>
+      <button id="overMenu" class="btn secondary">Main menu</button>
     </div>
   </div>
 
   <!-- ======================= LEADERBOARD ======================= -->
   <div id="lbScreen" class="overlay">
-    <h2 class="title" style="font-size:clamp(18px,4vw,34px)">🏆 TOPSCORES</h2>
-    <div class="subtitle">Beste resultaten · WK 2026</div>
-    <div id="lbList" class="online-box" style="max-width:560px; min-height:120px;">laden…</div>
-    <button id="lbBack" class="btn secondary small">‹ Terug</button>
+    <h2 class="title small-title">🏆 HIGH SCORES</h2>
+    <div class="subtitle">Best results · World Cup</div>
+    <div id="lbList" class="online-box" style="max-width:560px; min-height:120px;">loading…</div>
+    <button id="lbBack" class="btn secondary small">‹ Back</button>
   </div>
 
-  <!-- ======================= WK-TOERNOOI ======================= -->
+  <!-- ======================= WORLD CUP TOURNAMENT ======================= -->
   <div id="wkScreen" class="overlay">
-    <h2 class="title" id="wkTitle" style="font-size:clamp(18px,4vw,32px)">WK-TOERNOOI</h2>
+    <h2 class="title small-title" id="wkTitle">WORLD CUP</h2>
     <div class="subtitle" id="wkSub"></div>
-    <div id="wkBracket" class="online-box" style="max-width:540px"></div>
+    <div id="wkBracket" class="bracket-wrap"></div>
     <div class="btn-row" id="wkBtns"></div>
   </div>
 
-  <!-- ======================= PAUZE ======================= -->
+  <!-- ======================= PAUSE ======================= -->
   <div id="pauseScreen" class="overlay">
-    <h2 class="title" style="font-size:clamp(20px,4.5vw,36px)">PAUZE</h2>
-    <div class="subtitle" id="pauseSub">ESC om door te gaan</div>
+    <h2 class="title" style="font-size:clamp(20px,4.5vw,36px)">PAUSED</h2>
+    <div class="subtitle" id="pauseSub">Press ESC to resume</div>
     <div class="btn-row">
-      <button id="pauseResume" class="btn">Doorgaan</button>
-      <button id="pauseQuit" class="btn secondary">Opgeven & menu</button>
+      <button id="pauseResume" class="btn">Resume</button>
+      <button id="pauseQuit" class="btn secondary">Quit to menu</button>
     </div>
   </div>
 
-  <!-- in-game opgeven/pauze-knop -->
-  <button id="quitBtn" aria-label="pauze / menu">☰</button>
+  <!-- in-game pause/quit button -->
+  <button id="quitBtn" aria-label="pause / menu">☰</button>
 
   <!-- ======================= TOUCH CONTROLS ======================= -->
   <div id="touch">
@@ -151,7 +151,7 @@
     <div class="pad right">
       <div class="tbtn jump" id="btnJ">▲</div>
     </div>
-    <!-- speler 2 (alleen 2P lokaal) -->
+    <!-- player 2 (local 2P only) -->
     <div class="pad right" id="pad2" style="display:none; bottom:104px;">
       <div class="tbtn" id="btn2L">◀</div>
       <div class="tbtn" id="btn2R">▶</div>
@@ -159,15 +159,15 @@
     </div>
   </div>
 
-  <div id="playHint">Speler 1: A/D + W (of pijltjes) · ESC of ☰ = pauze/menu</div>
+  <div id="playHint">Player 1: A/D + W (or arrow keys) · ESC or ☰ = pause/menu</div>
 
   <!-- ======================= ROTATE HINT ======================= -->
   <div id="rotate">
     <div class="ph">📱</div>
-    <div class="subtitle">Draai je toestel horizontaal<br>voor de beste ervaring 🟧</div>
+    <div class="subtitle">Rotate your device to landscape<br>for the best experience ⚽</div>
   </div>
 
-  <!-- PeerJS (online, optioneel) -->
+  <!-- PeerJS (online, optional) -->
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="leaderboard.js"></script>
   <script src="game.js"></script>

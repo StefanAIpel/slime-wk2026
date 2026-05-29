@@ -1,42 +1,54 @@
-# ⚽🟧 Slime WK 2026
+# ⚽ World Cup Slime
 
-Retro **slime soccer** voor het WK 2026 — Nederland centraal, 16 landen.
-Speel tegen de computer, met z'n tweeën op dezelfde pc, of **online tegen een vriend**.
-Werkt op desktop én mobiel. Pure HTML5 canvas + vanilla JS, geen build.
+Retro **slime soccer** in a modern kit — a remake of the early-2000s *Slimiathlete /
+Slime Soccer* vibe, tied to the **2026 World Cup**. Play the computer, two players on
+the same screen, or **online against a friend**. Mobile-first, but plays great on
+desktop with WASD / arrow keys. Pure HTML5 canvas + vanilla JS, no build step.
 
-## Spelen
-- **Online (gedeployed):** zie de Netlify-URL.
-- **Lokaal:** open `index.html` in je browser (dubbelklik). Online-modus vereist internet (PeerJS).
+## Play
+- **Online (deployed):** see the Netlify URL.
+- **Local:** open `index.html` in your browser (double-click). Online mode needs internet (PeerJS).
 
-## Modi
-- **1 speler** — vs computer (Makkelijk → WK-niveau)
-- **2 spelers** — zelfde toetsenbord
-- **Online** — peer-to-peer via een 4-letter code (geen account, geen server)
+## Modes
+- **🏆 World Cup** — a real, randomly-seeded **16-team knockout**. The 20-country pool is
+  drawn fresh every tournament (your pick + 15 random others), so the bracket is never
+  fixed in advance. You play your own 2-minute match each round; the other matches are
+  auto-simulated by team strength, so right after your match you see who advanced and who
+  you face in the quarter-final. Win 4 rounds (R16 → QF → SF → Final) to lift the cup.
+- **1 Player** — vs computer (Easy → World Cup level)
+- **2 Players** — same keyboard
+- **Online** — peer-to-peer via a 4-letter code (no account, no server)
 
-## Besturing
-| | Bewegen | Springen |
+## Controls
+| | Move | Jump |
 |---|---|---|
-| Speler 1 | `A` / `D` of ◀ ▶ | `W` / `Spatie` / ▲ |
-| Speler 2 (2P) | pijltjes ← → | pijltje ↑ |
-| Mobiel | touch-knoppen | touch-knop |
+| Player 1 | `A` / `D` or ◀ ▶ | `W` / `Space` / ▲ |
+| Player 2 (2P) | arrows ← → | arrow ↑ |
+| Mobile | touch buttons | touch button |
 
-`ESC` = pauze (lokale modi).
+`ESC` = pause (local modes).
 
-## Techniek
-- **Render/physics:** Canvas 2D, vaste 60Hz tijdstap.
-- **Geluid:** volledig gesynthetiseerd via Web Audio (geen assets).
+## Tech
+- **Render/physics:** Canvas 2D, fixed 60 Hz timestep.
+- **Audio:** fully synthesized via Web Audio (no asset files).
 - **Online:** [PeerJS](https://peerjs.com) WebRTC, host-authoritative netcode.
-- **Leaderboard:** Supabase REST (anon key + RLS), tabel `slime_leaderboard`.
+- **Leaderboard:** Supabase REST (anon key + RLS), table `slime_leaderboard`.
+- **UI:** modern Rubik typography; the canvas pitch, floodlights, crowd and goals stay.
 
-## Ontwikkeling
+## Development
 ```bash
-# headless smoketest (vereist Chrome + playwright)
+# headless bracket + runtime logic test (no browser needed)
+node brackettest.mjs
+
+# full browser smoke tests (require: npm i -D playwright + Chrome)
 node smoketest.mjs
 node goaltest.mjs
+node wktest.mjs
+node lbtest.mjs
 ```
 
 ## Deploy
-Statische site → Netlify (publish dir = root, geen build). Push naar `main` deployt automatisch.
+Static site → Netlify (publish dir = root, no build). Pushing to `main` deploys automatically.
 
 ---
-Gemaakt voor het WK 2026. Hup Holland Hup! 🟧
+Built for the 2026 World Cup. ⚽

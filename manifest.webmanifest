@@ -1,7 +1,7 @@
 {
   "name": "World Cup Slime",
   "short_name": "Slime",
-  "description": "Retro slime soccer voor het WK 2026 — Nederland centraal. Vs computer, 2 spelers of online.",
+  "description": "Retro slime soccer in a modern kit — World Cup knockout, vs computer, 2 players or online.",
   "id": "/",
   "start_url": "./?source=pwa",
   "scope": "./",
@@ -10,7 +10,7 @@
   "background_color": "#0a0a16",
   "theme_color": "#0a0a16",
   "categories": ["games", "sports", "entertainment"],
-  "lang": "nl",
+  "lang": "en",
   "icons": [
     { "src": "assets/icons/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "assets/icons/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
