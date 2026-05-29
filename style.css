@@ -18,6 +18,7 @@
   --ui:      'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --display: 'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --mono:    ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
+  --padb:    0px;   /* bottom space reserved for touch controls (tablets); 0 on desktop */
 }
 
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -42,8 +43,8 @@ html, body {
 #game {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width: min(100vw, calc(100vh * 960 / 600));
-  height: min(100vh, calc(100vw * 600 / 960));
+  width:  min(100vw, calc((100vh - var(--padb)) * 960 / 600));
+  height: min(calc(100vh - var(--padb)), calc(100vw * 600 / 960));
   background: #0b1b2b;
   box-shadow: 0 0 0 3px #000, 0 0 40px rgba(255,122,24,.25), 0 18px 60px rgba(0,0,0,.6);
   border-radius: 4px;
@@ -355,3 +356,20 @@ a { color: var(--oranje2); }
 
 /* leaderboard date/time line */
 .lb-row .when { display: block; font-size: 8px; color: var(--muted); margin-top: 2px; }
+
+/* ---- Touch controls: bigger on touch; on tablets the pitch shrinks so the pads sit BELOW it ---- */
+@media (pointer: coarse){
+  .tbtn { width: 86px; height: 86px; font-size: 30px; }
+  .tbtn.catch { font-size: 34px; }
+  .pad { bottom: max(20px, env(safe-area-inset-bottom)); }
+}
+@media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
+  :root { --padb: 172px; }                       /* reserve a control strip under the field */
+  #stage { align-items: flex-start; padding-top: max(8px, env(safe-area-inset-top)); }
+  .tbtn { width: 112px; height: 112px; font-size: 42px; border-width: 4px; }
+  .tbtn.catch { font-size: 46px; }
+  .pad { bottom: max(26px, env(safe-area-inset-bottom)); gap: 18px; }
+  .pad.left  { left: 42px; }
+  .pad.right { right: 42px; }
+  #pad2 { bottom: 168px; }
+}
