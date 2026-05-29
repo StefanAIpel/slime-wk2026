@@ -42,8 +42,8 @@ html, body {
 #game {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width: min(100vw, calc(100vh * 900 / 520));
-  height: min(100vh, calc(100vw * 520 / 900));
+  width: min(100vw, calc(100vh * 960 / 600));
+  height: min(100vh, calc(100vw * 600 / 960));
   background: #0b1b2b;
   box-shadow: 0 0 0 3px #000, 0 0 40px rgba(255,122,24,.25), 0 18px 60px rgba(0,0,0,.6);
   border-radius: 4px;
@@ -128,12 +128,33 @@ html, body {
   background: rgba(18,18,42,.72);
   border: 1px solid rgba(255,255,255,.08);
   border-radius: 18px;
-  padding: 22px;
-  display: flex; flex-direction: column; gap: 12px; align-items: center;
+  padding: 20px 22px;
+  display: flex; flex-direction: column; gap: 11px; align-items: center;
   max-width: 560px; width: 100%;
   backdrop-filter: blur(8px);
   box-shadow: 0 18px 50px rgba(0,0,0,.55);
 }
+/* retro corner team labels (like the original start screen) */
+.team-tag {
+  position: fixed; top: max(14px, env(safe-area-inset-top));
+  font-family: var(--display); font-weight: 800; font-size: clamp(10px,1.6vw,14px);
+  letter-spacing: 2px; z-index: 21; pointer-events: none; text-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+.team-tag.left  { left: max(16px, env(safe-area-inset-left));  color: var(--oranje2); }
+.team-tag.right { right: max(16px, env(safe-area-inset-right)); color: #7cc0ee; }
+/* mode buttons + match-length pills */
+.mode-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; }
+.btn.mode { min-width: 0; flex: 1 1 28%; padding: 11px 10px; }
+.len-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
+.len-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+.pill {
+  font-family: var(--ui); font-weight: 700; font-size: clamp(11px,1.5vw,13px); color: var(--ink);
+  background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 999px;
+  padding: 7px 13px; cursor: pointer; transition: transform .06s, border-color .12s;
+}
+.pill:hover { border-color: var(--oranje2); }
+.pill:active { transform: translateY(1px); }
+.pill.active { background: linear-gradient(180deg,#ffd585,#ff7a18); color: #2a1400; border-color: #b4540a; font-weight: 800; }
 
 /* ---- Team select grid ---- */
 .team-grid {
@@ -232,6 +253,8 @@ html, body {
 }
 .tbtn:active { background: rgba(255,122,24,.5); }
 .tbtn.jump { background: rgba(52,209,122,.22); border-color: rgba(52,209,122,.7); }
+.tbtn.catch { background: rgba(124,192,238,.22); border-color: rgba(124,192,238,.75); font-size: 30px; }
+.tbtn.catch:active { background: rgba(124,192,238,.55); }
 
 /* ---- Rotate device hint (zichtbaarheid via JS: alleen tijdens het spelen) ---- */
 #rotate {

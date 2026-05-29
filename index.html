@@ -27,15 +27,27 @@
     <canvas id="game"></canvas>
   </div>
 
-  <!-- ======================= MENU ======================= -->
+  <!-- ======================= MENU (retro layout over the live pitch) ======================= -->
   <div id="menuScreen" class="overlay">
+    <div class="team-tag left">LEFT TEAM</div>
+    <div class="team-tag right">RIGHT TEAM</div>
     <h1 class="title">WORLD CUP<span class="accent">SLIME</span></h1>
-    <div class="subtitle">Retro slime soccer · modern kit ⚽</div>
+    <div class="subtitle">slime soccer · a modern remake ⚽</div>
     <div class="menu-card">
       <button id="btnWK" class="btn hero">🏆 World Cup · knockout</button>
-      <button id="btn1p" class="btn">1 Player · vs computer</button>
-      <button id="btn2p" class="btn">2 Players · same screen</button>
-      <button id="btnOnline" class="btn">Online · challenge a friend</button>
+      <div class="mode-row">
+        <button id="btn1p" class="btn mode">1 Player</button>
+        <button id="btn2p" class="btn mode">2 Players</button>
+        <button id="btnOnline" class="btn mode">Online</button>
+      </div>
+      <div class="len-label">Match length</div>
+      <div class="len-row" id="lenRow">
+        <button class="pill" data-mode="goals">Goals</button>
+        <button class="pill" data-min="1">1 min</button>
+        <button class="pill" data-min="2">2 min</button>
+        <button class="pill" data-min="4">4 min</button>
+        <button class="pill" data-min="8">8 min</button>
+      </div>
       <div class="btn-row">
         <button id="btnLeaders" class="btn secondary small">🏆 High scores</button>
         <button id="btnSettings" class="btn secondary small">Settings</button>
@@ -149,17 +161,19 @@
       <div class="tbtn" id="btnR">▶</div>
     </div>
     <div class="pad right">
+      <div class="tbtn catch" id="btnC" aria-label="catch / hold ball">✊</div>
       <div class="tbtn jump" id="btnJ">▲</div>
     </div>
     <!-- player 2 (local 2P only) -->
     <div class="pad right" id="pad2" style="display:none; bottom:104px;">
       <div class="tbtn" id="btn2L">◀</div>
       <div class="tbtn" id="btn2R">▶</div>
+      <div class="tbtn catch" id="btn2C" aria-label="catch / hold ball">✊</div>
       <div class="tbtn jump" id="btn2J">▲</div>
     </div>
   </div>
 
-  <div id="playHint">Player 1: A/D + W (or arrow keys) · ESC or ☰ = pause/menu</div>
+  <div id="playHint">Player 1: A/D + W (or arrows) · hold S / ↓ = catch ball · ESC or ☰ = pause</div>
 
   <!-- ======================= ROTATE HINT ======================= -->
   <div id="rotate">

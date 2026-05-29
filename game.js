@@ -11,16 +11,16 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-const W = 900, H = 520;              // logische resolutie
+const W = 960, H = 600;              // logical resolution (bigger / more zoomed out)
 canvas.width = W; canvas.height = H;
 ctx.imageSmoothingEnabled = false;
 
-const GROUND   = H - 44;             // grondniveau (y van veld-oppervlak)
+const GROUND   = H - 52;             // ground level (y of the pitch surface)
 const CENTER   = W / 2;
-const SLIME_R  = 62;                 // straal slime (halve cirkel) — kleiner = meer veld
+const SLIME_R  = 60;                 // slime radius (half circle) — smaller vs field = more zoomed out
 const BALL_R   = 13;
-const GOAL_H   = 150;                // hoogte doelmond
-const GOAL_D   = 42;                 // diepte/breedte van het doel-net
+const GOAL_H   = 172;                // goal mouth height
+const GOAL_D   = 46;                 // depth/width of the goal net
 const BAR_Y    = GROUND - GOAL_H;    // y van de lat
 const BAR_TH   = 8;
 
@@ -108,30 +108,45 @@ const settings = {
 };
 
 /* ----------------------------------------------------------------------------
-   3. Audio  (Web Audio, volledig gesynthetiseerd)
+   3. Audio
+   Background music = audio extracted from the uploaded mp4 (looping, HTML5 media).
+   Cheering at goals/wins = synth crowd-swell + stadium horn (Web Audio).
+   Final whistle at match end = uploaded mp3 stinger. Other match SFX removed.
+   Everything stops when the tab/app is hidden or closed.
    ---------------------------------------------------------------------------- */
 const Audio = (() => {
   let ac = null, master = null, crowd = null, crowdGain = null;
+  let bgm = null, sfxWhistle = null, musicWanted = false;
   function ensure(){
     if (ac) return;
     try {
       ac = new (window.AudioContext || window.webkitAudioContext)();
-      master = ac.createGain(); master.gain.value = 0.42; master.connect(ac.destination);
+      master = ac.createGain(); master.gain.value = 0.5; master.connect(ac.destination);
       startCrowd();
     } catch(e){ ac = null; }
   }
+  // HTML5 media elements: looping background track + final-whistle stinger
+  function media(){
+    try {
+      if (bgm || typeof window==='undefined' || !window.Audio) return;
+      bgm = new window.Audio('assets/audio/bg-music.mp3'); bgm.loop = true; bgm.preload = 'auto'; bgm.volume = 0.4;
+      sfxWhistle = new window.Audio('assets/audio/whistle.mp3'); sfxWhistle.preload = 'auto'; sfxWhistle.volume = 0.9;
+    } catch(e){ bgm = null; sfxWhistle = null; }
+  }
+  function playMusic(){ musicWanted = true; if (bgm && settings.sound){ bgm.play().catch(()=>{}); } }
+  function pauseMusic(){ if (bgm){ try{ bgm.pause(); }catch(e){} } }
+  function resumeMusic(){ if (bgm && musicWanted && settings.sound){ bgm.play().catch(()=>{}); } }
   function startCrowd(){
-    // zacht stadiongeroezemoes: ruis door bandpass
+    // crowd-noise source kept ONLY for goal/win swells — no constant ambience (mp4 is the bg)
     const buf = ac.createBuffer(1, ac.sampleRate*2, ac.sampleRate);
     const d = buf.getChannelData(0);
     for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*0.5;
     crowd = ac.createBufferSource(); crowd.buffer = buf; crowd.loop = true;
     const bp = ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=520; bp.Q.value=0.6;
-    crowdGain = ac.createGain(); crowdGain.gain.value = settings.sound ? 0.04 : 0;
+    crowdGain = ac.createGain(); crowdGain.gain.value = 0;        // silent until a goal/win swell
     crowd.connect(bp); bp.connect(crowdGain); crowdGain.connect(master);
     crowd.start();
   }
-  // --- bouwstenen (zacht, met lowpass tegen schelheid) ---
   function osc(type, f, t0, dur, vol, slideTo, filterHz){
     if (!ac) return;
     const o=ac.createOscillator(), g=ac.createGain();
@@ -153,47 +168,46 @@ const Audio = (() => {
     const g=ac.createGain(); g.gain.value=vol;
     s.connect(f); f.connect(g); g.connect(master); s.start(t0);
   }
-  // trap = lage sinus-thump + korte contact-klik (voetbal-feel, geen piep)
-  function kickThump(t0, f, vol){
-    osc('sine', f, t0, 0.17, vol, f*0.55, 700);
-    osc('triangle', f*2, t0, 0.06, vol*0.3, f, 1100);
-    noiseHit(t0, 0.03, vol*0.45, 'highpass', 1600);
-  }
   function hornNote(t0, f, dur, vol){
     osc('sawtooth', f, t0, dur, vol, null, 1100);
-    osc('sawtooth', f*1.006, t0, dur, vol*0.65, null, 1100);   // detune = warmte
+    osc('sawtooth', f*1.006, t0, dur, vol*0.65, null, 1100);   // detune = warmth
   }
   function crowdSwell(t, peak){
-    if (!crowdGain) return; const base=settings.sound?0.04:0;
+    if (!crowdGain) return;
     crowdGain.gain.cancelScheduledValues(t);
-    crowdGain.gain.setValueAtTime(Math.max(0.0001,base),t);
+    crowdGain.gain.setValueAtTime(0.0001,t);
     crowdGain.gain.linearRampToValueAtTime(peak,t+0.18);
-    crowdGain.gain.exponentialRampToValueAtTime(Math.max(0.0001,base),t+2.6);
+    crowdGain.gain.exponentialRampToValueAtTime(0.0001,t+2.6);
   }
+  const NOOP = ()=>{};
   const api = {
-    unlock(){ ensure(); if (ac && ac.state==='suspended') ac.resume(); },
-    kick(power){ if(!settings.sound||!ac) return; const t=ac.currentTime; const f=115+Math.min(120,power*6); kickThump(t,f, Math.min(0.5, 0.3+power*0.012)); },
-    wall(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('sine',125,t,0.1,0.18,80,500); noiseHit(t,0.02,0.06,'lowpass',800); },
-    jump(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('sine',150,t,0.13,0.12,95,500); },
-    post(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('triangle',196,t,0.24,0.26,150,1400); osc('sine',300,t,0.12,0.12,180,1400); noiseHit(t,0.03,0.12,'highpass',1400); },
-    whistle(){ if(!settings.sound||!ac) return; const t=ac.currentTime;     // scheidsrechtersfluit-triller
-      for(let k=0;k<4;k++){ const tk=t+k*0.045; osc('triangle', k%2?2050:2250, tk, 0.04, 0.10, null, 3200); }
-      noiseHit(t,0.18,0.04,'highpass',2600); },
-    count(){ if(!settings.sound||!ac) return; const t=ac.currentTime; osc('sine',740,t,0.09,0.16,640,900); },
+    unlock(){ ensure(); media(); if (ac && ac.state==='suspended') ac.resume(); playMusic(); },
+    // minor match SFX intentionally removed — background music + cheering only
+    kick:NOOP, wall:NOOP, jump:NOOP, post:NOOP, count:NOOP, whistle:NOOP,
+    // cheering at goals and at the win (synth crowd swell + stadium horn)
     goal(){
       if(!settings.sound||!ac) return; const t=ac.currentTime;
-      hornNote(t,180,0.8,0.13); hornNote(t,226,0.8,0.11); hornNote(t+0.05,270,0.72,0.10);   // stadionhoorn
-      noiseHit(t,0.55,0.10,'bandpass',850);                                                  // gejuich
-      crowdSwell(t,0.4);
+      hornNote(t,180,0.8,0.16); hornNote(t,226,0.8,0.13); hornNote(t+0.05,270,0.72,0.12);
+      noiseHit(t,0.6,0.14,'bandpass',900);
+      crowdSwell(t,0.6);
     },
     win(){ if(!settings.sound||!ac) return; const t=ac.currentTime;
-      [[262,0],[330,0.2],[392,0.4],[523,0.6],[523,0.95]].forEach(([f,dt])=>hornNote(t+dt,f,0.55,0.12));
-      noiseHit(t,1.0,0.11,'bandpass',850); crowdSwell(t,0.46); },
-    click(){ if(!ac) return; const t=ac.currentTime; osc('sine',520,t,0.03,0.07,null,1400); },
-    setCrowd(on){ if (crowdGain) crowdGain.gain.value = on ? 0.04 : 0; },
+      [[262,0],[330,0.2],[392,0.4],[523,0.6],[523,0.95]].forEach(([f,dt])=>hornNote(t+dt,f,0.55,0.14));
+      noiseHit(t,1.0,0.14,'bandpass',900); crowdSwell(t,0.75); },
+    // real final-whistle stinger (from the uploaded mp3)
+    endWhistle(){ if(!settings.sound) return; if(!sfxWhistle) media(); if(sfxWhistle){ try{ sfxWhistle.currentTime=0; sfxWhistle.play().catch(()=>{}); }catch(e){} } },
+    click(){ if(!ac||!settings.sound) return; const t=ac.currentTime; osc('sine',520,t,0.03,0.06,null,1400); },
+    setSound(on){ if(on) resumeMusic(); else pauseMusic(); },
+    pause:pauseMusic, resume:resumeMusic,
+    setCrowd:NOOP,                                  // kept for compatibility
   };
   return api;
 })();
+// background music stops when the tab/app is hidden and resumes when visible (and on close)
+if (typeof document!=='undefined' && document.addEventListener){
+  document.addEventListener('visibilitychange', ()=>{ if (document.hidden) Audio.pause(); else Audio.resume(); });
+  addEventListener('pagehide', ()=>Audio.pause());
+}
 
 /* ----------------------------------------------------------------------------
    4. Input  (toetsenbord + touch)
@@ -207,9 +221,9 @@ addEventListener('keydown', e => {
 });
 addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
-// touch-input vlaggen (voor de menselijke speler)
-const touch = { L:false, R:false, J:false, L2:false, R2:false, J2:false };
-const BTN_PROP = { btnL:'L', btnR:'R', btnJ:'J', btn2L:'L2', btn2R:'R2', btn2J:'J2' };
+// touch-input flags (D / D2 = catch/hold-ball button)
+const touch = { L:false, R:false, J:false, D:false, L2:false, R2:false, J2:false, D2:false };
+const BTN_PROP = { btnL:'L', btnR:'R', btnJ:'J', btnC:'D', btn2L:'L2', btn2R:'R2', btn2J:'J2', btn2C:'D2' };
 const activePointers = new Map();   // pointerId -> button-id
 function btnIdAt(x,y){
   const el = document.elementFromPoint(x,y);
@@ -246,19 +260,20 @@ function clearPointer(pid){ const prev = activePointers.get(pid); if (prev) setB
 
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
 
-// lees keyset -> {left,right,jump}
-function wasdInput(){ return { left: !!keys['a'], right: !!keys['d'], jump: !!keys['w'] }; }
-function arrowsInput(){ return { left: !!keys['arrowleft'], right: !!keys['arrowright'], jump: !!keys['arrowup'] || !!keys[' '] }; }
-// primaire mens (1P / online): alles samen + touchpad 1
+// read keyset -> {left,right,jump,down}  (down = catch/hold the ball)
+function wasdInput(){ return { left: !!keys['a'], right: !!keys['d'], jump: !!keys['w'], down: !!keys['s'] }; }
+function arrowsInput(){ return { left: !!keys['arrowleft'], right: !!keys['arrowright'], jump: !!keys['arrowup'] || !!keys[' '], down: !!keys['arrowdown'] }; }
+// primary human (1P / online): everything together + touchpad 1
 function humanInput(){
   return {
     left:  !!keys['a'] || !!keys['arrowleft']  || touch.L,
     right: !!keys['d'] || !!keys['arrowright'] || touch.R,
     jump:  !!keys['w'] || !!keys['arrowup'] || !!keys[' '] || touch.J,
+    down:  !!keys['s'] || !!keys['arrowdown'] || touch.D,
   };
 }
-function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2 }; }
-function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J }; }
+function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2, down: !!keys['arrowdown']||touch.D2 }; }
+function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J, down: !!keys['s']||touch.D }; }
 
 /* ----------------------------------------------------------------------------
    5. Entities
@@ -269,13 +284,14 @@ function makeSlime(side, team){
     x: side==='left' ? W*0.25 : W*0.75,
     y: GROUND, vx:0, vy:0,
     onGround:true,
-    eyeX:0, eyeY:0,        // pupil-offset (kijkt naar bal)
-    squash:0,              // animatie bij landen/springen
-    hang:0, penalty:0,     // anti-goal-hangen timer + straf-flash
-    input:{left:false,right:false,jump:false},
+    eyeX:0, eyeY:0,        // pupil offset (looks at the ball)
+    squash:0,              // landing/jump animation
+    hang:0, penalty:0,     // anti-goal-camping timer + penalty flash
+    holding:false, holdT:0, catchCD:0,   // ball-catch (hold down) state
+    input:{left:false,right:false,jump:false,down:false},
   };
 }
-function makeBall(){ return { x:CENTER, y:GROUND-260, vx:0, vy:0, spin:0 }; }
+function makeBall(){ return { x:CENTER, y:GROUND-260, vx:0, vy:0, spin:0, held:null }; }
 
 /* ----------------------------------------------------------------------------
    6. Game-state
@@ -342,6 +358,7 @@ function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 
 function updateSlime(s){
   const i = s.input;
+  if (s.catchCD>0) s.catchCD--;
   s.vx = (i.right?SLIME_SPEED:0) - (i.left?SLIME_SPEED:0);
   s.x += s.vx;
   // half-veld begrenzing (klein gaatje bij de middenlijn)
@@ -389,8 +406,41 @@ function reflectOffSlime(b, s){
   return false;
 }
 
+/* ---- Ball catch/hold (classic slime: hold DOWN to clamp the ball) ---- */
+const HOLD_MAX = 150;   // max hold ~2.5s, then auto-release
+function tryCatch(s){
+  const b = G.ball;
+  if (b.held || !s.input.down || s.catchCD>0) return false;
+  const dx=b.x-s.x, dy=b.y-s.y;
+  if (Math.hypot(dx,dy) < SLIME_R+BALL_R+12 && b.y <= s.y+2){   // touching the dome's top
+    b.held=s; s.holding=true; s.holdT=0; b.vx=0; b.vy=0;
+    return true;
+  }
+  return false;
+}
+function holdBall(s){
+  const b = G.ball;
+  if (!s.input.down || s.holdT>HOLD_MAX || G.screen!==SCREEN.PLAY){ releaseBall(s); return; }
+  s.holdT++;
+  const dir = s.side==='left'?1:-1;                 // perch on the dome, slightly forward
+  b.x = clamp(s.x + dir*6, BALL_R, W-BALL_R);
+  b.y = s.y - SLIME_R - BALL_R + 4;
+  b.vx = s.vx; b.vy = s.vy; b.spin += 0.04;
+}
+function releaseBall(s){
+  const b = G.ball;
+  b.held=null; s.holding=false; s.catchCD=22;
+  const dir = s.side==='left'?1:-1;                 // throw forward + up; jumping throws higher
+  b.vx = s.vx*0.6 + dir*9.5;
+  b.vy = Math.min(-7, s.vy - 7);
+  spawnDust(b.x, b.y, 6, s.team.trim);
+}
+
 function updateBall(){
   const b = G.ball;
+  // held ball sticks to the holder until DOWN is released (or the hold times out)
+  if (b.held){ holdBall(b.held); return; }
+  if (tryCatch(G.p1) || tryCatch(G.p2)){ holdBall(b.held); return; }
   b.vy += BALL_GRAV;
   // snelheidslimiet
   const sp = Math.hypot(b.vx,b.vy);
@@ -496,8 +546,9 @@ function computeAI(s){
 function resetPositions(){
   G.p1.x = W*0.25; G.p1.y=GROUND; G.p1.vx=G.p1.vy=0; G.p1.onGround=true;
   G.p2.x = W*0.75; G.p2.y=GROUND; G.p2.vx=G.p2.vy=0; G.p2.onGround=true;
+  G.p1.holding=G.p2.holding=false; G.p1.holdT=G.p2.holdT=0; G.p1.catchCD=G.p2.catchCD=0;
   G.ball = makeBall();
-  // bal richting de speler die net tegen kreeg
+  // ball goes toward the player who was just scored on
   G.ball.x = G.lastScorer===0 ? W*0.32 : W*0.68;
 }
 /* ---- Menu attract mode (two CPU slimes knock the ball about; no scoring) ---- */
@@ -566,9 +617,9 @@ function score(who){
   if (G.mode==='host' && G.net) G.net.sendState();
 }
 function endMatch(){
-  G.winner = G.score[0]===G.score[1] ? 1 : (G.score[0]>G.score[1] ? 1 : 2);  // gelijk komt hier niet voor (golden goal)
+  G.winner = G.score[0]===G.score[1] ? 1 : (G.score[0]>G.score[1] ? 1 : 2);  // tie can't happen here (golden goal)
   G.screen = SCREEN.OVER;
-  Audio.win();
+  Audio.endWhistle(); Audio.win();
   if (G.mode==='host' && G.net) G.net.sendState();
   if (G.wkMode) wkMatchEnd(G.winner===1);
   else showGameOver();
@@ -703,7 +754,7 @@ function lerpBall(e,t){ if(!t)return; e.x+=(t.x-e.x)*0.5; e.y+=(t.y-e.y)*0.5; e.
 function makeNet(){
   return {
     peer:null, conn:null, isHost:false, code:'',
-    guestInput:{left:false,right:false,jump:false},
+    guestInput:{left:false,right:false,jump:false,down:false},
     connected:false, lostConnection:false,
     _closed:false, _retryT:null, _sendT:0, _lastRecvT:0,
     host(onCode, onStatus, onStart){
@@ -747,7 +798,7 @@ function makeNet(){
       else if (d.t==='input'){ this.guestInput = d.i; }
     },
     startGame(payload){ if (this.conn && this.connected) this.conn.send(Object.assign({t:'start'},payload)); },
-    sendInput(i){ if (this.conn && this.connected) this.conn.send({t:'input', i:{left:i.left,right:i.right,jump:i.jump}}); },
+    sendInput(i){ if (this.conn && this.connected) this.conn.send({t:'input', i:{left:i.left,right:i.right,jump:i.jump,down:i.down}}); },
     sendState(){
       if (!this.conn || !this.connected) return;
       this.conn.send({ t:'state',
@@ -772,7 +823,7 @@ function applyNetState(d){
    13. Rendering
    ---------------------------------------------------------------------------- */
 let crowdSeed = [];
-for (let i=0;i<160;i++) crowdSeed.push({ x:Math.random(), y:Math.random(), c:(Math.random()*6)|0, f:Math.random()*6.28 });
+for (let i=0;i<300;i++) crowdSeed.push({ x:Math.random(), y:Math.random(), c:(Math.random()*6)|0, f:Math.random()*6.28 });
 
 // modern in-canvas type (sporty broadcast look) — replaces the old pixel font
 function FONT(px, w){ return (w||800)+' '+px+"px Rubik, system-ui, -apple-system, sans-serif"; }
@@ -784,6 +835,7 @@ function render(){
 
   drawStadium();
   drawPitch();
+  if (G.p1 && G.p2 && (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL)) drawCampZones();
   drawGoal(true);
   drawGoal(false);
   if (G.ball) drawBall(G.ball);
@@ -898,19 +950,29 @@ function drawSlime(s){
   ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(eyeX, eyeYBase, 13, 0, 7); ctx.fill();
   ctx.fillStyle='#0a0a16';
   ctx.beginPath(); ctx.arc(eyeX + s.eyeX*5, eyeYBase + s.eyeY*5, 6, 0, 7); ctx.fill();
+  // (the no-camping warning is drawn on the ground via drawCampZones, like the original)
+}
 
-  // anti-goal-camping: warning bar + penalty message
-  if (s.penalty > 0){
-    ctx.fillStyle = (G.frame>>2&1)?'#ff5470':'#ffae3b';
-    ctx.font=FONT(12,800); ctx.textAlign='center';
-    ctx.fillText('NO CAMPING!', s.x, s.y - r - 14);
-  } else if (s.hang > CAMP_WARN){
-    const frac = (s.hang - CAMP_WARN) / (CAMP_MAX - CAMP_WARN);
-    const bw = 54, by = s.y - r - 16;
-    ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(s.x-bw/2, by, bw, 6);
-    ctx.fillStyle = frac>0.6 ? '#ff5470' : '#ffae3b';
-    ctx.fillRect(s.x-bw/2, by, bw*Math.min(1,frac), 6);
-  }
+// goal-hanging zones marked on the pitch near each goal; they light up when a slime camps
+function drawCampZones(){
+  if (!G.p1 || !G.p2) return;
+  const zw = W*0.20, gh = H-GROUND;     // matches inCampZone() boundary
+  [[G.p1, 0, true], [G.p2, W-zw, false]].forEach(([s, zx, isLeft])=>{
+    let col='255,235,160', a=0.16;                       // idle: clearly visible warning strip on the grass
+    if (s.penalty>0){ col='255,84,112'; a=(G.frame>>2&1)?0.55:0.22; }
+    else if (s.hang>CAMP_WARN){ const f=Math.min(1,(s.hang-CAMP_WARN)/(CAMP_MAX-CAMP_WARN)); col='255,174,59'; a=0.22+0.40*f; }
+    ctx.fillStyle=`rgba(${col},${a})`; ctx.fillRect(zx, GROUND, zw, gh);
+    // hazard hatching (clipped to the zone) so the no-hang area reads even when idle
+    ctx.save();
+    ctx.beginPath(); ctx.rect(zx, GROUND, zw, gh); ctx.clip();
+    ctx.strokeStyle=`rgba(${col},${Math.min(0.95,a+0.30)})`; ctx.lineWidth=3;
+    for (let x=zx; x<zx+zw+gh; x+=16){ ctx.beginPath(); ctx.moveTo(x, GROUND); ctx.lineTo(x-gh, H); ctx.stroke(); }
+    ctx.restore();
+    // bright boundary line at the inner edge of the zone
+    const bx = isLeft ? zx+zw : zx;
+    ctx.strokeStyle=`rgba(${col},${Math.min(1,a+0.55)})`; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(bx, GROUND); ctx.lineTo(bx, H); ctx.stroke();
+  });
 }
 
 function drawBall(b){
@@ -1363,6 +1425,7 @@ function backToMenu(){
   guestMatchId=-1; guestPickSent=false;
   G.particles=[];
   startAttract();
+  refreshMenuPills();
   showOverlay('menuScreen'); updateTouchVisibility();
 }
 function onConnectionLost(){
@@ -1525,15 +1588,36 @@ function refreshToggles(){
   $('tWin').querySelector('.val').textContent   = settings.matchMode==='time'?settings.matchMin:settings.toWin;
   $('tDiff').querySelector('.val').textContent  = AI_LEVELS[settings.diff].label;
 }
-function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setCrowd(settings.sound); refreshToggles(); }
+function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setSound(settings.sound); refreshToggles(); }
 function toggleCrt(){ settings.crt=!settings.crt; store.save('crt',settings.crt); refreshToggles(); }
 function toggleMode(){ settings.matchMode = settings.matchMode==='time'?'goals':'time'; store.save('matchMode',settings.matchMode); refreshToggles(); }
 function cycleWin(){
-  if (settings.matchMode==='time'){ const o=[1,2,5]; settings.matchMin=o[(o.indexOf(settings.matchMin)+1)%o.length]; store.save('matchMin',settings.matchMin); }
+  if (settings.matchMode==='time'){ const o=[1,2,4,8]; settings.matchMin=o[(o.indexOf(settings.matchMin)+1)%o.length]; store.save('matchMin',settings.matchMin); }
   else { const o=[3,5,7,10]; settings.toWin=o[(o.indexOf(settings.toWin)+1)%o.length]; store.save('toWin',settings.toWin); G.toWin=settings.toWin; }
   refreshToggles();
 }
 function cycleDiff(){ const opts=Object.keys(AI_LEVELS); settings.diff=opts[(opts.indexOf(settings.diff)+1)%opts.length]; store.save('diff',settings.diff); refreshToggles(); }
+
+/* ---- Menu match-length pills (mirror the original's 1/2/4/8 + Goals) ---- */
+function refreshMenuPills(){
+  const row=$('lenRow'); if(!row) return;
+  row.querySelectorAll('.pill').forEach(p=>{
+    const active = p.dataset.mode==='goals' ? settings.matchMode==='goals'
+                 : (settings.matchMode==='time' && settings.matchMin===+p.dataset.min);
+    p.classList.toggle('active', active);
+  });
+}
+function setupMenuPills(){
+  const row=$('lenRow'); if(!row) return;
+  row.querySelectorAll('.pill').forEach(p=>{
+    p.onclick=()=>{ Audio.unlock(); Audio.click();
+      if (p.dataset.mode==='goals'){ settings.matchMode='goals'; store.save('matchMode','goals'); }
+      else { settings.matchMode='time'; settings.matchMin=+p.dataset.min; store.save('matchMode','time'); store.save('matchMin',settings.matchMin); }
+      refreshMenuPills();
+    };
+  });
+  refreshMenuPills();
+}
 
 /* ----------------------------------------------------------------------------
    16. Knoppen koppelen + init
@@ -1550,7 +1634,7 @@ wire('tMode', toggleMode);
 { const qb=$('quitBtn'); if (qb) qb.onclick = quitButton; }
 wire('teamBack', backToMenu);
 wire('onlineBack', backToMenu);
-wire('setBack', ()=>showOverlay('menuScreen'));
+wire('setBack', ()=>{ refreshMenuPills(); showOverlay('menuScreen'); });
 wire('btnHost', hostGame);
 wire('btnJoin', joinGame);
 wire('hostStart', hostStartMatch);
@@ -1574,8 +1658,13 @@ function checkPeer(){
   }
 }
 
+// start the background music on the very first user interaction (autoplay-safe)
+function firstGesture(){ Audio.unlock(); removeEventListener('pointerdown', firstGesture); removeEventListener('keydown', firstGesture); }
+addEventListener('pointerdown', firstGesture); addEventListener('keydown', firstGesture);
+
 // init
 buildTeamGrid();
+setupMenuPills();
 startAttract();
 showOverlay('menuScreen');
 updateTouchVisibility();

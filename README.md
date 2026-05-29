@@ -20,13 +20,20 @@ desktop with WASD / arrow keys. Pure HTML5 canvas + vanilla JS, no build step.
 - **Online** — peer-to-peer via a 4-letter code (no account, no server)
 
 ## Controls
-| | Move | Jump |
-|---|---|---|
-| Player 1 | `A` / `D` or ◀ ▶ | `W` / `Space` / ▲ |
-| Player 2 (2P) | arrows ← → | arrow ↑ |
-| Mobile | touch buttons | touch button |
+| | Move | Jump | Catch / hold ball |
+|---|---|---|---|
+| Player 1 | `A` / `D` or ◀ ▶ | `W` / `Space` / ▲ | hold `S` / `↓` or ✊ |
+| Player 2 (2P) | arrows ← → | arrow ↑ | hold `↓` or ✊ |
+| Mobile | touch buttons | touch button | hold the ✊ button |
 
-`ESC` = pause (local modes).
+Hold the catch button to clamp the ball on top of your slime (classic slime move); let go to
+throw it — jump while holding for a higher throw. `ESC` = pause (local modes). Stay out of the
+marked zone in front of your own goal too long and the ref sends you out (no goal-hanging).
+
+## Audio
+Background music plays from an in-game track (stops when the tab/app is hidden or closed);
+cheering swells on goals and wins, with a final-whistle stinger at the end of a match. Toggle
+all sound in **Settings**.
 
 ## Tech
 - **Render/physics:** Canvas 2D, fixed 60 Hz timestep.

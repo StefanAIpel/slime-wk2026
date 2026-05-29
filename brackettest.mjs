@@ -48,7 +48,7 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(new URL('./game.js', import.meta.url), 'utf8'), sandbox);
 // top-level const/function bindings live in the context's lexical scope; surface them
-vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, tick, render, go1p, pickTeam, score, openSettings, showLeaderboard };', sandbox);
+vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, tick, render, go1p, pickTeam, score, openSettings, showLeaderboard, updateBall, GROUND, SLIME_R, BALL_R };', sandbox);
 
 const T = sandbox.__TEST;
 const { G, TEAMS, SCREEN, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner } = T;
@@ -119,7 +119,7 @@ try {
   G.wkMode = false; G.wk = null; G.golden = false; G.mode = '1p';
   G.screen = SCREEN.MENU; G.attract = true;
   for (let i=0;i<400;i++){ T.tick(); }
-  ok(G.ball.x>=0 && G.ball.x<=900 && G.ball.y<=520, 'attract ball stays on the pitch');
+  ok(G.ball.x>=0 && G.ball.x<=960 && G.ball.y<=600, 'attract ball stays on the pitch');
   T.render();                                       // draw menu frame with stubbed canvas
 
   // start a 1P match and run the countdown out to play
@@ -143,5 +143,22 @@ try {
 } catch(e){ smokeErr = e; }
 ok(!smokeErr, 'no runtime errors across attract/play/menus' + (smokeErr?(' — '+smokeErr.stack.split('\n').slice(0,2).join(' ')):''));
 
-console.log('\n' + (fails ? ('FAILED (' + fails + ')') : 'ALL BRACKET TESTS PASSED'));
+// ---- 6. ball catch / hold (classic: hold DOWN) ----------------------------
+console.log('Ball catch/hold (hold DOWN):');
+try {
+  G.wkMode=false; G.wk=null; G.mode='1p'; G.screen=SCREEN.PLAY;
+  G.p1.x=300; G.p1.y=T.GROUND; G.p1.vx=0; G.p1.vy=0; G.p1.catchCD=0; G.p1.holding=false;
+  G.p2.x=700; G.p2.input={left:false,right:false,jump:false,down:false};
+  G.ball.held=null; G.ball.x=300; G.ball.y=T.GROUND - T.SLIME_R - 2; G.ball.vx=0; G.ball.vy=0;
+  G.p1.input={left:false,right:false,jump:false,down:true};
+  T.updateBall();
+  ok(G.ball.held===G.p1, 'holding DOWN next to the ball catches it');
+  G.p1.x=320; T.updateBall();
+  ok(Math.abs(G.ball.x-320)<14 && G.ball.y < G.p1.y, 'held ball tracks the slime and sits on top');
+  G.p1.input.down=false; T.updateBall();
+  ok(G.ball.held===null && G.ball.vy<0, 'releasing DOWN throws the ball up/forward');
+  ok(G.p1.catchCD>0, 'catch cooldown is set after release');
+} catch(e){ ok(false, 'catch mechanic threw — '+e.message); }
+
+console.log('\n' + (fails ? ('FAILED (' + fails + ')') : 'ALL TESTS PASSED'));
 process.exit(fails ? 1 : 0);
