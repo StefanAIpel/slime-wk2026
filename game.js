@@ -112,7 +112,7 @@ const Audio = (() => {
     for (let i=0;i<d.length;i++) d[i] = (Math.random()*2-1)*0.5;
     crowd = ac.createBufferSource(); crowd.buffer = buf; crowd.loop = true;
     const bp = ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=520; bp.Q.value=0.6;
-    crowdGain = ac.createGain(); crowdGain.gain.value = 0.04;
+    crowdGain = ac.createGain(); crowdGain.gain.value = settings.sound ? 0.04 : 0;
     crowd.connect(bp); bp.connect(crowdGain); crowdGain.connect(master);
     crowd.start();
   }
@@ -155,6 +155,7 @@ const Audio = (() => {
     win(){ if(!settings.sound||!ac) return; const t=ac.currentTime;
       const seq=[523,523,523,659,784,659,784,1047]; seq.forEach((f,i)=>tone(f,t+i*0.14,0.22,'square',0.28)); },
     click(){ if(!ac) return; const t=ac.currentTime; tone(880,t,0.04,'square',0.12); },
+    setCrowd(on){ if (crowdGain) crowdGain.gain.value = on ? 0.04 : 0; },
   };
   return api;
 })();
@@ -173,17 +174,40 @@ addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
 
 // touch-input vlaggen (voor de menselijke speler)
 const touch = { L:false, R:false, J:false, L2:false, R2:false, J2:false };
-function bindTouch(id, prop){
-  const el = document.getElementById(id);
-  if (!el) return;
-  const on  = e => { e.preventDefault(); touch[prop] = true;  };
-  const off = e => { e.preventDefault(); touch[prop] = false; };
-  el.addEventListener('pointerdown', on);
-  el.addEventListener('pointerup', off);
-  el.addEventListener('pointerleave', off);
-  el.addEventListener('pointercancel', off);
+const BTN_PROP = { btnL:'L', btnR:'R', btnJ:'J', btn2L:'L2', btn2R:'R2', btn2J:'J2' };
+const activePointers = new Map();   // pointerId -> button-id
+function btnIdAt(x,y){
+  const el = document.elementFromPoint(x,y);
+  const b = el && el.closest ? el.closest('.tbtn') : null;
+  return b && BTN_PROP[b.id] ? b.id : null;
 }
-['btnL:L','btnR:R','btnJ:J','btn2L:L2','btn2R:R2','btn2J:J2'].forEach(s=>{ const [id,p]=s.split(':'); bindTouch(id,p); });
+function setBtn(id, on){ const p = BTN_PROP[id]; if (p) touch[p] = on; }
+function routePointer(pid, id){
+  const prev = activePointers.get(pid);
+  if (prev === id) return;
+  if (prev) setBtn(prev, false);
+  if (id){ setBtn(id, true); activePointers.set(pid, id); }
+  else activePointers.delete(pid);
+}
+function clearPointer(pid){ const prev = activePointers.get(pid); if (prev) setBtn(prev, false); activePointers.delete(pid); }
+(function bindTouchRouter(){
+  const pad = document.getElementById('touch');
+  if (!pad) return;
+  pad.addEventListener('pointerdown', e=>{
+    if (!e.target.closest || !e.target.closest('.tbtn')) return;
+    e.preventDefault();
+    try { e.target.releasePointerCapture && e.target.releasePointerCapture(e.pointerId); } catch(_){}
+    routePointer(e.pointerId, btnIdAt(e.clientX, e.clientY));
+  });
+  // glijden tussen knoppen: hertarget op basis van vingerpositie
+  window.addEventListener('pointermove', e=>{
+    if (!activePointers.has(e.pointerId)) return;
+    routePointer(e.pointerId, btnIdAt(e.clientX, e.clientY));
+  });
+  const end = e=>{ if (activePointers.has(e.pointerId)) clearPointer(e.pointerId); };
+  window.addEventListener('pointerup', end);
+  window.addEventListener('pointercancel', end);
+})();
 
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
 
@@ -309,7 +333,12 @@ function reflectOffSlime(b, s){
     const out = Math.max(speed*0.92, 8.5);
     b.vx = nx*out + s.vx*0.85;
     b.vy = ny*out + s.vy*0.55;
-    if (b.vy > -2) b.vy = -2;            // altijd ietsje omhoog
+    // lichte opwaartse bias bij een bovenkant-treffer; een dalende slime mag wél smashen
+    if (ny < -0.15 && b.vy > -2) b.vy = -2;
+    // voorkom dat de slime de bal door muur/plafond/doellijn duwt
+    if (b.x < BALL_R){ b.x = BALL_R; if (b.vx < 0) b.vx = -b.vx; }
+    else if (b.x > W-BALL_R){ b.x = W-BALL_R; if (b.vx > 0) b.vx = -b.vx; }
+    if (b.y < BALL_R){ b.y = BALL_R; if (b.vy < 0) b.vy = -b.vy; }
     Audio.kick(out);
     spawnDust(b.x, b.y, 6, '#ffffff');
     return true;
@@ -325,6 +354,15 @@ function updateBall(){
   if (sp > BALL_MAX){ b.vx*=BALL_MAX/sp; b.vy*=BALL_MAX/sp; }
   b.x += b.vx; b.y += b.vy;
   b.spin += b.vx*0.03;
+
+  // slimes EERST: zo wordt een door de slime weggeduwde bal nog dezelfde tick
+  // door de muur/doel-logica afgehandeld i.p.v. pas volgende tick (anti-tunnel).
+  // returnwaarde voorkomt dubbele bounce bij overlap rond de middenlijn.
+  if (!reflectOffSlime(b, G.p1)) reflectOffSlime(b, G.p2);
+
+  // lat + paal (beide doelen)
+  collideBar(b, true);   // links
+  collideBar(b, false);  // rechts
 
   // plafond
   if (b.y < BALL_R){ b.y=BALL_R; b.vy=-b.vy*BALL_REST; Audio.wall(); }
@@ -342,34 +380,29 @@ function updateBall(){
     if (b.y > BAR_Y + BAR_TH){ score(0); return; }        // doelpunt voor links
     b.x=W-BALL_R; b.vx=-b.vx*BALL_REST; Audio.wall();
   }
-
-  // lat + paal (beide doelen)
-  collideBar(b, true);   // links
-  collideBar(b, false);  // rechts
-
-  // slimes
-  reflectOffSlime(b, G.p1);
-  reflectOffSlime(b, G.p2);
 }
 
 function collideBar(b, left){
-  const postX = left ? GOAL_D : W - GOAL_D;     // voorkant van de lat (paal-tip)
-  // bovenkant van de lat: horizontale balk van wand tot postX op hoogte BAR_Y
-  const inX = left ? (b.x < postX) : (b.x > postX);
-  if (inX && b.y - BALL_R < BAR_Y + BAR_TH && b.y + BALL_R > BAR_Y - 2){
-    // botsing met onder/boven van de lat
-    if (b.vy < 0 && b.y > BAR_Y){          // van onderaf tegen de lat
-      b.y = BAR_Y + BAR_TH + BALL_R; b.vy = -b.vy*BALL_REST; Audio.post();
-    } else if (b.vy > 0 && b.y < BAR_Y){   // bovenop de lat
-      b.y = BAR_Y - BALL_R; b.vy = -b.vy*BALL_REST; Audio.post();
+  const postX = left ? GOAL_D : W - GOAL_D;
+  // de lat is de massieve balk [barTop,barBot] boven de doelmond; de doelmond
+  // zelf (y > barBot) is open. inGoalX met BALL_R-marge dicht de naad bij de paal.
+  const inGoalX = left ? (b.x < postX + BALL_R) : (b.x > postX - BALL_R);
+  const barTop = BAR_Y - BAR_TH, barBot = BAR_Y;
+  // lat: penetratie-resolutie (geen richtings-naad, vangt ook b.y == BAR_Y)
+  if (inGoalX && b.y + BALL_R > barTop && b.y - BALL_R < barBot){
+    if (b.y < (barTop + barBot) * 0.5){     // bal-midden boven de lat -> erbovenop
+      b.y = barTop - BALL_R; if (b.vy > 0) b.vy = -b.vy * BALL_REST;
+    } else {                                 // bal-midden onder de lat -> tegen onderkant
+      b.y = barBot + BALL_R; if (b.vy < 0) b.vy = -b.vy * BALL_REST;
     }
+    Audio.post();
   }
-  // paal-tip als cirkel
-  const dx = b.x - postX, dy = b.y - BAR_Y;
-  const d = Math.hypot(dx,dy);
-  if (d < BALL_R+5 && d>0){
-    const nx=dx/d, ny=dy/d; b.x=postX+nx*(BALL_R+5); b.y=BAR_Y+ny*(BALL_R+5);
-    const dot=b.vx*nx+b.vy*ny; b.vx=(b.vx-2*dot*nx)*BALL_REST; b.vy=(b.vy-2*dot*ny)*BALL_REST; Audio.post();
+  // frame-hoek (waar lat en staander samenkomen) als cirkel; alleen kaatsen bij naderen
+  const dx = b.x - postX, dy = b.y - BAR_Y, d = Math.hypot(dx, dy);
+  if (d < BALL_R + 6 && d > 0){
+    const nx = dx/d, ny = dy/d, dot = b.vx*nx + b.vy*ny;
+    b.x = postX + nx*(BALL_R+6); b.y = BAR_Y + ny*(BALL_R+6);
+    if (dot < 0){ b.vx = (b.vx - 2*dot*nx)*BALL_REST; b.vy = (b.vy - 2*dot*ny)*BALL_REST; Audio.post(); }
   }
 }
 
@@ -453,6 +486,9 @@ function score(who){
     G.screen = SCREEN.GOAL;
     G.goalTimer = 130;
   }
+  // kritieke transitie meteen sturen (niet afhankelijk van de 30Hz-throttle):
+  // anders mist de guest ~50% van de tijd het GOAL/OVER-signaal.
+  if (G.mode==='host' && G.net) G.net.sendState();
 }
 
 /* ----------------------------------------------------------------------------
@@ -464,6 +500,16 @@ function tick(){
   if (G.flash>0) G.flash--;
   updateParticles();
 
+  // ---- ONLINE keepalive + watchdog (vangt ook harde drops zonder 'close') ----
+  if ((G.mode==='host'||G.mode==='guest') && G.net && G.net.connected){
+    // host stuurt periodiek state (ook tijdens OVER/aftrap) zodat de guest weet dat host leeft
+    if (G.mode==='host' && G.p1 && G.frame % 20 === 0) G.net.sendState();
+    const active = [SCREEN.COUNT,SCREEN.PLAY,SCREEN.GOAL,SCREEN.OVER].indexOf(G.screen) >= 0;
+    if (active && performance.now() - G.net._lastRecvT > 3000) G.net.lostConnection = true;
+  }
+  // ---- ONLINE: verbinding verbroken tijdens een potje ----
+  if ((G.mode==='host'||G.mode==='guest') && G.net && G.net.lostConnection){ onConnectionLost(); return; }
+
   // ---- ONLINE GUEST: alleen input sturen + interpoleren naar net-state ----
   if (G.mode==='guest'){
     if (G.net) G.net.sendInput(humanInput());
@@ -471,10 +517,12 @@ function tick(){
       const t=G.netTarget;
       lerpEntity(G.p1, t.p1); lerpEntity(G.p2, t.p2); lerpBall(G.ball, t.ball);
       G.score = t.score.slice(); G.screen = t.screen; G.winner=t.winner||0;
-      // ogen
+      if (typeof t.cd==='number') G.countdown = t.cd;             // synchrone aftelling
+      if (typeof t.lastScorer==='number') G.lastScorer = t.lastScorer;
       faceBall(G.p1); faceBall(G.p2);
     }
     if (G.screen===SCREEN.OVER && !overShown){ showGameOver(); }
+    else if (G.screen!==SCREEN.OVER && overShown){ overShown=false; hideAllOverlays(); updateTouchVisibility(); }
     return;
   }
 
@@ -482,7 +530,7 @@ function tick(){
   if (G.screen===SCREEN.COUNT){
     if (G.countdown%60===0 && G.countdown>0 && G.countdown<=180) Audio.count();
     G.countdown--;
-    // input al uitlezen zodat ogen bewegen; physics bevroren behalve val van bal
+    // input al uitlezen zodat de ogen bewegen; physics volledig bevroren tijdens de aftelling
     assignInputs(true);
     faceBall(G.p1); faceBall(G.p2);
     if (G.countdown<=0){ G.screen=SCREEN.PLAY; }
@@ -535,8 +583,8 @@ function makeNet(){
   return {
     peer:null, conn:null, isHost:false, code:'',
     guestInput:{left:false,right:false,jump:false},
-    connected:false,
-    _sendT:0,
+    connected:false, lostConnection:false,
+    _closed:false, _retryT:null, _sendT:0, _lastRecvT:0,
     host(onCode, onStatus, onStart){
       this.isHost=true;
       const code = randomCode();
@@ -545,14 +593,15 @@ function makeNet(){
       catch(e){ onStatus('PeerJS niet geladen — check internet', true); return; }
       this.peer.on('open', ()=> onCode(code));
       this.peer.on('error', err=>{
-        if (String(err).includes('unavailable')) { onStatus('Code bezet, nieuwe code...', true); this.code=randomCode(); this.peer.destroy(); setTimeout(()=>this.host(onCode,onStatus,onStart),300); }
+        if (String(err).includes('unavailable')) { onStatus('Code bezet, nieuwe code...', true); this.code=randomCode(); this.peer.destroy(); this._retryT=setTimeout(()=>{ if(this._closed) return; this.host(onCode,onStatus,onStart); },300); }
         else onStatus('Fout: '+err, true);
       });
       this.peer.on('connection', c=>{
+        if (this.conn){ try{ c.close(); }catch(_){} return; }   // max. 1 tegenstander
         this.conn=c;
-        c.on('open', ()=>{ this.connected=true; onStatus('Tegenstander verbonden!', false); });
+        c.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Tegenstander verbonden!', false); });
         c.on('data', d=>this._recv(d));
-        c.on('close', ()=>{ this.connected=false; onStatus('Verbinding verbroken', true); });
+        c.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Verbinding verbroken', true); });
       });
       this._onStart = onStart;
     },
@@ -563,27 +612,28 @@ function makeNet(){
       this.peer.on('open', ()=>{
         onStatus('Verbinden...', false);
         this.conn = this.peer.connect('SLWK'+code, { reliable:true });
-        this.conn.on('open', ()=>{ this.connected=true; onStatus('Verbonden! Wacht op host...', false); });
+        this.conn.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Verbonden! Wacht op host...', false); });
         this.conn.on('data', d=>this._recv(d));
-        this.conn.on('close', ()=>{ this.connected=false; onStatus('Verbinding verbroken', true); });
+        this.conn.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Verbinding verbroken', true); });
       });
       this.peer.on('error', err=> onStatus('Kan niet verbinden: '+err, true));
       this._onStart = onStart;
     },
     _recv(d){
+      this._lastRecvT = performance.now();   // watchdog-hartslag
       if (d.t==='start'){ if(this._onStart) this._onStart(d); }
       else if (d.t==='state'){ applyNetState(d); }
       else if (d.t==='input'){ this.guestInput = d.i; }
     },
-    startGame(payload){ if (this.conn) this.conn.send(Object.assign({t:'start'},payload)); },
+    startGame(payload){ if (this.conn && this.connected) this.conn.send(Object.assign({t:'start'},payload)); },
     sendInput(i){ if (this.conn && this.connected) this.conn.send({t:'input', i:{left:i.left,right:i.right,jump:i.jump}}); },
     sendState(){
       if (!this.conn || !this.connected) return;
       this.conn.send({ t:'state',
         p1:packEnt(G.p1), p2:packEnt(G.p2), ball:packBall(G.ball),
-        score:G.score, screen:G.screen, winner:G.winner, cd:G.countdown });
+        score:G.score, screen:G.screen, winner:G.winner, cd:G.countdown, lastScorer:G.lastScorer });
     },
-    close(){ try{ this.conn&&this.conn.close(); this.peer&&this.peer.destroy(); }catch(e){} }
+    close(){ this._closed=true; clearTimeout(this._retryT); try{ this.conn&&this.conn.close(); this.peer&&this.peer.destroy(); }catch(e){} }
   };
 }
 function randomCode(){ const a='ACDEFHJKLMNPRTUVWXY3479'; let s=''; for(let i=0;i<4;i++) s+=a[(Math.random()*a.length)|0]; return s; }
@@ -593,7 +643,7 @@ function sendStateMaybe(){ if (G.mode==='host' && G.net){ G.net._sendT++; if (G.
 
 let overShown=false;
 function applyNetState(d){
-  G.netTarget = { p1:d.p1, p2:d.p2, ball:d.ball, score:d.score, screen:d.screen, winner:d.winner };
+  G.netTarget = { p1:d.p1, p2:d.p2, ball:d.ball, score:d.score, screen:d.screen, winner:d.winner, cd:d.cd, lastScorer:d.lastScorer };
   if (d.screen!==SCREEN.OVER) overShown=false;
 }
 
@@ -876,9 +926,10 @@ function buildTeamGrid(){
 }
 function pickTeam(t,el){
   Audio.click();
+  if (G.mode==='guest' && guestPickSent) return;     // niet 2x sturen (touch double-tap)
   document.querySelectorAll('.team').forEach(e=>e.classList.remove('sel'));
   el.classList.add('sel');
-  if (G.mode==='guest'){ pickP2=t; sendGuestTeamAndWait(); return; }
+  if (G.mode==='guest'){ pickP2=t; guestPickSent=true; sendGuestTeamAndWait(); return; }
   if (pickStage===0){
     pickP1=t;
     if (G.mode==='1p'){
@@ -904,11 +955,10 @@ function launchLocal(){
 // ---- menu knoppen ----
 function go1p(){ Audio.unlock(); G.mode='1p'; openTeamSelect('Kies <b>jouw</b> land'); }
 function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openTeamSelect('Speler <b>1</b> (links): kies je land'); }
-function openTeamSelect(label){ pickStage=0; pickP1=pickP2=null; $('pickLabel').innerHTML=label; buildTeamGrid(); showOverlay('teamScreen'); }
+function openTeamSelect(label){ pickStage=0; pickP1=pickP2=null; G.screen=SCREEN.TEAM; $('pickLabel').innerHTML=label; buildTeamGrid(); showOverlay('teamScreen'); }
 
-function goOnline(){ Audio.unlock(); showOverlay('onlineScreen'); $('onlineStatus').textContent=''; $('hostArea').style.display='none'; $('joinArea').style.display='none'; }
+function goOnline(){ Audio.unlock(); G.screen=SCREEN.ONLINE; showOverlay('onlineScreen'); $('onlineStatus').textContent=''; $('hostArea').style.display='none'; $('joinArea').style.display='none'; }
 
-let overShownFlag=false;
 function showGameOver(){
   overShown=true;
   const winTeam = G.winner===1?G.p1.team:G.p2.team;
@@ -917,7 +967,11 @@ function showGameOver(){
   else if (G.mode==='2p') who = 'SPELER '+G.winner+' WINT!';
   else { const meWon = (G.mode==='host' && G.winner===1)||(G.mode==='guest' && G.winner===2); who = meWon?'JIJ WINT!':'TEGENSTANDER WINT'; }
   $('overTitle').textContent=who;
-  $('overSub').innerHTML=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${winTeam.name} — ${G.score[0]} : ${G.score[1]}`;
+  let sub=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${winTeam.name} — ${G.score[0]} : ${G.score[1]}`;
+  // online: alleen de host kan revanche starten
+  if (G.mode==='guest'){ $('overRematch').style.display='none'; sub+='<div class="status">Wacht tot de host opnieuw start…</div>'; }
+  else { $('overRematch').style.display=''; }
+  $('overSub').innerHTML=sub;
   setupLbSubmit();
   showOverlay('overScreen');
   updateTouchVisibility();
@@ -977,26 +1031,44 @@ function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else { sho
 function backToMenu(){
   if (G.net){ G.net.close(); G.net=null; }
   G.mode='1p'; G.screen=SCREEN.MENU; G.paused=false; overShown=false;
+  guestMatchId=-1; guestPickSent=false;
   G.particles=[];
   showOverlay('menuScreen'); updateTouchVisibility();
 }
+function onConnectionLost(){
+  if (G.net){ try{ G.net.close(); }catch(e){} G.net=null; }
+  G.mode='1p'; G.screen=SCREEN.ONLINE; G.paused=false; overShown=false;
+  guestMatchId=-1; guestPickSent=false; G.particles=[];
+  $('hostArea').style.display='none'; $('joinArea').style.display='none';
+  const hs=$('hostStart'); if(hs) hs.style.display='none';
+  showOverlay('onlineScreen');
+  $('onlineStatus').textContent='Verbinding verbroken.'; $('onlineStatus').className='status err';
+  updateTouchVisibility();
+}
 function rematch(){
-  if (G.mode==='host' && G.net){ // host herstart en seint
-    startMatch(); G.net.startGame(startPayload());
-  } else if (G.mode==='guest'){ /* host bestuurt herstart */ }
+  if (G.mode==='host' && G.net){
+    if (!G.net.connected){ onConnectionLost(); return; }   // tegenstander weg
+    hostMatchId++;
+    startMatch();
+    G.net.startGame(startPayload());
+  } else if (G.mode==='guest'){ /* alleen de host herstart; knop is verborgen */ }
   else startMatch();
   updateTouchVisibility();
 }
 
 function onEscape(){
-  if (G.screen===SCREEN.PLAY || G.paused){
-    if (G.mode==='host'||G.mode==='guest') return;   // geen pauze online
-    G.paused=!G.paused;
-  } else if (G.screen===SCREEN.TEAM || G.screen===SCREEN.ONLINE){ backToMenu(); }
+  // actief (online) potje of online-overlay: terug naar menu (geen pauze online)
+  if (G.mode==='host' || G.mode==='guest'){ backToMenu(); return; }
+  // lokaal spel: pauze togglen
+  if (G.screen===SCREEN.PLAY || G.paused){ G.paused=!G.paused; return; }
+  // open submenu-overlay (team/online/settings/topscores) -> terug naar menu
+  const open=document.querySelector('.overlay.show');
+  if (open && open.id!=='menuScreen' && open.id!=='overScreen') backToMenu();
 }
 
 /* ---- Online flow ---- */
-function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings.toWin }; }
+let hostMatchId=0, guestMatchId=-1, guestPickSent=false;
+function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings.toWin, mid:hostMatchId }; }
 
 function hostGame(){
   Audio.unlock(); G.mode='host'; G.net=makeNet();
@@ -1012,11 +1084,11 @@ function hostGame(){
 }
 function hostStartMatch(){
   if (!G.net || !G.net.connected){ $('onlineStatus').textContent='Nog geen tegenstander verbonden.'; $('onlineStatus').className='status err'; return; }
-  // host kiest team via mini-select; voor nu: host = NED, gast = random tot teamkeuze toegevoegd
+  // host kiest eigen land; daarna vraagt de host de gast om een land (waitForGuestTeam)
   openOnlineTeamPick();
 }
 function openOnlineTeamPick(){
-  G.mode='host';
+  G.mode='host'; G.screen=SCREEN.TEAM;
   $('pickLabel').innerHTML='Host: kies <b>jouw</b> land (links)';
   buildTeamGrid(); showOverlay('teamScreen');
 }
@@ -1039,10 +1111,12 @@ function patchNetForTeams(){
   };
 }
 function beginOnlineMatch(){
+  if (G.net) G.net._onGuestTeam=null;        // voorkom dubbele start door 2e 'pick'
   G.mode='host';
+  hostMatchId++;
   G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
-  G.net.startGame(startPayload());
   startMatch();
+  G.net.startGame(startPayload());           // mid in payload dedupe't aan gastzijde
 }
 function joinGame(){
   Audio.unlock(); G.mode='guest'; G.net=makeNet();
@@ -1056,7 +1130,7 @@ function joinConnect(){
   patchNetForTeams();
 }
 function showGuestTeamPick(){
-  G.mode='guest';
+  G.mode='guest'; G.screen=SCREEN.TEAM; guestPickSent=false;
   $('pickLabel').innerHTML='Kies <b>jouw</b> land (rechts)';
   buildTeamGrid(); showOverlay('teamScreen');
 }
@@ -1065,11 +1139,14 @@ function sendGuestTeamAndWait(){
   $('pickLabel').innerHTML='Verstuurd! Wacht op host...';
 }
 function onGuestStart(d){
+  if (typeof d.mid==='number'){ if (d.mid===guestMatchId) return; guestMatchId=d.mid; }  // negeer dubbele 'start'
   pickP1=teamByCode(d.p1); pickP2=teamByCode(d.p2);
-  settings.toWin=d.toWin||5; G.toWin=settings.toWin;
+  G.toWin=d.toWin||5;                         // niet de lokale settings muteren
   G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
-  G.score=[0,0]; G.winner=0; overShown=false;
-  hideAllOverlays(); G.screen=SCREEN.PLAY; updateTouchVisibility();
+  G.score=[0,0]; G.winner=0; G.lastScorer=0; overShown=false;
+  G.netTarget=null;                           // stale OVER-state weg (fix online revanche)
+  G.countdown=180; G.screen=SCREEN.COUNT;     // aftelling tonen i.p.v. PLAY-flits
+  hideAllOverlays(); updateTouchVisibility();
 }
 
 /* ---- Settings ---- */
@@ -1080,7 +1157,7 @@ function refreshToggles(){
   $('tWin').querySelector('.val').textContent   = settings.toWin;
   $('tDiff').querySelector('.val').textContent  = AI_LEVELS[settings.diff].label;
 }
-function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); refreshToggles(); }
+function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setCrowd(settings.sound); refreshToggles(); }
 function toggleCrt(){ settings.crt=!settings.crt; store.save('crt',settings.crt); refreshToggles(); }
 function cycleWin(){ const opts=[3,5,7,10]; settings.toWin=opts[(opts.indexOf(settings.toWin)+1)%opts.length]; store.save('toWin',settings.toWin); G.toWin=settings.toWin; refreshToggles(); }
 function cycleDiff(){ const opts=Object.keys(AI_LEVELS); settings.diff=opts[(opts.indexOf(settings.diff)+1)%opts.length]; store.save('diff',settings.diff); refreshToggles(); }
