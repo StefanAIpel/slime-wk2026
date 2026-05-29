@@ -1,12 +1,13 @@
 import pw from '/Users/appel/node_modules/playwright/index.js';
+import { pathToFileURL } from 'node:url';
 const { chromium } = pw;
-const URL = 'file:///Users/appel/Projects/slime-wk2026/index.html';
+const TEST_URL = pathToFileURL(new URL('./index.html', import.meta.url).pathname).href;
 const errors = [];
 const browser = await chromium.launch({ headless: true, channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
 page.on('pageerror', e => errors.push('pageerror: '+e.message));
 page.on('console', m => { if (m.type()==='error') errors.push('console: '+m.text()); });
-await page.goto(URL, { waitUntil:'load' });
+await page.goto(TEST_URL,{waitUntil:'load'});
 await page.waitForTimeout(800);
 
 // 1) menu -> topscores -> lijst laadt (netwerk)

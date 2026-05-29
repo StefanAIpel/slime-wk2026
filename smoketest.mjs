@@ -1,7 +1,8 @@
 import pw from '/Users/appel/node_modules/playwright/index.js';
+import { pathToFileURL } from 'node:url';
 const { chromium } = pw;
 
-const URL = 'file:///Users/appel/Projects/slime-wk2026/index.html';
+const TEST_URL = pathToFileURL(new URL('./index.html', import.meta.url).pathname).href;
 const errors = [];
 const logs = [];
 
@@ -11,7 +12,7 @@ const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
 page.on('console', m => { logs.push(`[${m.type()}] ${m.text()}`); if (m.type()==='error') errors.push('console: '+m.text()); });
 page.on('pageerror', e => errors.push('pageerror: '+e.message));
 
-await page.goto(URL, { waitUntil: 'load' });
+await page.goto(TEST_URL, { waitUntil: 'load' });
 await page.waitForTimeout(1500);
 await page.screenshot({ path: 'shot-1-menu.png' });
 
