@@ -1,6 +1,5 @@
-import pw from '/Users/appel/node_modules/playwright/index.js';
-const { chromium } = pw;
-const URL = 'file:///Users/appel/Projects/slime-wk2026/index.html';
+import { chromium } from 'playwright';
+const URL = new URL('./index.html', import.meta.url).href;
 const errors = [];
 const browser = await chromium.launch({ headless: true, channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
