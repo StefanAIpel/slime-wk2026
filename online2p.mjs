@@ -1,6 +1,7 @@
 import pw from '/Users/appel/node_modules/playwright/index.js';
+import { pathToFileURL } from 'node:url';
 const { chromium } = pw;
-const URL = 'file:///Users/appel/Projects/slime-wk2026/index.html';
+const TEST_URL = pathToFileURL(new URL('./index.html', import.meta.url).pathname).href;
 const errors = [];
 const browser = await chromium.launch({ headless: true, channel: 'chrome' });
 const ctx = await browser.newContext({ viewport: { width: 1000, height: 640 } });
@@ -11,7 +12,7 @@ const screenOf = p => p.evaluate(()=>window.__G.screen);
 
 const host = await ctx.newPage(); watch(host,'HOST');
 const guest = await ctx.newPage(); watch(guest,'GUEST');
-await host.goto(URL,{waitUntil:'load'}); await guest.goto(URL,{waitUntil:'load'});
+await host.goto(TEST_URL,{waitUntil:'load'}); await guest.goto(TEST_URL,{waitUntil:'load'});
 await host.waitForTimeout(500);
 
 // HOST: online -> host -> code
