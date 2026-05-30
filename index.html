@@ -34,13 +34,17 @@
     <h1 class="title">WORLD CUP<span class="accent">SLIME</span></h1>
     <div class="subtitle">slime soccer · a modern remake ⚽</div>
     <div class="menu-card">
-      <button id="btnWK" class="btn hero wc2026">🏆 World Cup 2026 · 🇺🇸🇲🇽🇨🇦</button>
+      <div class="grp-label">1 Player <span>· keyboard or touch</span></div>
       <div class="mode-row">
-        <button id="btn1p" class="btn mode">1 Player</button>
-        <button id="btn2p" class="btn mode">2 Players</button>
-        <button id="btnOnline" class="btn mode">Online</button>
+        <button id="btn1p" class="btn mode">⚽ Friendly</button>
+        <button id="btnWK" class="btn mode wc2026">🏆 World Cup 2026</button>
       </div>
-      <div class="len-label">Match</div>
+      <div class="grp-label">Multiplayer</div>
+      <div class="mode-row">
+        <button id="btn2p" class="btn mode">2 Players · same device</button>
+        <button id="btnOnline" class="btn mode">🌐 Online</button>
+      </div>
+      <div class="len-label">Match format · Friendly &amp; 2 Players</div>
       <div class="len-row" id="lenRow"></div>
       <div class="btn-row">
         <button id="btnSound" class="btn secondary small" aria-label="sound on/off">🔊</button>
@@ -142,7 +146,7 @@
   <!-- ======================= LEADERBOARD ======================= -->
   <div id="lbScreen" class="overlay">
     <h2 class="title small-title">🏆 HIGH SCORES</h2>
-    <div class="subtitle">Best results · World Cup</div>
+    <div class="subtitle">World Cup runs · points by difficulty</div>
     <div id="lbList" class="online-box" style="max-width:560px; min-height:120px;">loading…</div>
     <button id="lbBack" class="btn secondary small">‹ Back</button>
   </div>
