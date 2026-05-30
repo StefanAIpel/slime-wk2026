@@ -439,8 +439,8 @@ function attackDir(s){ return s.side==='left' ? 1 : -1; }   // direction toward 
 function holdBall(s){
   const b = G.ball;
   const other = (s===G.p1)?G.p2:G.p1;
-  // a clamped ball can be STOLEN: jump into the holder to knock it loose
-  if (other && Math.abs(s.x-other.x) < SLIME_R*1.0 && !other.onGround){
+  // a clamped ball can be STOLEN: jump into/through the holder to knock it loose
+  if (other && Math.abs(s.x-other.x) < SLIME_R*1.25 && !other.onGround){
     b.held=null; s.holding=false; s.catchCD=14;
     b.vx=(Math.random()-0.5)*4; b.vy=-5; b.spin=0; spawnDust(b.x,b.y,8,'#ffffff');
     return;
@@ -743,8 +743,7 @@ function tick(){
   // ---- PLAY ----
   if (G.screen===SCREEN.PLAY){
     assignInputs(false);
-    updateSlime(G.p1); updateSlime(G.p2);
-    separateSlimes();
+    updateSlime(G.p1); updateSlime(G.p2);   // slimes pass THROUGH each other (jump into a holder to steal)
     updateBall();
     if (G.screen===SCREEN.PLAY){ updateMatchTimer(); updateAntiCamp(); }   // updateBall kan al scoren
     sendStateMaybe();
@@ -1331,18 +1330,23 @@ function wkBracketHTML(){
 function wkAtStart(){ return G.wk && G.wk.round===0 && !G.wk.champion && G.wk.rounds[0] && !G.wk.rounds[0].some(m=>m.played); }
 function wkOptsHTML(){
   const wk=G.wk;
+  const open = !!wk._optsOpen;                          // collapsed by default so the bracket is visible
   const lens=[1,2,3,4].map(n=>`<button class="pill${wk.min===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
   // ascending difficulty, with Rising (a R16->final ramp) last so it's clearly not "easiest"
   const diffs=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','WC'],['rising','Rising ↑']]
     .map(([k,l])=>`<button class="pill${wk.diffMode===k?' active':''}" data-d="${k}">${l}</button>`).join('');
-  return `<div class="len-label">Length · Difficulty (Rising ramps up each round)</div>`+
-         `<div class="len-row" id="wkLenRow">${lens}</div>`+
-         `<div class="len-row" id="wkDiffRow">${diffs}</div>`;
+  return `<button class="wk-opts-toggle" id="wkOptsToggle">⚙ Options · ${wk.min}m · ${escapeHtml(wkLevelLabel(wk.diffMode))} ${open?'▴':'▾'}</button>`+
+         `<div class="wk-opts-body${open?' open':''}" id="wkOptsBody">`+
+           `<div class="len-label">Length · Difficulty (Rising ramps up each round)</div>`+
+           `<div class="len-row" id="wkLenRow">${lens}</div>`+
+           `<div class="len-row" id="wkDiffRow">${diffs}</div>`+
+         `</div>`;
 }
 function wireWkOpts(){
+  const tg=$('wkOptsToggle'); if(tg) tg.onclick=()=>{ Audio.click(); G.wk._optsOpen=!G.wk._optsOpen; showWKStage(); };
   const lr=$('wkLenRow'), dr=$('wkDiffRow'); if(!lr||!dr) return;
-  lr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.min=+p.dataset.min; settings.wkMin=G.wk.min; store.save('wkMin',G.wk.min); showWKStage(); });
-  dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.diffMode=p.dataset.d; G.wk.diffs=wkDiffsFor(p.dataset.d); settings.wkDiff=p.dataset.d; store.save('wkDiff',p.dataset.d); showWKStage(); });
+  lr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.min=+p.dataset.min; settings.wkMin=G.wk.min; store.save('wkMin',G.wk.min); G.wk._optsOpen=true; showWKStage(); });
+  dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.diffMode=p.dataset.d; G.wk.diffs=wkDiffsFor(p.dataset.d); settings.wkDiff=p.dataset.d; store.save('wkDiff',p.dataset.d); G.wk._optsOpen=true; showWKStage(); });
 }
 function showWKStage(){
   const wk=G.wk; const m=wkUserMatch(); const opp=m?wkOppOf(m):null;
@@ -1350,6 +1354,7 @@ function showWKStage(){
   const lvl = wkLevelLabel(wk.diffMode);
   const venue = (wk.venues && wk.venues[wk.round]) || '';
   $('wkSub').innerHTML =
+    `<div class="wk-bar"></div>`+
     `<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>`+
     `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · ${wk.min}-min · ${escapeHtml(lvl)}`+
     (venue ? `<br><span class="wk-venue">📍 ${escapeHtml(venue)} — ${WK_ROUNDS[wk.round]}</span>` : '');
