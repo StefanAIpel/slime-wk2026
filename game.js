@@ -1442,27 +1442,27 @@ function wkShowResult(champion){
   if (champion){
     spawnConfetti(); Audio.win();
     $('wkTitle').textContent='🏆 WORLD CHAMPIONS 2026!';
-    $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br><b>${escapeHtml(wk.team.name)}</b> are world champions — the cup is lifted in New York/New Jersey! ⚽🎉`;
-    if (window.Leaderboard && window.Leaderboard.enabled){
-      extra = `<div style="margin:12px auto 0; display:flex; flex-direction:column; gap:8px; max-width:320px;">
-        <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
-        <button id="wkSubmit" class="btn small">🏆 Submit to leaderboard</button>
-        <div class="status" id="wkStatus"></div></div>`;
-    }
+    $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br><b>${escapeHtml(wk.team.name)}</b> are world champions — lifted in New York/New Jersey! ⚽🎉`;
   } else {
     $('wkTitle').textContent='Knocked out';
     const champTxt = wk.champion ? ` Champions: <b>${escapeHtml(wk.champion.name)}</b>.` : '';
     $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>You went out in the <b>${WK_ROUNDS[wk.round]}</b>.${champTxt} Try again!`;
+  }
+  if (window.Leaderboard && window.Leaderboard.enabled){
+    extra += `<div style="margin:4px auto 0; display:flex; flex-direction:column; gap:8px; max-width:320px;">
+      <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
+      <button id="wkSubmit" class="btn small">🏆 Submit ${pts} pts</button>
+      <div class="status" id="wkStatus"></div></div>`;
   }
   $('wkBracket').innerHTML = wkBracketHTML() + extra;
   $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">New tournament</button>`+
                           `<button id="wkHome" class="btn secondary">Main menu</button>`;
   $('wkAgain').onclick=()=>{ Audio.click(); setupWK(wk.team); };
   $('wkHome').onclick=()=>{ Audio.click(); backToMenu(); };
-  const sb=$('wkSubmit'); if (sb) sb.onclick=submitWKChampion;
+  const sb=$('wkSubmit'); if (sb) sb.onclick=submitWKRun;
   showOverlay('wkScreen');
 }
-async function submitWKChampion(){
+async function submitWKRun(){
   if (!window.Leaderboard) return;
   const wk=G.wk;
   const name=($('wkName').value||'').trim()||'Anonymous';
@@ -1470,12 +1470,11 @@ async function submitWKChampion(){
   $('wkSubmit').disabled=true; $('wkStatus').textContent='Submitting...'; $('wkStatus').className='status';
   const fm=(wk.rounds[WK_ROUNDS.length-1]||[]).find(x=>x.user) || {a:wk.team, sa:0, sb:0};
   const uf=(fm.a===wk.team)?fm.sa:fm.sb, ua=(fm.a===wk.team)?fm.sb:fm.sa;
-  const level=('WC '+wkLevelLabel(wk.diffMode)).slice(0,12);   // e.g. "WC Rising", "WC World Cup"
+  const level=('WC '+wkLevelLabel(wk.diffMode)).slice(0,12);
   const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf|0, score_against:ua|0, points:(wk._pts||wkPoints()), mode:'worldcup', difficulty:level });
   $('wkStatus').textContent = ok?'Submitted! ⚽':'Failed (offline?)'; $('wkStatus').className='status '+(ok?'ok':'err');
   $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit'; if(!ok) $('wkSubmit').disabled=false;
 }
-
 // ---- menu knoppen ----
 function go1p(){ Audio.unlock(); G.mode='1p'; openTeamSelect('Pick <b>your</b> country'); }
 function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openTeamSelect('Player <b>1</b> (left): pick your country'); }
@@ -1502,7 +1501,7 @@ function showGameOver(){
 }
 
 // ---- leaderboard is World Cup-only: no submit on the regular game-over screen ----
-// (only winning the World Cup is a real achievement worth posting; see submitWKChampion)
+// (only winning the World Cup is a real achievement worth posting; see submitWKRun)
 function setupLbSubmit(){
   const box=$('lbSubmit'); if(box) box.style.display='none';
   G._lbEntry=null;
