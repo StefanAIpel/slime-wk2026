@@ -1428,8 +1428,17 @@ function wkResolveAndAdvance(userWon){
     wkShowResult(false);
   }
 }
+// leaderboard points for a World Cup run: difficulty × rounds won + champion bonus + goal diff
+function wkPoints(){
+  const wk=G.wk; const champ = wk.champion===wk.team;
+  const mult = (WK_DIFF_MULT[wk.diffMode]||2);
+  const roundsWon = champ ? 4 : wk.round;
+  let gd=0; wk.rounds.forEach(rd=>rd.forEach(m=>{ if(m.user && m.played){ const uf=m.a===wk.team?m.sa:m.sb, ua=m.a===wk.team?m.sb:m.sa; gd+=(uf-ua); }}));
+  return Math.max(0, (roundsWon*mult*10 + (champ?mult*30:0) + Math.max(0,gd)*3)|0);
+}
 function wkShowResult(champion){
-  const wk=G.wk; let extra='';
+  const wk=G.wk; const pts=wkPoints(); wk._pts=pts;
+  let extra='<div class="wk-score">⭐ '+pts+' points · '+escapeHtml(wkLevelLabel(wk.diffMode))+'</div>';
   if (champion){
     spawnConfetti(); Audio.win();
     $('wkTitle').textContent='🏆 WORLD CHAMPIONS 2026!';
@@ -1462,9 +1471,9 @@ async function submitWKChampion(){
   const fm=(wk.rounds[WK_ROUNDS.length-1]||[]).find(x=>x.user) || {a:wk.team, sa:0, sb:0};
   const uf=(fm.a===wk.team)?fm.sa:fm.sb, ua=(fm.a===wk.team)?fm.sb:fm.sa;
   const level=('WC '+wkLevelLabel(wk.diffMode)).slice(0,12);   // e.g. "WC Rising", "WC World Cup"
-  const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf, score_against:ua, mode:'worldcup', difficulty:level });
+  const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf|0, score_against:ua|0, points:(wk._pts||wkPoints()), mode:'worldcup', difficulty:level });
   $('wkStatus').textContent = ok?'Submitted! ⚽':'Failed (offline?)'; $('wkStatus').className='status '+(ok?'ok':'err');
-  $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit to leaderboard'; if(!ok) $('wkSubmit').disabled=false;
+  $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit'; if(!ok) $('wkSubmit').disabled=false;
 }
 
 // ---- menu knoppen ----
