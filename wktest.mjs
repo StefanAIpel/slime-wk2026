@@ -1,12 +1,12 @@
 import { chromium } from 'playwright';
-const URL = new URL('./index.html', import.meta.url).href;
+const PAGE_URL = new globalThis.URL('./index.html', import.meta.url).href + '?debug=1';
 const errors = [];
 const browser = await chromium.launch({ headless: true, channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
 page.on('pageerror', e => errors.push('pageerror: '+e.message));
 page.on('console', m => { if (m.type()==='error') errors.push('console: '+m.text()); });
 async function poll(fn, ms=8000, label=''){ const t0=Date.now(); while(Date.now()-t0<ms){ if(await page.evaluate(fn)) return true; await page.waitForTimeout(120);} throw new Error('timeout: '+label); }
-await page.goto(URL, { waitUntil:'load' });
+await page.goto(PAGE_URL, { waitUntil:'load' });
 await page.waitForTimeout(600);
 
 // ===== World Cup knockout: real 16-team bracket, win 4 rounds = champion =====
