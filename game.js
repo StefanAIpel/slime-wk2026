@@ -1280,7 +1280,7 @@ const WK_VENUES = ['Los Angeles','Dallas','Atlanta','Houston','Kansas City','Sea
 const WK_FINAL_VENUE = 'New York/New Jersey';
 
 function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
-function goWK(){ Audio.unlock(); wkPending=true; openTeamSelect('Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦'); }
+function goWK(){ Audio.unlock(); ensureLeaderboard(); wkPending=true; openTeamSelect('Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦'); }
 
 // a match = { a, b, sa, sb, winner:0|1|null, played, user }
 function newMatch(a,b){ return { a, b, sa:0, sb:0, winner:null, played:false, user:(a===G.wk.team||b===G.wk.team) }; }
@@ -1448,7 +1448,8 @@ function wkShowResult(champion){
     const champTxt = wk.champion ? ` Champions: <b>${escapeHtml(wk.champion.name)}</b>.` : '';
     $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>You went out in the <b>${WK_ROUNDS[wk.round]}</b>.${champTxt} Try again!`;
   }
-  if (window.Leaderboard && window.Leaderboard.enabled){
+  // leaderboard loads on demand; always offer submit (handler degrades gracefully if offline)
+  {
     extra += `<div style="margin:4px auto 0; display:flex; flex-direction:column; gap:8px; max-width:320px;">
       <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
       <button id="wkSubmit" class="btn small">🏆 Submit ${pts} pts</button>
@@ -1463,6 +1464,7 @@ function wkShowResult(champion){
   showOverlay('wkScreen');
 }
 async function submitWKRun(){
+  await ensureLeaderboard();
   if (!window.Leaderboard) return;
   const wk=G.wk;
   const name=($('wkName').value||'').trim()||'Anonymous';
@@ -1480,7 +1482,37 @@ function go1p(){ Audio.unlock(); G.mode='1p'; openTeamSelect('Pick <b>your</b> c
 function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openTeamSelect('Player <b>1</b> (left): pick your country'); }
 function openTeamSelect(label){ pickStage=0; pickP1=pickP2=null; G.screen=SCREEN.TEAM; $('pickLabel').innerHTML=label; buildTeamGrid(); showOverlay('teamScreen'); }
 
-function goOnline(){ Audio.unlock(); G.screen=SCREEN.ONLINE; showOverlay('onlineScreen'); $('onlineStatus').textContent=''; $('hostArea').style.display='none'; $('joinArea').style.display='none'; }
+/* ---- Lazy script loading (keep PeerJS + leaderboard out of the initial render path) ---- */
+const _scriptP = {};
+function loadScript(src){
+  if (_scriptP[src]) return _scriptP[src];
+  return _scriptP[src] = new Promise((res,rej)=>{
+    const s=document.createElement('script'); s.src=src; s.async=true;
+    s.onload=()=>res(true);
+    s.onerror=()=>{ _scriptP[src]=null; rej(new Error('failed to load '+src)); };
+    document.head.appendChild(s);
+  });
+}
+async function ensurePeer(){
+  if (typeof Peer!=='undefined') return true;
+  try { await loadScript('https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js'); return typeof Peer!=='undefined'; }
+  catch(e){ return false; }
+}
+function ensureLeaderboard(){
+  if (window.Leaderboard) return Promise.resolve(true);
+  return loadScript('leaderboard.js').then(()=>!!window.Leaderboard).catch(()=>false);
+}
+function peerUnavailable(){ $('btnHost').disabled=true; $('btnJoin').disabled=true; $('onlinePeerWarn').style.display='block'; }
+
+async function goOnline(){
+  Audio.unlock(); G.screen=SCREEN.ONLINE; showOverlay('onlineScreen');
+  $('hostArea').style.display='none'; $('joinArea').style.display='none'; $('onlinePeerWarn').style.display='none';
+  $('btnHost').disabled=true; $('btnJoin').disabled=true;
+  $('onlineStatus').textContent='Loading online…'; $('onlineStatus').className='status';
+  const ok=await ensurePeer();
+  if (ok){ $('btnHost').disabled=false; $('btnJoin').disabled=false; $('onlineStatus').textContent=''; }
+  else { peerUnavailable(); $('onlineStatus').textContent=''; }
+}
 
 function showGameOver(){
   overShown=true;
@@ -1520,6 +1552,7 @@ async function showLeaderboard(from){
   lbFrom = from || 'menu';
   showOverlay('lbScreen');
   const list=$('lbList'); list.innerHTML='loading…';
+  await ensureLeaderboard();
   if (!window.Leaderboard){ list.textContent='Leaderboard not available.'; return; }
   const rows = await window.Leaderboard.top(12);
   if (!rows){ list.innerHTML='<div class="status err">Could not load leaderboard (offline?).</div>'; return; }
@@ -1596,8 +1629,10 @@ function quitButton(){
 let hostMatchId=0, guestMatchId=-1, guestPickSent=false;
 function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings.toWin, matchMode:G.matchMode, matchMin:G.matchMin, mid:hostMatchId }; }
 
-function hostGame(){
-  Audio.unlock(); G.mode='host'; G.net=makeNet();
+async function hostGame(){
+  Audio.unlock();
+  if (!(await ensurePeer())){ peerUnavailable(); return; }
+  G.mode='host'; G.net=makeNet();
   $('hostArea').style.display='block'; $('joinArea').style.display='none';
   $('hostCode').textContent='...';
   $('onlineStatus').textContent='Connecting to server...'; $('onlineStatus').className='status';
@@ -1683,10 +1718,11 @@ function joinGame(){
   Audio.unlock(); G.mode='guest'; G.net=makeNet();
   $('hostArea').style.display='none'; $('joinArea').style.display='block';
 }
-function joinConnect(){
+async function joinConnect(){
   const code=$('joinCode').value.trim().toUpperCase();
   if (code.length<4){ $('onlineStatus').textContent='Enter the 4-letter code.'; $('onlineStatus').className='status err'; return; }
   $('onlineStatus').textContent='Connecting...'; $('onlineStatus').className='status';
+  if (!(await ensurePeer())){ peerUnavailable(); $('onlineStatus').textContent='Online unavailable (offline?).'; $('onlineStatus').className='status err'; return; }
   G.net.join(code, (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':'ok'); }, null);
   patchNetForTeams();
 }
@@ -1806,12 +1842,7 @@ wire('tWin', cycleWin);
 wire('tDiff', cycleDiff);
 
 // PeerJS aanwezig?
-function checkPeer(){
-  if (typeof Peer==='undefined'){
-    $('btnHost').disabled=true; $('btnJoin').disabled=true;
-    $('onlinePeerWarn').style.display='block';
-  }
-}
+// PeerJS now loads on demand (see ensurePeer/goOnline); no eager presence check needed.
 
 // start the background music on the very first user interaction (autoplay-safe)
 function firstGesture(){ Audio.unlock(); removeEventListener('pointerdown', firstGesture); removeEventListener('keydown', firstGesture); }
@@ -1829,10 +1860,12 @@ showOverlay('menuScreen');
 updateTouchVisibility();
 addEventListener('resize', updateRotateHint);
 addEventListener('orientationchange', ()=>setTimeout(updateRotateHint, 200));
-setTimeout(checkPeer, 1500);
+setTimeout(()=>{ try{ initFromURL(); }catch(e){} }, 0);   // invite link ?j=CODE (PeerJS lazy-loads)
 initFromURL();   // invite link ?j=CODE
 
-// expose for debugging / tests
-window.__G = G;
-window.__TEAMS = TEAMS;
-window.__demoMatchup = (a,b,host)=>{ pickP1=teamByCode(a); pickP2=teamByCode(b); showMatchup(!!host); };
+// expose for debugging / tests — only on localhost or with ?debug=1 (keeps prod clean)
+if (location.hostname==='localhost' || location.hostname==='127.0.0.1' || /[?&]debug=1\b/.test(location.search)){
+  window.__G = G;
+  window.__TEAMS = TEAMS;
+  window.__demoMatchup = (a,b,host)=>{ pickP1=teamByCode(a); pickP2=teamByCode(b); showMatchup(!!host); };
+}

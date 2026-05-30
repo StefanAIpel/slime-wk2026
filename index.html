@@ -177,19 +177,19 @@
   <!-- ======================= TOUCH CONTROLS ======================= -->
   <div id="touch">
     <div class="pad" id="padMove1">
-      <div class="tbtn" id="btnL">◀</div>
-      <div class="tbtn" id="btnR">▶</div>
+      <div class="tbtn" id="btnL" role="button" aria-label="move left">◀</div>
+      <div class="tbtn" id="btnR" role="button" aria-label="move right">▶</div>
     </div>
     <div class="pad" id="padAct1">
-      <div class="tbtn catch" id="btnC" aria-label="catch / hold ball">🤲</div>
-      <div class="tbtn jump" id="btnJ">▲</div>
+      <div class="tbtn catch" id="btnC" role="button" aria-label="catch / hold ball">🤲</div>
+      <div class="tbtn jump" id="btnJ" role="button" aria-label="jump">▲</div>
     </div>
     <!-- player 2 (local 2P only) -->
     <div class="pad" id="pad2" style="display:none;">
-      <div class="tbtn" id="btn2L">◀</div>
-      <div class="tbtn" id="btn2R">▶</div>
-      <div class="tbtn catch" id="btn2C" aria-label="catch / hold ball">🤲</div>
-      <div class="tbtn jump" id="btn2J">▲</div>
+      <div class="tbtn" id="btn2L" role="button" aria-label="player 2 move left">◀</div>
+      <div class="tbtn" id="btn2R" role="button" aria-label="player 2 move right">▶</div>
+      <div class="tbtn catch" id="btn2C" role="button" aria-label="player 2 catch / hold ball">🤲</div>
+      <div class="tbtn jump" id="btn2J" role="button" aria-label="player 2 jump">▲</div>
     </div>
   </div>
 
@@ -202,8 +202,7 @@
   </div>
 
   <!-- PeerJS (online, optional) -->
-  <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-  <script src="leaderboard.js"></script>
+  <!-- PeerJS (online) and leaderboard.js load on demand from game.js — kept out of the initial render path -->
   <script src="game.js"></script>
   <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js').catch(()=>{}));}</script>
 </body>
