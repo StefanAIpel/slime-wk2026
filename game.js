@@ -804,6 +804,28 @@ function lerpBall(e,t){ if(!t)return; e.x+=(t.x-e.x)*0.5; e.y+=(t.y-e.y)*0.5; e.
 /* ----------------------------------------------------------------------------
    12. Online netcode  (PeerJS, host-authoritative)
    ---------------------------------------------------------------------------- */
+/* WebRTC ICE servers. STUN alone fails when both players sit behind symmetric
+   NAT (common on mobile data / CGNAT), so a TURN relay is required for reliable
+   cross-network play — e.g. iOS on cellular <-> Android on Wi-Fi.
+   Public anonymous TURN is best-effort and may be rate-limited/down. For
+   guaranteed mobile play, get a FREE TURN account (metered.ca = 20GB/mo, or
+   expressturn.com = 1000GB/mo) and either edit TURN_SERVERS below, or — with no
+   redeploy — paste your servers in the browser console and reconnect:
+     store.save('ice', [{urls:'turn:HOST:PORT', username:'U', credential:'C'}]) */
+const TURN_SERVERS = [
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:0.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },   // PeerJS default relay
+];
+function iceServers(){
+  const override = store.load('ice', null);              // runtime TURN override (array), no redeploy needed
+  return [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    ...(Array.isArray(override) && override.length ? override : TURN_SERVERS),
+  ];
+}
+function peerOpts(){ return { debug:1, config:{ iceServers: iceServers() } }; }
+
 function makeNet(){
   return {
     peer:null, conn:null, isHost:false, code:'',
@@ -815,7 +837,7 @@ function makeNet(){
       // reuse this device's code so you can host again later with the same code
       const code = this.code || store.load('hostcode', null) || randomCode();
       this.code = code;
-      try { this.peer = new Peer('SLWK'+code, { debug:1 }); }
+      try { this.peer = new Peer('SLWK'+code, peerOpts()); }
       catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=>{ store.save('hostcode', this.code); onCode(this.code); });
       this.peer.on('error', err=>{
@@ -836,12 +858,13 @@ function makeNet(){
         c.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Opponent connected!', false); });
         c.on('data', d=>this._recv(d));
         c.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Connection lost', true); });
+        c.on('iceStateChanged', s=>{ console.log('[net] ICE(host)', s); if (s==='failed' && !this.connected) onStatus('Could not link up (NAT/firewall) — a TURN server is needed.', true); });
       });
       this._onStart = onStart;
     },
     join(code, onStatus, onStart){
       this.isHost=false;
-      try { this.peer = new Peer({ debug:1 }); }
+      try { this.peer = new Peer(peerOpts()); }
       catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=>{
         onStatus('Connecting…', false);
@@ -849,12 +872,13 @@ function makeNet(){
         // don't hang on "Connecting…" forever if the host isn't there
         this._joinT = setTimeout(()=>{
           if (this.connected || this._closed) return;
-          onStatus('No game found with code '+code+' — check it and try again.', true);
+          onStatus('Couldn’t link up — check the code, try the same Wi-Fi, or set up a TURN server.', true);
           try{ this.conn&&this.conn.close(); }catch(_){}
         }, 15000);
         this.conn.on('open', ()=>{ clearTimeout(this._joinT); this.connected=true; this._lastRecvT=performance.now(); onStatus('Connected! Waiting for host…', false); });
         this.conn.on('data', d=>this._recv(d));
         this.conn.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Connection lost', true); });
+        this.conn.on('iceStateChanged', s=>{ console.log('[net] ICE(join)', s); if (s==='failed' && !this.connected){ clearTimeout(this._joinT); onStatus('Could not link up (NAT/firewall) — a TURN server is needed.', true); } });
       });
       this.peer.on('error', err=>{
         if (err && err.type==='peer-unavailable'){ clearTimeout(this._joinT); onStatus('No game found with code '+code+' — check it and try again.', true); }
