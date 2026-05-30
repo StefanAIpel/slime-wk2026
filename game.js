@@ -12,7 +12,11 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 const W = 1056, H = 600;             // logical resolution (~10% wider field)
-canvas.width = W; canvas.height = H;
+// Hi-DPI backing store: render at device pixel ratio (capped at 2) so the HUD,
+// flags and score come out crisp instead of nearest-neighbour upscaled.
+const DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+ctx.scale(DPR, DPR);
 ctx.imageSmoothingEnabled = false;
 
 const GROUND   = H - 52;             // ground level (y of the pitch surface)
@@ -1125,35 +1129,36 @@ function drawParticles(){
 }
 
 function drawScoreboard(){
-  const w=244, h=54, x=CENTER-w/2, y=14;
-  ctx.fillStyle='rgba(6,6,16,0.85)'; roundRect(x,y,w,h,10); ctx.fill();
-  ctx.strokeStyle='#2c2c55'; ctx.lineWidth=2; roundRect(x,y,w,h,10); ctx.stroke();
+  const SC=2;                                       // ~2x bigger HUD (flags + score)
+  const w=244*SC, h=54*SC, x=CENTER-w/2, y=12;
+  ctx.fillStyle='rgba(6,6,16,0.85)'; roundRect(x,y,w,h,10*SC); ctx.fill();
+  ctx.strokeStyle='#2c2c55'; ctx.lineWidth=2; roundRect(x,y,w,h,10*SC); ctx.stroke();
   // flags
-  drawMiniFlag(G.p1.team, x+10, y+11, 40, 27);
-  drawMiniFlag(G.p2.team, x+w-50, y+11, 40, 27);
+  drawMiniFlag(G.p1.team, x+10*SC, y+11*SC, 40*SC, 27*SC);
+  drawMiniFlag(G.p2.team, x+w-50*SC, y+11*SC, 40*SC, 27*SC);
   // codes
   ctx.textBaseline='alphabetic';
-  ctx.font=FONT(12,800); ctx.textAlign='center';
-  ctx.fillStyle=G.p1.team.color; ctx.fillText(G.p1.team.code, x+30, y+50);
-  ctx.fillStyle=G.p2.team.color; ctx.fillText(G.p2.team.code, x+w-30, y+50);
+  ctx.font=FONT(12*SC,800); ctx.textAlign='center';
+  ctx.fillStyle=G.p1.team.color; ctx.fillText(G.p1.team.code, x+30*SC, y+50*SC);
+  ctx.fillStyle=G.p2.team.color; ctx.fillText(G.p2.team.code, x+w-30*SC, y+50*SC);
   // score
-  ctx.fillStyle='#fff'; ctx.font=FONT(28,900);
-  ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+38);
+  ctx.fillStyle='#fff'; ctx.font=FONT(28*SC,900);
+  ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+38*SC);
   // sub-line: match clock (time mode) or goal target
   ctx.textAlign='center';
   if (G.matchMode==='time'){
     if (G.golden){
-      ctx.font=FONT(12,800); ctx.fillStyle = (G.frame>>4&1)?'#ffae3b':'#ff5470';
-      ctx.fillText('GOLDEN GOAL', CENTER, y+h+14);
+      ctx.font=FONT(12*SC,800); ctx.fillStyle = (G.frame>>4&1)?'#ffae3b':'#ff5470';
+      ctx.fillText('GOLDEN GOAL', CENTER, y+h+14*SC);
     } else {
       const sec=Math.max(0,Math.ceil(G.matchTime/60));
       const txt=(sec/60|0)+':'+String(sec%60).padStart(2,'0');
-      ctx.font=FONT(16,800); ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
-      ctx.fillText(txt, CENTER, y+h+15);
+      ctx.font=FONT(16*SC,800); ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
+      ctx.fillText(txt, CENTER, y+h+15*SC);
     }
   } else {
-    ctx.font=FONT(11,700); ctx.fillStyle='#9a9ad0';
-    ctx.fillText('FIRST TO '+G.toWin, CENTER, y+h+13);
+    ctx.font=FONT(11*SC,700); ctx.fillStyle='#9a9ad0';
+    ctx.fillText('FIRST TO '+G.toWin, CENTER, y+h+13*SC);
   }
 }
 
