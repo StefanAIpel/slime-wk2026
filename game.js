@@ -110,6 +110,9 @@ const settings = {
   wkDiff:    store.load('wkDiff', 'rising'),        // World Cup: 'rising' | easy|normal|hard|worldcup
 };
 function clamp01(v){ v=+v; return isNaN(v)?0.7:(v<0?0:v>1?1:v); }
+// drop retired longest modes (8 min / 10 goals) from any older saved settings
+if ([3,5,7].indexOf(settings.toWin)<0) settings.toWin=5;
+if ([1,2,4].indexOf(settings.matchMin)<0) settings.matchMin=2;
 
 /* ----------------------------------------------------------------------------
    3. Audio
@@ -1045,22 +1048,28 @@ function drawCampZones(){
 }
 
 function drawBall(b){
-  // schaduw
+  // shadow
   const sh = clamp(1-(GROUND-b.y)/300,0.15,1);
   ctx.fillStyle=`rgba(0,0,0,${0.28*sh})`;
   ctx.beginPath(); ctx.ellipse(b.x, GROUND+5, BALL_R*sh, 5*sh, 0,0,7); ctx.fill();
 
   ctx.save();
   ctx.translate(b.x,b.y); ctx.rotate(b.spin);
+  // white ball
   ctx.fillStyle='#f7f7f7'; ctx.beginPath(); ctx.arc(0,0,BALL_R,0,7); ctx.fill();
-  ctx.strokeStyle='#cfcfcf'; ctx.lineWidth=1; ctx.stroke();
-  // pentagons
-  ctx.fillStyle='#16161e';
-  ctx.beginPath(); ctx.arc(0,0,BALL_R*0.34,0,7); ctx.fill();
-  for (let i=0;i<5;i++){
-    const a=i/5*Math.PI*2;
-    ctx.beginPath(); ctx.arc(Math.cos(a)*BALL_R*0.62, Math.sin(a)*BALL_R*0.62, BALL_R*0.14, 0,7); ctx.fill();
-  }
+  // subtle WC 2026 swirl accents (red/blue/green), clipped to the ball
+  ctx.save(); ctx.beginPath(); ctx.arc(0,0,BALL_R,0,7); ctx.clip();
+  ctx.lineWidth=3; ctx.globalAlpha=0.5; ctx.lineCap='round';
+  ctx.strokeStyle='#1f6fff'; ctx.beginPath(); ctx.arc(-BALL_R*0.2,-BALL_R*0.1, BALL_R*0.95, -0.5, 1.5); ctx.stroke();
+  ctx.strokeStyle='#e4002b'; ctx.beginPath(); ctx.arc( BALL_R*0.45, BALL_R*0.25, BALL_R*0.75, 2.1, 4.1); ctx.stroke();
+  ctx.strokeStyle='#00a64a'; ctx.beginPath(); ctx.arc( BALL_R*0.5, -BALL_R*0.45, BALL_R*0.55, 1.2, 3.4); ctx.stroke();
+  ctx.globalAlpha=1; ctx.restore();
+  // rim + panel dots (mostly dark for grip, a couple coloured)
+  ctx.strokeStyle='#cfcfcf'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(0,0,BALL_R,0,7); ctx.stroke();
+  ctx.fillStyle='#16161e'; ctx.beginPath(); ctx.arc(0,0,BALL_R*0.26,0,7); ctx.fill();
+  const dot=['#16161e','#1f6fff','#16161e','#e4002b','#00a64a'];
+  for (let i=0;i<5;i++){ const a=i/5*Math.PI*2; ctx.fillStyle=dot[i];
+    ctx.beginPath(); ctx.arc(Math.cos(a)*BALL_R*0.62, Math.sin(a)*BALL_R*0.62, BALL_R*0.13, 0,7); ctx.fill(); }
   ctx.restore();
 }
 
@@ -1264,6 +1273,7 @@ function launchLocal(){
 const WK_ROUNDS = ['Round of 16','Quarter-final','Semi-final','Final'];
 const WK_HEAD   = ['R16','QF','SF','FINAL'];          // compact bracket column heads
 const WK_DIFFS  = ['normal','hard','hard','worldcup'];// AI level per round
+const WK_DIFF_MULT = { easy:1, normal:2, hard:3, worldcup:4, rising:3 };  // leaderboard points multiplier
 const WK_COUNTS = [8,4,2,1];                          // matches per round
 // real 2026 host cities; your run is played across them, with the final in New York/New Jersey
 const WK_VENUES = ['Los Angeles','Dallas','Atlanta','Houston','Kansas City','Seattle','Bay Area','Philadelphia','Miami','Boston','Mexico City','Guadalajara','Monterrey','Toronto','Vancouver'];
@@ -1510,9 +1520,8 @@ async function showLeaderboard(from){
     const t=teamByCode(r.team);
     return `<div class="lb-row${i<3?' top':''}">
       <span class="rank">${i+1}</span>
-      <span class="who">${escapeHtml(r.name)} <span class="tcode">${t.code}</span><span class="when">${fmtDate(r.created_at)}</span></span>
-      <span class="sc">${r.score_for}-${r.score_against}</span>
-      <span class="tcode">${escapeHtml(r.difficulty||r.mode||'')}</span>
+      <span class="who">${escapeHtml(r.name)} <span class="tcode">${t.code}</span><span class="when">${escapeHtml(r.difficulty||r.mode||'')} · ${fmtDate(r.created_at)}</span></span>
+      <span class="sc">${(r.points|0)} pts</span>
     </div>`;
   }).join('');
 }
@@ -1724,7 +1733,7 @@ function toggleCrt(){ settings.crt=!settings.crt; store.save('crt',settings.crt)
 function toggleMode(){ settings.matchMode = settings.matchMode==='time'?'goals':'time'; store.save('matchMode',settings.matchMode); refreshToggles(); }
 function cycleWin(){
   if (settings.matchMode==='time'){ const o=[1,2,4,8]; settings.matchMin=o[(o.indexOf(settings.matchMin)+1)%o.length]; store.save('matchMin',settings.matchMin); }
-  else { const o=[3,5,7,10]; settings.toWin=o[(o.indexOf(settings.toWin)+1)%o.length]; store.save('toWin',settings.toWin); G.toWin=settings.toWin; }
+  else { const o=[3,5,7]; settings.toWin=o[(o.indexOf(settings.toWin)+1)%o.length]; store.save('toWin',settings.toWin); G.toWin=settings.toWin; }
   refreshToggles();
 }
 function cycleDiff(){ const opts=Object.keys(AI_LEVELS); settings.diff=opts[(opts.indexOf(settings.diff)+1)%opts.length]; store.save('diff',settings.diff); refreshToggles(); }
@@ -1737,8 +1746,8 @@ function renderMenuPills(){
   let html = `<button class="pill mode${isGoals?' active':''}" data-set="goals">Goals</button>`+
              `<button class="pill mode${!isGoals?' active':''}" data-set="time">Timed</button>`+
              `<span class="pill-sep"></span>`;
-  if (isGoals) html += [3,5,7,10].map(n=>`<button class="pill${settings.toWin===n?' active':''}" data-win="${n}">${n}</button>`).join('');
-  else         html += [1,2,4,8].map(n=>`<button class="pill${settings.matchMin===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
+  if (isGoals) html += [3,5,7].map(n=>`<button class="pill${settings.toWin===n?' active':''}" data-win="${n}">${n}</button>`).join('');
+  else         html += [1,2,4].map(n=>`<button class="pill${settings.matchMin===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
   row.innerHTML = html;
   row.querySelectorAll('.pill').forEach(p=>{
     p.onclick=()=>{ Audio.unlock(); Audio.click();
@@ -1805,6 +1814,8 @@ buildTeamGrid();
 setupMenuPills();
 setupVolume();
 updateSoundBtn();
+// "2 Players · same device" needs two keyboard sets — desktop only
+if (IS_TOUCH){ const b=$('btn2p'); if(b){ b.style.display='none'; } }
 startAttract();
 showOverlay('menuScreen');
 updateTouchVisibility();

@@ -145,7 +145,10 @@ html, body {
 .team-tag.right { right: max(16px, env(safe-area-inset-right)); color: #7cc0ee; }
 /* mode buttons + match-length pills */
 .mode-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; }
-.btn.mode { min-width: 0; flex: 1 1 28%; padding: 11px 10px; }
+.btn.mode { min-width: 0; flex: 1 1 40%; padding: 12px 10px; }
+.btn.mode.wc2026 { background: linear-gradient(180deg,#ffd585,#ff7a18); border-bottom-color:#9c4708; }
+.grp-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--oranje2); font-weight: 800; width: 100%; text-align: left; margin: 4px 0 -2px; }
+.grp-label span { color: var(--muted); font-weight: 600; letter-spacing: .5px; text-transform: none; }
 .len-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
 .len-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
 .pill {
@@ -278,8 +281,14 @@ body.m2p #padAct1 { left: max(16px, env(safe-area-inset-left)); right: auto; bot
 .tbtn.jump { background: rgba(52,209,122,.22); border-color: rgba(52,209,122,.7); }
 .tbtn.catch { background: rgba(124,192,238,.22); border-color: rgba(124,192,238,.75); }
 .tbtn.catch:active { background: rgba(124,192,238,.55); }
+/* reserve a strip below the pitch on touch so the buttons sit under it (follow the ball clearly) */
+@media (pointer: coarse){
+  :root { --padb: 88px; }
+  #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
+}
 /* a bit bigger on larger touch screens (tablets), still a tidy corner overlay */
 @media (pointer: coarse) and (min-width: 760px){
+  :root { --padb: 108px; }
   .tbtn { width: 76px; height: 76px; font-size: 28px; }
   body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 100px); }
 }
@@ -310,7 +319,7 @@ body.m2p #padAct1 { left: max(16px, env(safe-area-inset-left)); right: auto; bot
 /* ---- Leaderboard ---- */
 #lbList { gap: 4px; font-size: 9px; }
 .lb-row {
-  display: grid; grid-template-columns: 28px 1fr auto auto;
+  display: grid; grid-template-columns: 28px 1fr auto;
   align-items: center; gap: 8px;
   padding: 7px 8px; border-radius: 6px; background: #06060f;
 }
@@ -318,7 +327,8 @@ body.m2p #padAct1 { left: max(16px, env(safe-area-inset-left)); right: auto; bot
 .lb-row .rank { color: var(--oranje2); }
 .lb-row .who  { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .lb-row .tcode{ color: var(--muted); font-size: 8px; }
-.lb-row .sc   { color: var(--good); }
+.lb-row .sc   { color: var(--good); font-weight: 800; font-variant-numeric: tabular-nums; }
+.wk-score { font-size: 16px; font-weight: 800; color: var(--oranje2); margin: 8px 0 2px; }
 
 /* ---- In-game opgeven/pauze-knop ---- */
 #quitBtn {
