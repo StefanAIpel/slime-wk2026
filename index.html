@@ -40,14 +40,8 @@
         <button id="btn2p" class="btn mode">2 Players</button>
         <button id="btnOnline" class="btn mode">Online</button>
       </div>
-      <div class="len-label">Match length</div>
-      <div class="len-row" id="lenRow">
-        <button class="pill" data-mode="goals">Goals</button>
-        <button class="pill" data-min="1">1 min</button>
-        <button class="pill" data-min="2">2 min</button>
-        <button class="pill" data-min="4">4 min</button>
-        <button class="pill" data-min="8">8 min</button>
-      </div>
+      <div class="len-label">Match</div>
+      <div class="len-row" id="lenRow"></div>
       <div class="btn-row">
         <button id="btnSound" class="btn secondary small" aria-label="sound on/off">🔊</button>
         <button id="btnShare" class="btn secondary small">📤 Share</button>
@@ -156,8 +150,9 @@
     </div>
   </div>
 
-  <!-- in-game pause/quit button -->
+  <!-- in-game pause/quit + mute buttons -->
   <button id="quitBtn" aria-label="pause / menu">☰</button>
+  <button id="muteBtn" aria-label="sound on/off">🔊</button>
 
   <!-- ======================= TOUCH CONTROLS ======================= -->
   <div id="touch">

@@ -156,6 +156,8 @@ html, body {
 .pill:hover { border-color: var(--oranje2); }
 .pill:active { transform: translateY(1px); }
 .pill.active { background: linear-gradient(180deg,#ffd585,#ff7a18); color: #2a1400; border-color: #b4540a; font-weight: 800; }
+.pill.mode { min-width: 58px; }
+.pill-sep { width: 1px; align-self: stretch; background: var(--line); margin: 2px 4px; }
 
 /* ---- Team select grid ---- */
 .team-grid {
@@ -305,6 +307,18 @@ html, body {
 #quitBtn.show { display: flex; }
 #quitBtn:active { background: rgba(255,122,24,.4); }
 
+/* in-game mute button (mirrors the quit button, top-right) */
+#muteBtn {
+  position: fixed; z-index: 14; display: none;
+  top: max(10px, env(safe-area-inset-top)); right: max(10px, env(safe-area-inset-right));
+  width: 44px; height: 44px; border-radius: 10px;
+  background: rgba(6,6,16,.55); color: var(--ink);
+  border: 2px solid var(--line); font-size: 20px; cursor: pointer;
+  align-items: center; justify-content: center; line-height: 1;
+}
+#muteBtn.show { display: flex; }
+#muteBtn:active { background: rgba(255,122,24,.4); }
+
 /* ---- World Cup bracket ---- */
 .bracket-wrap {
   width: 100%; max-width: min(96vw, 940px);
@@ -330,6 +344,9 @@ html, body {
 .wk-champ { font-size: 15px; color: var(--oranje2); font-weight: 800; margin-top: 8px; }
 .wk-opts { display: flex; flex-direction: column; gap: 4px; align-items: center; margin: -2px 0 2px; }
 .wk-opts:empty { display: none; }
+/* World Cup 2026 branding on the tournament screen */
+.wk-host { font-weight: 800; letter-spacing: 1.5px; color: var(--oranje2); }
+.wk-venue { color: var(--ink); font-weight: 600; }
 
 .tag { font-size: 11px; color: var(--muted); letter-spacing: 3px; margin-top: 6px; font-family: var(--ui); font-weight: 600; text-transform: uppercase; }
 .flash-orange { color: var(--oranje); }
@@ -357,11 +374,11 @@ a { color: var(--oranje2); }
 /* leaderboard date/time line */
 .lb-row .when { display: block; font-size: 8px; color: var(--muted); margin-top: 2px; }
 
-/* ---- Touch controls: bigger on touch; on tablets the pitch shrinks so the pads sit BELOW it ---- */
+/* ---- Touch controls: phones keep a compact corner overlay; tablets get big pads BELOW the field ---- */
 @media (pointer: coarse){
-  .tbtn { width: 86px; height: 86px; font-size: 30px; }
-  .tbtn.catch { font-size: 34px; }
-  .pad { bottom: max(20px, env(safe-area-inset-bottom)); }
+  .tbtn { width: 72px; height: 72px; font-size: 26px; }
+  .tbtn.catch { font-size: 30px; }
+  .pad { bottom: max(18px, env(safe-area-inset-bottom)); }
 }
 @media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
   :root { --padb: 172px; }                       /* reserve a control strip under the field */

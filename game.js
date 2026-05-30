@@ -1134,6 +1134,7 @@ function updateTouchVisibility(){
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
   $('playHint').style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
   $('quitBtn').classList.toggle('show', inGame);
+  $('muteBtn').classList.toggle('show', inGame);
   updateRotateHint();
 }
 function updateRotateHint(){
@@ -1196,9 +1197,12 @@ const WK_ROUNDS = ['Round of 16','Quarter-final','Semi-final','Final'];
 const WK_HEAD   = ['R16','QF','SF','FINAL'];          // compact bracket column heads
 const WK_DIFFS  = ['normal','hard','hard','worldcup'];// AI level per round
 const WK_COUNTS = [8,4,2,1];                          // matches per round
+// real 2026 host cities; your run is played across them, with the final in New York/New Jersey
+const WK_VENUES = ['Los Angeles','Dallas','Atlanta','Houston','Kansas City','Seattle','Bay Area','Philadelphia','Miami','Boston','Mexico City','Guadalajara','Monterrey','Toronto','Vancouver'];
+const WK_FINAL_VENUE = 'New York/New Jersey';
 
 function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
-function goWK(){ Audio.unlock(); wkPending=true; openTeamSelect('Pick <b>your</b> country for the World Cup ⚽'); }
+function goWK(){ Audio.unlock(); wkPending=true; openTeamSelect('Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦'); }
 
 // a match = { a, b, sa, sb, winner:0|1|null, played, user }
 function newMatch(a,b){ return { a, b, sa:0, sb:0, winner:null, played:false, user:(a===G.wk.team||b===G.wk.team) }; }
@@ -1207,7 +1211,8 @@ function wkLevelLabel(mode){ return mode==='rising' ? 'Rising' : (AI_LEVELS[mode
 function setupWK(team){
   G.wkMode = true;
   const diffMode = settings.wkDiff || 'rising';
-  G.wk = { team, round:0, min: settings.wkMin||2, diffMode, diffs: wkDiffsFor(diffMode), rounds:[], champion:null };
+  const venues = shuffleArr(WK_VENUES.slice()).slice(0,3).concat([WK_FINAL_VENUE]);   // your road to the final
+  G.wk = { team, round:0, min: settings.wkMin||2, diffMode, diffs: wkDiffsFor(diffMode), venues, rounds:[], champion:null };
   const others = shuffleArr(TEAMS.filter(x=>x!==team)).slice(0,15);
   const field  = shuffleArr([team, ...others]);       // 16 teams, fully random seeding
   const r16=[]; for (let i=0;i<16;i+=2) r16.push(newMatch(field[i], field[i+1]));
@@ -1290,7 +1295,11 @@ function showWKStage(){
   const wk=G.wk; const m=wkUserMatch(); const opp=m?wkOppOf(m):null;
   $('wkTitle').textContent = WK_ROUNDS[wk.round];
   const lvl = wkLevelLabel(wk.diffMode);
-  $('wkSub').innerHTML = `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · ${wk.min}-min matches · ${escapeHtml(lvl)} · win 4 rounds to lift the cup`;
+  const venue = (wk.venues && wk.venues[wk.round]) || '';
+  $('wkSub').innerHTML =
+    `<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>`+
+    `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · ${wk.min}-min · ${escapeHtml(lvl)}`+
+    (venue ? `<br><span class="wk-venue">📍 ${escapeHtml(venue)} — ${WK_ROUNDS[wk.round]}</span>` : '');
   $('wkOpts').innerHTML = wkAtStart() ? wkOptsHTML() : '';
   if (wkAtStart()) wireWkOpts();
   $('wkBracket').innerHTML = wkBracketHTML();
@@ -1337,8 +1346,8 @@ function wkShowResult(champion){
   const wk=G.wk; let extra='';
   if (champion){
     spawnConfetti(); Audio.win();
-    $('wkTitle').textContent='🏆 CHAMPIONS!';
-    $('wkSub').innerHTML=`<b>${escapeHtml(wk.team.name)}</b> win the World Cup! ⚽🎉`;
+    $('wkTitle').textContent='🏆 WORLD CHAMPIONS 2026!';
+    $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br><b>${escapeHtml(wk.team.name)}</b> are world champions — the cup is lifted in New York/New Jersey! ⚽🎉`;
     if (window.Leaderboard && window.Leaderboard.enabled){
       extra = `<div style="margin:12px auto 0; display:flex; flex-direction:column; gap:8px; max-width:320px;">
         <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
@@ -1348,7 +1357,7 @@ function wkShowResult(champion){
   } else {
     $('wkTitle').textContent='Knocked out';
     const champTxt = wk.champion ? ` Champions: <b>${escapeHtml(wk.champion.name)}</b>.` : '';
-    $('wkSub').innerHTML=`You went out in the <b>${WK_ROUNDS[wk.round]}</b>.${champTxt} Try again!`;
+    $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>You went out in the <b>${WK_ROUNDS[wk.round]}</b>.${champTxt} Try again!`;
   }
   $('wkBracket').innerHTML = wkBracketHTML() + extra;
   $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">New tournament</button>`+
@@ -1607,7 +1616,7 @@ function refreshToggles(){
   $('tDiff').querySelector('.val').textContent  = AI_LEVELS[settings.diff].label;
   const vr=$('volRange'); if(vr) vr.value=Math.round(settings.volume*100);
 }
-function updateSoundBtn(){ const b=$('btnSound'); if(b) b.textContent = settings.sound?'🔊':'🔇'; }
+function updateSoundBtn(){ const i = settings.sound?'🔊':'🔇'; const b=$('btnSound'); if(b) b.textContent=i; const m=$('muteBtn'); if(m) m.textContent=i; }
 function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setSound(settings.sound); updateSoundBtn(); refreshToggles(); }
 function setupVolume(){
   const r=$('volRange'); if(!r) return;
@@ -1631,25 +1640,28 @@ function cycleWin(){
 function cycleDiff(){ const opts=Object.keys(AI_LEVELS); settings.diff=opts[(opts.indexOf(settings.diff)+1)%opts.length]; store.save('diff',settings.diff); refreshToggles(); }
 
 /* ---- Menu match-length pills (mirror the original's 1/2/4/8 + Goals) ---- */
-function refreshMenuPills(){
+// Match-type pills: choose Goals (first to 3/5/7/10) or Timed (1/2/4/8 min) right from the menu
+function renderMenuPills(){
   const row=$('lenRow'); if(!row) return;
-  row.querySelectorAll('.pill').forEach(p=>{
-    const active = p.dataset.mode==='goals' ? settings.matchMode==='goals'
-                 : (settings.matchMode==='time' && settings.matchMin===+p.dataset.min);
-    p.classList.toggle('active', active);
-  });
-}
-function setupMenuPills(){
-  const row=$('lenRow'); if(!row) return;
+  const isGoals = settings.matchMode!=='time';
+  let html = `<button class="pill mode${isGoals?' active':''}" data-set="goals">Goals</button>`+
+             `<button class="pill mode${!isGoals?' active':''}" data-set="time">Timed</button>`+
+             `<span class="pill-sep"></span>`;
+  if (isGoals) html += [3,5,7,10].map(n=>`<button class="pill${settings.toWin===n?' active':''}" data-win="${n}">${n}</button>`).join('');
+  else         html += [1,2,4,8].map(n=>`<button class="pill${settings.matchMin===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
+  row.innerHTML = html;
   row.querySelectorAll('.pill').forEach(p=>{
     p.onclick=()=>{ Audio.unlock(); Audio.click();
-      if (p.dataset.mode==='goals'){ settings.matchMode='goals'; store.save('matchMode','goals'); }
-      else { settings.matchMode='time'; settings.matchMin=+p.dataset.min; store.save('matchMode','time'); store.save('matchMin',settings.matchMin); }
-      refreshMenuPills();
+      if (p.dataset.set==='goals'){ settings.matchMode='goals'; store.save('matchMode','goals'); }
+      else if (p.dataset.set==='time'){ settings.matchMode='time'; store.save('matchMode','time'); }
+      else if (p.dataset.win){ settings.toWin=+p.dataset.win; store.save('toWin',settings.toWin); G.toWin=settings.toWin; }
+      else if (p.dataset.min){ settings.matchMin=+p.dataset.min; store.save('matchMin',settings.matchMin); }
+      renderMenuPills();
     };
   });
-  refreshMenuPills();
 }
+function refreshMenuPills(){ renderMenuPills(); }
+function setupMenuPills(){ renderMenuPills(); }
 
 /* ----------------------------------------------------------------------------
    16. Knoppen koppelen + init
@@ -1664,6 +1676,7 @@ wire('pauseResume', resumeGame);
 wire('pauseQuit', backToMenu);
 wire('tMode', toggleMode);
 { const qb=$('quitBtn'); if (qb) qb.onclick = quitButton; }
+{ const mb=$('muteBtn'); if (mb) mb.onclick = ()=>{ toggleSound(); }; }
 wire('teamBack', backToMenu);
 wire('onlineBack', backToMenu);
 wire('setBack', ()=>{ refreshMenuPills(); showOverlay('menuScreen'); });
