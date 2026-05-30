@@ -48,7 +48,7 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(new URL('./game.js', import.meta.url), 'utf8'), sandbox);
 // top-level const/function bindings live in the context's lexical scope; surface them
-vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, tick, render, go1p, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES };', sandbox);
+vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, wkPoints, tick, render, go1p, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES };', sandbox);
 
 const T = sandbox.__TEST;
 const { G, TEAMS, SCREEN, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner } = T;
@@ -199,6 +199,22 @@ G.p1.input={left:false,right:false,jump:false,down:true}; T.updateBall();   // p
 G.p2.x=415; G.p2.y=T.GROUND-30; G.p2.onGround=false;                        // p2 jumps into p1
 T.updateBall();
 ok(G.ball.held===null, 'an opponent jumping into the holder knocks the ball loose (steal)');
+
+// ---- 9. World Cup leaderboard points (per difficulty) ----------------------
+console.log('Leaderboard points:');
+try {
+  T.settings.wkDiff='worldcup'; setupWK(TEAMS[0]);
+  for (let r=0;r<4;r++){ G.score=[2,0]; wkMatchEnd(true); }   // win the cup on World Cup difficulty
+  const champPts = T.wkPoints();
+  T.settings.wkDiff='easy'; setupWK(TEAMS[0]);
+  for (let r=0;r<4;r++){ G.score=[1,0]; wkMatchEnd(true); }   // win the cup on Easy
+  const easyPts = T.wkPoints();
+  ok(champPts>0 && easyPts>0, 'a completed run yields points');
+  ok(champPts>easyPts, 'higher difficulty is worth more points ('+champPts+' vs '+easyPts+')');
+  T.settings.wkDiff='hard'; setupWK(TEAMS[0]);
+  G.score=[0,2]; wkMatchEnd(false);                            // lose in R16
+  ok(T.wkPoints()>=0, 'a knocked-out run still computes points');
+} catch(e){ ok(false,'points threw — '+e.message); }
 
 console.log('\n' + (fails ? ('FAILED (' + fails + ')') : 'ALL TESTS PASSED'));
 process.exit(fails ? 1 : 0);
