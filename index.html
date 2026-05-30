@@ -18,7 +18,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="World Cup Slime">
+  <meta name="apple-mobile-web-app-title" content="Slime WC">
 </head>
 <body>
 
@@ -90,6 +90,22 @@
       <div class="status err" id="onlinePeerWarn" style="display:none">⚠ Online needs internet (PeerJS failed to load). Local modes still work.</div>
     </div>
     <button id="onlineBack" class="btn secondary small">‹ Back</button>
+  </div>
+
+  <!-- ======================= ONLINE MATCHUP CONFIRM ======================= -->
+  <div id="matchupScreen" class="overlay">
+    <h2 class="title small-title">MATCHUP</h2>
+    <div class="matchup">
+      <div class="mc you"><div class="mc-tag">YOU</div><div id="matchYou"></div></div>
+      <div class="mc-vs">VS</div>
+      <div class="mc opp"><div class="mc-tag">OPPONENT</div><div id="matchOpp"></div></div>
+    </div>
+    <div class="subtitle" id="matchSide"></div>
+    <div class="status" id="matchStatus"></div>
+    <div class="btn-row">
+      <button id="matchStart" class="btn">▶ Start match</button>
+      <button id="matchCancel" class="btn secondary">Cancel</button>
+    </div>
   </div>
 
   <!-- ======================= SETTINGS ======================= -->

@@ -1,6 +1,6 @@
 {
-  "name": "World Cup Slime",
-  "short_name": "Slime",
+  "name": "Slime WC",
+  "short_name": "Slime WC",
   "description": "Retro slime soccer in a modern kit — World Cup knockout, vs computer, 2 players or online.",
   "id": "/",
   "start_url": "./?source=pwa",
