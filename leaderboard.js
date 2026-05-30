@@ -17,10 +17,11 @@
   async function submit(entry) {
     try {
       const body = {
-        name: String(entry.name || 'Anoniem').slice(0, 20),
+        name: String(entry.name || 'Anonymous').slice(0, 20),
         team: String(entry.team || '').slice(0, 4),
         score_for: Math.max(0, Math.min(99, entry.score_for | 0)),
         score_against: Math.max(0, Math.min(99, entry.score_against | 0)),
+        points: Math.max(0, Math.min(99999, entry.points | 0)),
         mode: entry.mode || '1p',
         difficulty: (entry.difficulty || '').slice(0, 12),
       };
@@ -35,8 +36,8 @@
 
   async function top(limit = 10) {
     try {
-      const q = `select=name,team,score_for,score_against,difficulty,created_at` +
-                `&order=score_for.desc,created_at.desc&limit=${limit}`;
+      const q = `select=name,team,score_for,score_against,points,difficulty,created_at` +
+                `&order=points.desc,created_at.desc&limit=${limit}`;
       const res = await fetch(`${URL}/rest/v1/${TABLE}?${q}`, { headers });
       if (!res.ok) return null;
       return await res.json();
