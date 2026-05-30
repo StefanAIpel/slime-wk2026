@@ -6,7 +6,7 @@ the same screen, or **online against a friend**. Mobile-first, but plays great o
 desktop with WASD / arrow keys. Pure HTML5 canvas + vanilla JS, no build step.
 
 ## Play
-- **Online (deployed):** see the Netlify URL.
+- **Online (deployed):** https://slime-wk2026.netlify.app
 - **Local:** open `index.html` in your browser (double-click). Online mode needs internet (PeerJS).
 
 ## Modes
@@ -37,7 +37,7 @@ all sound in **Settings**.
 
 ## Tech
 - **Render/physics:** Canvas 2D, fixed 60 Hz timestep.
-- **Audio:** fully synthesized via Web Audio (no asset files).
+- **Audio:** background music + final-whistle from `assets/audio/` (extracted/compressed mp3); goal/win cheering synthesized via Web Audio.
 - **Online:** [PeerJS](https://peerjs.com) WebRTC, host-authoritative netcode.
 - **Leaderboard:** Supabase REST (anon key + RLS), table `slime_leaderboard`.
 - **UI:** modern Rubik typography; the canvas pitch, floodlights, crowd and goals stay.

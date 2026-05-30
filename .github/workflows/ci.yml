@@ -1,0 +1,24 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # Static site, no runtime deps. CI runs the deterministic, offline checks:
+      # syntax + the headless logic suite (brackettest). The Playwright browser
+      # tests (smoke/goal/wk/lb) need a browser + network (PeerJS broker, Supabase)
+      # and lbtest writes a real leaderboard row, so they're run manually, not in CI.
+      - name: Syntax check
+        run: npm run check
+      - name: Logic tests (headless, no browser)
+        run: npm run test:logic

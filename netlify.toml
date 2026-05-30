@@ -1,10 +1,35 @@
-# Statische site — geen build nodig.
+# Static site — no build for the runtime; tests/build are dev-only (see package.json).
 [build]
   publish = "."
   command = ""
 
+# Security + correctness headers (no CSP yet — needs testing against PeerJS/WebRTC + Supabase)
 [[headers]]
   for = "/*"
   [headers.values]
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+
+# Manifest must be served with the correct content type
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json"
+
+# Long-lived caching for static media/icons (safe: these rarely change)
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+# Always revalidate HTML and the service worker so new deploys show up immediately
+[[headers]]
+  for = "/*.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
