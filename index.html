@@ -40,14 +40,8 @@
         <button id="btn2p" class="btn mode">2 Players</button>
         <button id="btnOnline" class="btn mode">Online</button>
       </div>
-      <div class="len-label">Match length</div>
-      <div class="len-row" id="lenRow">
-        <button class="pill" data-mode="goals">Goals</button>
-        <button class="pill" data-min="1">1 min</button>
-        <button class="pill" data-min="2">2 min</button>
-        <button class="pill" data-min="4">4 min</button>
-        <button class="pill" data-min="8">8 min</button>
-      </div>
+      <div class="len-label">Match</div>
+      <div class="len-row" id="lenRow"></div>
       <div class="btn-row">
         <button id="btnSound" class="btn secondary small" aria-label="sound on/off">🔊</button>
         <button id="btnShare" class="btn secondary small">📤 Share</button>
@@ -156,29 +150,30 @@
     </div>
   </div>
 
-  <!-- in-game pause/quit button -->
+  <!-- in-game pause/quit + mute buttons -->
   <button id="quitBtn" aria-label="pause / menu">☰</button>
+  <button id="muteBtn" aria-label="sound on/off">🔊</button>
 
   <!-- ======================= TOUCH CONTROLS ======================= -->
   <div id="touch">
-    <div class="pad left" id="pad1">
+    <div class="pad" id="padMove1">
       <div class="tbtn" id="btnL">◀</div>
       <div class="tbtn" id="btnR">▶</div>
     </div>
-    <div class="pad right">
-      <div class="tbtn catch" id="btnC" aria-label="catch / hold ball">✊</div>
+    <div class="pad" id="padAct1">
+      <div class="tbtn catch" id="btnC" aria-label="catch / hold ball">🤲</div>
       <div class="tbtn jump" id="btnJ">▲</div>
     </div>
     <!-- player 2 (local 2P only) -->
-    <div class="pad right" id="pad2" style="display:none; bottom:104px;">
+    <div class="pad" id="pad2" style="display:none;">
       <div class="tbtn" id="btn2L">◀</div>
       <div class="tbtn" id="btn2R">▶</div>
-      <div class="tbtn catch" id="btn2C" aria-label="catch / hold ball">✊</div>
+      <div class="tbtn catch" id="btn2C" aria-label="catch / hold ball">🤲</div>
       <div class="tbtn jump" id="btn2J">▲</div>
     </div>
   </div>
 
-  <div id="playHint">Player 1: A/D + W (or arrows) · hold S / ↓ = catch ball · ESC or ☰ = pause</div>
+  <div id="playHint">Player 1: A/D + W (or arrows) · hold S / ↓ = catch · double-tap jump = higher · ESC or ☰ = pause</div>
 
   <!-- ======================= ROTATE HINT ======================= -->
   <div id="rotate">
