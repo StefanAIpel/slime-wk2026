@@ -10,11 +10,9 @@
     "test:logic": "node brackettest.mjs",
     "test:browser": "node smoketest.mjs && node goaltest.mjs && node wktest.mjs",
     "test:lb": "node lbtest.mjs",
-    "test": "npm run check && npm run test:logic",
-    "build": "esbuild src/main.js --bundle --minify --target=es2019 --outfile=game.js"
+    "test": "npm run check && npm run test:logic"
   },
   "devDependencies": {
-    "esbuild": "^0.25.0",
     "playwright": "^1.49.1"
   }
 }
