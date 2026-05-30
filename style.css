@@ -373,6 +373,21 @@ body.m2p #padAct1 { left: max(16px, env(safe-area-inset-left)); right: auto; bot
 .wk-opts .len-label { font-size: 9px; margin-top: 2px; }
 .wk-opts .len-row { gap: 5px; }
 .wk-opts .pill { padding: 5px 10px; font-size: 11px; }
+/* collapsible tournament options (closed by default so the bracket is visible) */
+.wk-opts-toggle {
+  font-family: var(--ui); font-weight: 700; font-size: 11px; color: var(--ink);
+  background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 999px;
+  padding: 6px 14px; cursor: pointer;
+}
+.wk-opts-toggle:hover { border-color: var(--oranje2); }
+.wk-opts-body { display: none; flex-direction: column; gap: 4px; align-items: center; margin-top: 4px; }
+.wk-opts-body.open { display: flex; }
+/* WC 2026 host-colours bar */
+.wk-bar { height: 4px; width: min(300px, 72%); margin: 0 auto 7px; border-radius: 3px;
+  background: linear-gradient(90deg,#e4002b 0 33%,#ffffff 33% 38%,#0b3d91 38% 71%,#ffffff 71% 76%,#00843d 76% 100%); }
+/* World Cup mode gets a subtly themed (USA/Mexico/Canada) backdrop + hero button */
+#wkScreen { background: radial-gradient(120% 90% at 50% 0%, rgba(11,61,145,.34) 0%, rgba(6,6,16,.9) 55%, rgba(0,132,61,.18) 100%); }
+.btn.hero.wc2026 { background: linear-gradient(180deg,#ffd585,#ff7a18); border-bottom-color:#9c4708; }
 /* World Cup 2026 branding on the tournament screen */
 .wk-host { font-weight: 800; letter-spacing: 1.5px; color: var(--oranje2); }
 .wk-venue { color: var(--ink); font-weight: 600; }
