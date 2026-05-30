@@ -809,7 +809,7 @@ function makeNet(){
     peer:null, conn:null, isHost:false, code:'',
     guestInput:{left:false,right:false,jump:false,down:false},
     connected:false, lostConnection:false,
-    _closed:false, _retryT:null, _sendT:0, _lastRecvT:0,
+    _closed:false, _retryT:null, _joinT:null, _retries:0, _sendT:0, _lastRecvT:0,
     host(onCode, onStatus, onStart){
       this.isHost=true;
       // reuse this device's code so you can host again later with the same code
@@ -819,8 +819,16 @@ function makeNet(){
       catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=>{ store.save('hostcode', this.code); onCode(this.code); });
       this.peer.on('error', err=>{
-        if (String(err).includes('unavailable')) { onStatus('Code taken, getting a new one...', true); this.code=randomCode(); this.peer.destroy(); this._retryT=setTimeout(()=>{ if(this._closed) return; this.host(onCode,onStatus,onStart); },300); }
-        else onStatus('Error: '+err, true);
+        // PeerJS reports a busy id as type 'unavailable-id' / message 'ID "..." is taken'
+        const taken = (err && err.type==='unavailable-id') || /is taken|unavailable/i.test(String((err&&err.message)||err));
+        if (taken) {
+          if ((this._retries=(this._retries||0)+1) > 6){ onStatus('Could not get a free code — please try again.', true); return; }
+          onStatus('Code taken, getting a new one…', true);
+          store.save('hostcode','');               // stop reusing the stale code on next launch
+          this.code = randomCode();
+          try{ this.peer.destroy(); }catch(_){}
+          this._retryT = setTimeout(()=>{ if(this._closed) return; this.host(onCode,onStatus,onStart); }, 300);
+        } else onStatus('Error: '+((err&&err.message)||err), true);
       });
       this.peer.on('connection', c=>{
         if (this.conn){ try{ c.close(); }catch(_){} return; }   // max. 1 tegenstander
@@ -836,13 +844,22 @@ function makeNet(){
       try { this.peer = new Peer({ debug:1 }); }
       catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=>{
-        onStatus('Connecting...', false);
+        onStatus('Connecting…', false);
         this.conn = this.peer.connect('SLWK'+code, { reliable:true });
-        this.conn.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Connected! Waiting for host...', false); });
+        // don't hang on "Connecting…" forever if the host isn't there
+        this._joinT = setTimeout(()=>{
+          if (this.connected || this._closed) return;
+          onStatus('No game found with code '+code+' — check it and try again.', true);
+          try{ this.conn&&this.conn.close(); }catch(_){}
+        }, 15000);
+        this.conn.on('open', ()=>{ clearTimeout(this._joinT); this.connected=true; this._lastRecvT=performance.now(); onStatus('Connected! Waiting for host…', false); });
         this.conn.on('data', d=>this._recv(d));
         this.conn.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Connection lost', true); });
       });
-      this.peer.on('error', err=> onStatus('Cannot connect: '+err, true));
+      this.peer.on('error', err=>{
+        if (err && err.type==='peer-unavailable'){ clearTimeout(this._joinT); onStatus('No game found with code '+code+' — check it and try again.', true); }
+        else onStatus('Cannot connect: '+((err&&err.message)||err), true);
+      });
       this._onStart = onStart;
     },
     _recv(d){
@@ -859,7 +876,7 @@ function makeNet(){
         p1:packEnt(G.p1), p2:packEnt(G.p2), ball:packBall(G.ball),
         score:G.score, screen:G.screen, winner:G.winner, cd:G.countdown, lastScorer:G.lastScorer, mt:G.matchTime, golden:G.golden });
     },
-    close(){ this._closed=true; clearTimeout(this._retryT); try{ this.conn&&this.conn.close(); this.peer&&this.peer.destroy(); }catch(e){} }
+    close(){ this._closed=true; clearTimeout(this._retryT); clearTimeout(this._joinT); try{ this.conn&&this.conn.close(); this.peer&&this.peer.destroy(); }catch(e){} }
   };
 }
 function randomCode(){ const a='ACDEFHJKLMNPRTUVWXY3479'; let s=''; for(let i=0;i<4;i++) s+=a[(Math.random()*a.length)|0]; return s; }
