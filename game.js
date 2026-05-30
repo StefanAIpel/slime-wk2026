@@ -11,26 +11,26 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-const W = 960, H = 600;              // logical resolution (bigger / more zoomed out)
+const W = 1056, H = 600;             // logical resolution (~10% wider field)
 canvas.width = W; canvas.height = H;
 ctx.imageSmoothingEnabled = false;
 
 const GROUND   = H - 52;             // ground level (y of the pitch surface)
 const CENTER   = W / 2;
-const SLIME_R  = 60;                 // slime radius (half circle) — smaller vs field = more zoomed out
+const SLIME_R  = 60;                 // slime radius (half circle)
 const BALL_R   = 13;
 const GOAL_H   = 172;                // goal mouth height
 const GOAL_D   = 46;                 // depth/width of the goal net
-const BAR_Y    = GROUND - GOAL_H;    // y van de lat
+const BAR_Y    = GROUND - GOAL_H;    // y of the crossbar
 const BAR_TH   = 8;
 
-// physics-afstemming (per 60fps tick)
-const SLIME_SPEED = 6.3;
+// physics tuning (per 60fps tick)
+const SLIME_SPEED = 6.93;            // ~10% faster
 const SLIME_JUMP  = 14.4;
 const SLIME_GRAV  = 0.72;
 const BALL_GRAV   = 0.34;
-const BALL_REST   = 0.86;            // demping bij muur/lat
-const BALL_MAX    = 22;              // snelheidslimiet
+const BALL_REST   = 0.86;            // wall/bar damping
+const BALL_MAX    = 22;              // speed limit
 
 /* ----------------------------------------------------------------------------
    1. Teams  (20-country pool; Netherlands featured/default).
@@ -54,8 +54,8 @@ const TEAMS = [
     flag:'linear-gradient(#000 33%,#dd0000 33% 66%,#ffce00 66%)' },
   { code:'POR', name:'Portugal',    color:'#c8102e', trim:'#0a5c2e', strength:86, stripes:['#006600','#006600','#ff0000'],
     flag:'linear-gradient(90deg,#006600 40%,#ff0000 40%)' },
-  { code:'ITA', name:'Italy',       color:'#1f7ae0', trim:'#ffffff', strength:83, stripes:['#009246','#ffffff','#ce2b37'],
-    flag:'linear-gradient(90deg,#009246 33%,#fff 33% 66%,#ce2b37 66%)' },
+  { code:'EGY', name:'Egypt',       color:'#d21034', trim:'#c8a45a', strength:78, stripes:['#ce1126','#ffffff','#000000'],
+    flag:'linear-gradient(#ce1126 33%,#fff 33% 66%,#000 66%)' },
   { code:'CRO', name:'Croatia',     color:'#d52b1e', trim:'#ffffff', strength:82, stripes:['#ff0000','#ffffff','#171796'],
     flag:'linear-gradient(#ff0000 50%,#171796 50%)' },
   { code:'MAR', name:'Morocco',     color:'#c1272d', trim:'#1f8f3a', strength:80, stripes:['#c1272d','#c1272d','#006233'],
@@ -82,10 +82,10 @@ const TEAMS = [
 const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 
 const AI_LEVELS = {
-  easy:     { label:'Easy',      speed:0.62, react:120, jump:0.018, predict:14, mistake:0.30 },
-  normal:   { label:'Normal',    speed:0.82, react:60,  jump:0.05,  predict:24, mistake:0.14 },
-  hard:     { label:'Hard',      speed:0.96, react:28,  jump:0.10,  predict:34, mistake:0.05 },
-  worldcup: { label:'World Cup', speed:1.06, react:10,  jump:0.16,  predict:46, mistake:0.0  },
+  easy:     { label:'Easy',      speed:0.50, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false },
+  normal:   { label:'Normal',    speed:0.78, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false },
+  hard:     { label:'Hard',      speed:1.00, react:22,  jump:0.12,  predict:38, mistake:0.04, smart:true  },
+  worldcup: { label:'World Cup', speed:1.18, react:6,   jump:0.22,  predict:58, mistake:0.0,  smart:true  },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -295,6 +295,8 @@ function makeSlime(side, team){
     squash:0,              // landing/jump animation
     hang:0, penalty:0,     // anti-goal-camping timer + penalty flash
     holding:false, holdT:0, catchCD:0,   // ball-catch (hold down) state
+    jumpWasDown:false, lastJumpFrame:-99, canDouble:false,   // double-tap = double jump
+    aiCatchT:0,                          // AI hold-ball timer
     input:{left:false,right:false,jump:false,down:false},
   };
 }
@@ -368,15 +370,22 @@ function updateSlime(s){
   if (s.catchCD>0) s.catchCD--;
   s.vx = (i.right?SLIME_SPEED:0) - (i.left?SLIME_SPEED:0);
   s.x += s.vx;
-  // half-veld begrenzing (klein gaatje bij de middenlijn)
-  if (s.side==='left')  s.x = clamp(s.x, SLIME_R*0.5, CENTER - 6);
-  else                  s.x = clamp(s.x, CENTER + 6, W - SLIME_R*0.5);
-  // springen
-  if (i.jump && s.onGround){ s.vy = -SLIME_JUMP; s.onGround=false; s.squash=-0.18; Audio.jump(); }
+  // full-field movement (you can chase the opponent to steal a held ball)
+  s.x = clamp(s.x, SLIME_R*0.5, W - SLIME_R*0.5);
+  // jumping — a quick double-tap gives one mid-air boost (double jump)
+  const edge = i.jump && !s.jumpWasDown;
+  s.jumpWasDown = i.jump;
+  if (edge){
+    if (s.onGround){
+      s.vy = -SLIME_JUMP; s.onGround=false; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
+    } else if (s.canDouble && (G.frame - s.lastJumpFrame) < 16){
+      s.vy = -SLIME_JUMP * 1.05; s.canDouble=false; s.squash=-0.20; Audio.jump();   // double-jump boost
+    }
+  }
   s.vy += SLIME_GRAV; s.y += s.vy;
   if (s.y >= GROUND){
     if (!s.onGround) s.squash = 0.22;
-    s.y = GROUND; s.vy = 0; s.onGround = true;
+    s.y = GROUND; s.vy = 0; s.onGround = true; s.canDouble=false;
   }
   s.squash *= 0.82;
   // ogen volgen de bal
@@ -413,8 +422,8 @@ function reflectOffSlime(b, s){
   return false;
 }
 
-/* ---- Ball catch/hold (classic slime: hold DOWN to clamp the ball) ---- */
-const HOLD_MAX = 150;   // max hold ~2.5s, then auto-release
+/* ---- Ball catch/hold (classic slime: hold the catch button to clamp the ball) ---- */
+const HOLD_MAX = 180;   // max hold ~3s, then auto-release
 function tryCatch(s){
   const b = G.ball;
   if (b.held || !s.input.down || s.catchCD>0) return false;
@@ -425,11 +434,19 @@ function tryCatch(s){
   }
   return false;
 }
+function attackDir(s){ return s.side==='left' ? 1 : -1; }   // direction toward the opponent's goal
 function holdBall(s){
   const b = G.ball;
+  const other = (s===G.p1)?G.p2:G.p1;
+  // a clamped ball can be STOLEN: jump into the holder to knock it loose
+  if (other && Math.abs(s.x-other.x) < SLIME_R*1.0 && !other.onGround){
+    b.held=null; s.holding=false; s.catchCD=14;
+    b.vx=(Math.random()-0.5)*4; b.vy=-5; b.spin=0; spawnDust(b.x,b.y,8,'#ffffff');
+    return;
+  }
   if (!s.input.down || s.holdT>HOLD_MAX || G.screen!==SCREEN.PLAY){ releaseBall(s); return; }
   s.holdT++;
-  const dir = s.side==='left'?1:-1;                 // perch on the dome, slightly forward
+  const dir = attackDir(s);                          // perch on the dome, slightly forward
   b.x = clamp(s.x + dir*6, BALL_R, W-BALL_R);
   b.y = s.y - SLIME_R - BALL_R + 4;
   b.vx = s.vx; b.vy = s.vy; b.spin += 0.04;
@@ -524,26 +541,40 @@ function effDiff(){ return (G.wkMode && G.wk) ? G.wk.diffs[G.wk.round] : setting
 function computeAI(s){
   const p = AI_LEVELS[effDiff()] || AI_LEVELS.normal;
   const b = G.ball;
-  const onMySide = b.x > CENTER - 30;
+  const myGoalX = W*0.80;                              // AI defends the right goal
+  const oppHolds = b.held && b.held!==s;
   aiState.reactT--;
   if (aiState.reactT <= 0){
     aiState.reactT = (Math.random()*p.react)|0;
-    const pred = predictBallX(p.predict);
-    let tx = onMySide ? pred : (W*0.72);
-    tx += (Math.random()-0.5) * (p.mistake*260);
-    aiState.targetX = clamp(tx, CENTER+10, W-SLIME_R*0.5);
+    let tx;
+    if (oppHolds) tx = b.held.x;                       // chase the holder to steal
+    else {
+      tx = predictBallX(p.predict);
+      if (b.x < CENTER-60 && b.vx<=0) tx = tx*0.4 + myGoalX*0.6;   // ball far away -> hold near goal
+    }
+    tx += (Math.random()-0.5) * (p.mistake*300);
+    aiState.targetX = clamp(tx, SLIME_R*0.5, W-SLIME_R*0.5);
   }
-  const inp = { left:false, right:false, jump:false };
+  const inp = { left:false, right:false, jump:false, down:false };
   const dead = 10;
   if (s.x < aiState.targetX - dead) inp.right = true;
   else if (s.x > aiState.targetX + dead) inp.left = true;
 
-  // springen: bal boven en binnen bereik
   const horiz = Math.abs(b.x - s.x);
   const ballAbove = b.y < s.y - 70;
-  const wantClear = onMySide && b.x > s.x - 30 && b.y < GROUND-40;
-  if (s.onGround && ballAbove && horiz < SLIME_R+46 && b.vy > -3 && Math.random() < (p.jump+0.04)) inp.jump = true;
-  if (s.onGround && wantClear && horiz < SLIME_R+10 && Math.random() < p.jump) inp.jump = true;
+
+  // smart levels: occasionally CLAMP the ball, then throw it toward the opponent's goal
+  if (p.smart){
+    if (s.aiCatchT<=0 && !b.held && s.catchCD<=0 && horiz<SLIME_R && b.y>s.y-SLIME_R-BALL_R-24 && b.y<=s.y+2 && Math.random()<0.05)
+      s.aiCatchT = 24 + (Math.random()*46|0);
+    if (s.aiCatchT>0 && (s.holding || (!b.held && s.catchCD<=0))){ inp.down=true; s.aiCatchT--; }
+    else s.aiCatchT = 0;
+  }
+
+  // jump to reach the ball; smart levels double-jump (air toggle) for very high balls
+  if (s.onGround && ballAbove && horiz < SLIME_R+50 && b.vy > -3 && Math.random() < (p.jump+0.05)) inp.jump = true;
+  if (s.onGround && oppHolds && Math.abs(s.x-b.held.x) < SLIME_R*1.1 && Math.random() < p.jump+0.1) inp.jump = true;  // jump in to steal
+  if (p.smart && !s.onGround && s.canDouble && ballAbove && b.y < s.y-150 && horiz < SLIME_R+50) inp.jump = !!(G.frame & 1);
   s.input = inp;
 }
 
@@ -555,8 +586,17 @@ function resetPositions(){
   G.p2.x = W*0.75; G.p2.y=GROUND; G.p2.vx=G.p2.vy=0; G.p2.onGround=true;
   G.p1.holding=G.p2.holding=false; G.p1.holdT=G.p2.holdT=0; G.p1.catchCD=G.p2.catchCD=0;
   G.ball = makeBall();
-  // ball goes toward the player who was just scored on
-  G.ball.x = G.lastScorer===0 ? W*0.32 : W*0.68;
+  // the team that CONCEDED kicks off: drop the ball on their side (lastScorer 0 = left scored -> ball to right)
+  G.ball.x = G.lastScorer===0 ? W*0.68 : W*0.32;
+}
+// keep the two slimes from overlapping now that they share the whole pitch
+function separateSlimes(){
+  const a=G.p1, b=G.p2, min=SLIME_R*1.18, dx=b.x-a.x, gap=Math.abs(dx);
+  if (gap < min && gap > 0.0001){
+    const push=(min-gap)/2, dir=dx>0?1:-1;
+    a.x=clamp(a.x-dir*push, SLIME_R*0.5, W-SLIME_R*0.5);
+    b.x=clamp(b.x+dir*push, SLIME_R*0.5, W-SLIME_R*0.5);
+  }
 }
 /* ---- Menu attract mode (two CPU slimes knock the ball about; no scoring) ---- */
 function startAttract(){
@@ -703,6 +743,7 @@ function tick(){
   if (G.screen===SCREEN.PLAY){
     assignInputs(false);
     updateSlime(G.p1); updateSlime(G.p2);
+    separateSlimes();
     updateBall();
     if (G.screen===SCREEN.PLAY){ updateMatchTimer(); updateAntiCamp(); }   // updateBall kan al scoren
     sendStateMaybe();
@@ -1132,6 +1173,7 @@ function updateTouchVisibility(){
   const inGame = (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL) && !G.paused;
   $('touch').classList.toggle('show', IS_TOUCH && inGame);
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
+  document.body.classList.toggle('m2p', G.mode==='2p');
   $('playHint').style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
   $('quitBtn').classList.toggle('show', inGame);
   $('muteBtn').classList.toggle('show', inGame);
@@ -1158,26 +1200,29 @@ function buildTeamGrid(){
   });
 }
 function pickTeam(t,el){
+  if (el && el.classList.contains('taken')) return;        // already taken by player 1 (2P)
   Audio.click();
-  if (wkPending){ wkPending=false; setupWK(t); return; }   // WK-toernooi: jouw land gekozen
-  if (G.mode==='guest' && guestPickSent) return;     // niet 2x sturen (touch double-tap)
+  if (wkPending){ wkPending=false; setupWK(t); return; }   // World Cup: your country chosen
+  if (G.mode==='guest' && guestPickSent) return;     // don't send twice (touch double-tap)
   document.querySelectorAll('.team').forEach(e=>e.classList.remove('sel'));
   el.classList.add('sel');
   if (G.mode==='guest'){ pickP2=t; guestPickSent=true; sendGuestTeamAndWait(); return; }
   if (pickStage===0){
     pickP1=t;
     if (G.mode==='1p'){
-      // AI kiest willekeurig ander team
+      // AI picks a random different team
       const others=TEAMS.filter(x=>x!==t); pickP2=others[(Math.random()*others.length)|0];
       launchLocal();
     } else if (G.mode==='host'){
-      // host kiest eigen team, gast kiest later
+      // host picks own team, guest picks later
       pickP2=null; waitForGuestTeam();
-    } else { // 2p
+    } else { // 2p — player 1 done; lock that team so player 2 can't pick the same one
       pickStage=1; $('pickLabel').innerHTML='Player <b>2</b> (right): pick your country';
-      setTimeout(()=>document.querySelectorAll('.team').forEach(e=>e.classList.remove('sel')),120);
+      el.classList.add('taken');
+      setTimeout(()=>document.querySelectorAll('.team').forEach(e=>{ if(!e.classList.contains('taken')) e.classList.remove('sel'); }),120);
     }
-  } else { // 2p tweede keuze
+  } else { // 2p second pick
+    if (t===pickP1) return;                                // same team not allowed
     pickP2=t; launchLocal();
   }
 }
@@ -1261,18 +1306,18 @@ function wkBracketHTML(){
   for (let r=0;r<4;r++){
     const round=wk.rounds[r], n=round?round.length:WK_COUNTS[r];
     const nowCol=(r===wk.round && !wk.champion);
-    let matches='';
+    let cells='';
     for (let i=0;i<n;i++){
       const m=round?round[i]:null;
-      matches+=wkMatchHTML(m, nowCol && m && m.user && !m.played);
+      cells+=`<div class="bk-cell">${wkMatchHTML(m, nowCol && m && m.user && !m.played)}</div>`;   // cell keeps later rounds centred on their feeders
     }
-    cols+=`<div class="bk-col"><div class="bk-head">${WK_HEAD[r]}</div>${matches}</div>`;
+    cols+=`<div class="bk-col"><div class="bk-head">${WK_HEAD[r]}</div>${cells}</div>`;
   }
   if (wk.champion){
     const c=wk.champion;
-    cols+=`<div class="bk-col"><div class="bk-head">🏆</div>`+
+    cols+=`<div class="bk-col"><div class="bk-head">🏆</div><div class="bk-cell">`+
       `<div class="bk-match user"><div class="bk-team win${c===wk.team?' you':''}">`+
-      `<span class="flag" style="background:${c.flag}"></span><span class="nm">${escapeHtml(c.name)}</span></div></div></div>`;
+      `<span class="flag" style="background:${c.flag}"></span><span class="nm">${escapeHtml(c.name)}</span></div></div></div></div>`;
   }
   return `<div class="bracket">${cols}</div>`;
 }
@@ -1280,11 +1325,13 @@ function wkBracketHTML(){
 function wkAtStart(){ return G.wk && G.wk.round===0 && !G.wk.champion && G.wk.rounds[0] && !G.wk.rounds[0].some(m=>m.played); }
 function wkOptsHTML(){
   const wk=G.wk;
-  const lens=[1,2,3,4].map(n=>`<button class="pill${wk.min===n?' active':''}" data-min="${n}">${n} min</button>`).join('');
-  const diffs=[['rising','Rising'],['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','WC']]
+  const lens=[1,2,3,4].map(n=>`<button class="pill${wk.min===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
+  // ascending difficulty, with Rising (a R16->final ramp) last so it's clearly not "easiest"
+  const diffs=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','WC'],['rising','Rising ↑']]
     .map(([k,l])=>`<button class="pill${wk.diffMode===k?' active':''}" data-d="${k}">${l}</button>`).join('');
-  return `<div class="len-label">Match length</div><div class="len-row" id="wkLenRow">${lens}</div>`+
-         `<div class="len-label">Difficulty</div><div class="len-row" id="wkDiffRow">${diffs}</div>`;
+  return `<div class="len-label">Length · Difficulty (Rising ramps up each round)</div>`+
+         `<div class="len-row" id="wkLenRow">${lens}</div>`+
+         `<div class="len-row" id="wkDiffRow">${diffs}</div>`;
 }
 function wireWkOpts(){
   const lr=$('wkLenRow'), dr=$('wkDiffRow'); if(!lr||!dr) return;

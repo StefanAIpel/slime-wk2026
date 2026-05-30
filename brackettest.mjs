@@ -35,7 +35,7 @@ const document = {
   getElementById:getEl, createElement:()=>makeEl('new'),
   querySelector:()=>getEl('menuScreen'),
   querySelectorAll:sel=> sel==='.overlay' ? Object.values(els).filter(e=>/Screen$/.test(e.id)) : [],
-  addEventListener(){}, removeEventListener(){} };
+  addEventListener(){}, removeEventListener(){}, body: makeEl('body') };
 const sandbox = {
   document, console, location:{ search:'', pathname:'/', origin:'http://x' },
   localStorage:(()=>{ const m={}; return { getItem:k=>k in m?m[k]:null, setItem:(k,v)=>{m[k]=String(v);}, removeItem:k=>{delete m[k];} }; })(),
@@ -48,7 +48,7 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(new URL('./game.js', import.meta.url), 'utf8'), sandbox);
 // top-level const/function bindings live in the context's lexical scope; surface them
-vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, tick, render, go1p, pickTeam, score, openSettings, showLeaderboard, updateBall, GROUND, SLIME_R, BALL_R, renderMenuPills, WK_VENUES };', sandbox);
+vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, tick, render, go1p, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES };', sandbox);
 
 const T = sandbox.__TEST;
 const { G, TEAMS, SCREEN, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner } = T;
@@ -119,7 +119,7 @@ try {
   G.wkMode = false; G.wk = null; G.golden = false; G.mode = '1p';
   G.screen = SCREEN.MENU; G.attract = true;
   for (let i=0;i<400;i++){ T.tick(); }
-  ok(G.ball.x>=0 && G.ball.x<=960 && G.ball.y<=600, 'attract ball stays on the pitch');
+  ok(G.ball.x>=0 && G.ball.x<=1056 && G.ball.y<=600, 'attract ball stays on the pitch');
   T.render();                                       // draw menu frame with stubbed canvas
 
   // start a 1P match and run the countdown out to play
@@ -173,6 +173,32 @@ ok(kit('BEL').startsWith('#e2'), 'Belgium home kit is red (not black)');
 ok(kit('GER')==='#edeef2', 'Germany home kit is white');
 ok(kit('POR')==='#c8102e', 'Portugal home kit is red');
 ok(kit('JPN')==='#1f4fb0', 'Japan home kit is blue');
+
+// ---- 8. new gameplay rules: real WC teams, kickoff, full-field, steal -------
+console.log('Gameplay rules:');
+ok(!TEAMS.some(t=>t.code==='ITA') && TEAMS.some(t=>t.code==='EGY'), 'Italy replaced by a real WC2026 team (Egypt)');
+ok(TEAMS.length===20, 'pool still has 20 teams');
+
+// kickoff: the team that conceded restarts (ball on their side)
+G.wkMode=false; G.wk=null; G.mode='1p'; G.screen=SCREEN.PLAY;
+G.lastScorer=0; T.resetPositions();                 // left scored -> right kicks off (ball right of centre)
+ok(G.ball.x > T.CENTER, 'conceding side (right) kicks off after the left scores');
+G.lastScorer=1; T.resetPositions();
+ok(G.ball.x < T.CENTER, 'conceding side (left) kicks off after the right scores');
+
+// full-field movement: the left slime can cross the halfway line
+G.p1.x=T.CENTER; G.p1.input={left:false,right:true,jump:false,down:false};
+for (let i=0;i<40;i++) T.updateSlime(G.p1);
+ok(G.p1.x > T.CENTER + 50, 'a slime can now run across the whole pitch (past halfway)');
+ok(G.p1.x <= T.W, 'slime stays inside the right wall');
+
+// steal: jumping into a holder knocks the clamped ball loose
+G.screen=SCREEN.PLAY; G.p1.x=400; G.p1.y=T.GROUND; G.p1.onGround=true; G.p1.holding=false; G.p1.catchCD=0;
+G.ball.held=null; G.ball.x=400; G.ball.y=T.GROUND-T.SLIME_R-2; G.ball.vx=G.ball.vy=0;
+G.p1.input={left:false,right:false,jump:false,down:true}; T.updateBall();   // p1 clamps it
+G.p2.x=415; G.p2.y=T.GROUND-30; G.p2.onGround=false;                        // p2 jumps into p1
+T.updateBall();
+ok(G.ball.held===null, 'an opponent jumping into the holder knocks the ball loose (steal)');
 
 console.log('\n' + (fails ? ('FAILED (' + fails + ')') : 'ALL TESTS PASSED'));
 process.exit(fails ? 1 : 0);

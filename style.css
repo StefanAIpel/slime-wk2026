@@ -43,8 +43,8 @@ html, body {
 #game {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  width:  min(100vw, calc((100vh - var(--padb)) * 960 / 600));
-  height: min(calc(100vh - var(--padb)), calc(100vw * 600 / 960));
+  width:  min(100vw, calc((100vh - var(--padb)) * 1056 / 600));
+  height: min(calc(100vh - var(--padb)), calc(100vw * 600 / 1056));
   background: #0b1b2b;
   box-shadow: 0 0 0 3px #000, 0 0 40px rgba(255,122,24,.25), 0 18px 60px rgba(0,0,0,.6);
   border-radius: 4px;
@@ -240,24 +240,35 @@ html, body {
   pointer-events: none; line-height: 1.7;
 }
 
-/* ---- Touch controls ---- */
+/* ---- Touch controls (corner overlay; player 1 spans both corners, 2P splits the screen) ---- */
 #touch { position: fixed; inset: 0; z-index: 12; display: none; pointer-events: none; }
 #touch.show { display: block; }
-.pad { position: absolute; bottom: 18px; pointer-events: auto; display: flex; gap: 12px; }
-.pad.left  { left: 18px; }
-.pad.right { right: 18px; }
+.pad {
+  position: absolute; bottom: max(16px, env(safe-area-inset-bottom));
+  pointer-events: auto; display: flex; gap: 14px;
+}
+#padMove1 { left: max(16px, env(safe-area-inset-left)); }
+#padAct1  { right: max(16px, env(safe-area-inset-right)); }
+#pad2     { right: max(16px, env(safe-area-inset-right)); }
+/* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
+body.m2p #padAct1 { left: max(16px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 74px; height: 74px; border-radius: 50%;
+  width: 60px; height: 60px; border-radius: 50%;
   background: rgba(255,122,24,.20);
   border: 3px solid rgba(255,174,59,.7);
-  color: var(--ink); font-size: 24px;
+  color: var(--ink); font-size: 22px;
   display: flex; align-items: center; justify-content: center;
-  touch-action: none;
+  touch-action: none; opacity: .92;
 }
 .tbtn:active { background: rgba(255,122,24,.5); }
 .tbtn.jump { background: rgba(52,209,122,.22); border-color: rgba(52,209,122,.7); }
-.tbtn.catch { background: rgba(124,192,238,.22); border-color: rgba(124,192,238,.75); font-size: 30px; }
+.tbtn.catch { background: rgba(124,192,238,.22); border-color: rgba(124,192,238,.75); }
 .tbtn.catch:active { background: rgba(124,192,238,.55); }
+/* a bit bigger on larger touch screens (tablets), still a tidy corner overlay */
+@media (pointer: coarse) and (min-width: 760px){
+  .tbtn { width: 76px; height: 76px; font-size: 28px; }
+  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 100px); }
+}
 
 /* ---- Rotate device hint (zichtbaarheid via JS: alleen tijdens het spelen) ---- */
 #rotate {
@@ -326,8 +337,9 @@ html, body {
   padding: 4px 2px 10px;
 }
 .bracket { display: flex; gap: 12px; align-items: stretch; min-width: max-content; margin: 0 auto; }
-.bk-col { display: flex; flex-direction: column; justify-content: space-around; gap: 8px; min-width: 138px; }
-.bk-head { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); text-align: center; font-weight: 700; margin-bottom: 2px; }
+.bk-col { display: flex; flex-direction: column; min-width: 150px; }
+.bk-cell { flex: 1; display: flex; flex-direction: column; justify-content: center; }  /* centres each round on its two feeders */
+.bk-head { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); text-align: center; font-weight: 700; margin-bottom: 4px; }
 .bk-match { background: #06060f; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
 .bk-match.user { border-color: var(--oranje); }
 .bk-match.now  { box-shadow: 0 0 0 2px var(--oranje), 0 0 16px rgba(255,122,24,.5); }
@@ -342,8 +354,11 @@ html, body {
 .bk-team.you .nm { color: var(--oranje2); font-weight: 800; }
 .bk-tbd { color: #55557a; }
 .wk-champ { font-size: 15px; color: var(--oranje2); font-weight: 800; margin-top: 8px; }
-.wk-opts { display: flex; flex-direction: column; gap: 4px; align-items: center; margin: -2px 0 2px; }
+.wk-opts { display: flex; flex-direction: column; gap: 3px; align-items: center; margin: -2px 0 2px; }
 .wk-opts:empty { display: none; }
+.wk-opts .len-label { font-size: 9px; margin-top: 2px; }
+.wk-opts .len-row { gap: 5px; }
+.wk-opts .pill { padding: 5px 10px; font-size: 11px; }
 /* World Cup 2026 branding on the tournament screen */
 .wk-host { font-weight: 800; letter-spacing: 1.5px; color: var(--oranje2); }
 .wk-venue { color: var(--ink); font-weight: 600; }
@@ -373,20 +388,3 @@ a { color: var(--oranje2); }
 
 /* leaderboard date/time line */
 .lb-row .when { display: block; font-size: 8px; color: var(--muted); margin-top: 2px; }
-
-/* ---- Touch controls: phones keep a compact corner overlay; tablets get big pads BELOW the field ---- */
-@media (pointer: coarse){
-  .tbtn { width: 72px; height: 72px; font-size: 26px; }
-  .tbtn.catch { font-size: 30px; }
-  .pad { bottom: max(18px, env(safe-area-inset-bottom)); }
-}
-@media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
-  :root { --padb: 172px; }                       /* reserve a control strip under the field */
-  #stage { align-items: flex-start; padding-top: max(8px, env(safe-area-inset-top)); }
-  .tbtn { width: 112px; height: 112px; font-size: 42px; border-width: 4px; }
-  .tbtn.catch { font-size: 46px; }
-  .pad { bottom: max(26px, env(safe-area-inset-bottom)); gap: 18px; }
-  .pad.left  { left: 42px; }
-  .pad.right { right: 42px; }
-  #pad2 { bottom: 168px; }
-}
