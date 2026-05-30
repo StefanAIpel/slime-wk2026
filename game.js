@@ -907,39 +907,57 @@ function render(){
 }
 
 function drawStadium(){
-  // avondlucht
+  // night sky
   const sky = ctx.createLinearGradient(0,0,0,GROUND);
-  sky.addColorStop(0,'#0d1b3a'); sky.addColorStop(0.6,'#1d2e5e'); sky.addColorStop(1,'#34406e');
+  sky.addColorStop(0,'#0a1430'); sky.addColorStop(0.55,'#152554'); sky.addColorStop(1,'#26345f');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND+6);
 
-  // tribunes
-  ctx.fillStyle='#11162e'; ctx.fillRect(0,60,W,GROUND-60);
-  // crowd dots
+  // subtle WC 2026 colour sweeps across the upper stands (USA/Mexico/Canada: red · blue · green)
+  const sweep=(yC, rad, col, a)=>{ ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle=col; ctx.lineWidth=46;
+    ctx.beginPath(); ctx.ellipse(CENTER, yC, W*0.62, rad, 0, Math.PI, 0); ctx.stroke(); ctx.restore(); };
+  sweep(GROUND*0.30, 150, '#e4002b', 0.06);    // red
+  sweep(GROUND*0.42, 120, '#1f6fff', 0.07);    // blue
+  sweep(GROUND*0.54,  96, '#00a64a', 0.06);    // green
+
+  // curved stadium bowl: two tiers + a lit front rail (front-on bowl => "smile" curves)
+  const band=(yEdge,yMid,h,col)=>{ ctx.fillStyle=col; ctx.beginPath();
+    ctx.moveTo(0,yEdge); ctx.quadraticCurveTo(CENTER,yMid,W,yEdge);
+    ctx.lineTo(W,yEdge+h); ctx.quadraticCurveTo(CENTER,yMid+h,0,yEdge+h); ctx.closePath(); ctx.fill(); };
+  band(70, 150, GROUND*0.34, '#0e1838');                 // upper tier
+  band(GROUND*0.52, GROUND*0.60, GROUND*0.40, '#0b1430'); // lower tier (closer/darker)
+
+  // crowd: blue stands twinkling with orange (NL) + red/green/white (WC) accents
   const t=G.frame*0.05;
-  const cols=['#ff7a18','#ffae3b','#ffffff','#34d17a','#7cc0ee','#ff5470'];
+  const cols=['#26407e','#2f4a8c','#ff7a18','#34d17a','#ff5470','#ffffff'];   // 0,1 blue · 2 NL orange · 3 green · 4 red · 5 white
   for (const s of crowdSeed){
-    const cx=s.x*W, cy=70 + s.y*(GROUND-150);
-    const tw=0.7+0.3*Math.sin(t+s.f);
+    const cx=s.x*W, cy=72 + s.y*(GROUND-150);
+    const tw=0.55+0.45*Math.sin(t+s.f);
     ctx.globalAlpha=tw; ctx.fillStyle=cols[s.c]; ctx.fillRect(cx,cy,4,4);
   }
   ctx.globalAlpha=1;
 
-  // floodlights
+  // lit front rail (bright curved line with a soft glow)
+  ctx.save(); ctx.strokeStyle='rgba(150,200,255,0.85)'; ctx.lineWidth=2.5; ctx.shadowColor='rgba(120,180,255,0.9)'; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.moveTo(0,GROUND*0.50); ctx.quadraticCurveTo(CENTER,GROUND*0.585,W,GROUND*0.50); ctx.stroke(); ctx.restore();
+
+  // floodlights (stronger glow cones + pylons)
   for (const fx of [W*0.12, W*0.88]){
-    const g=ctx.createRadialGradient(fx,30,4,fx,30,160);
-    g.addColorStop(0,'rgba(255,255,220,0.5)'); g.addColorStop(1,'rgba(255,255,220,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(fx,30,160,0,7); ctx.fill();
-    ctx.fillStyle='#cfcfe0'; ctx.fillRect(fx-22,8,44,10);
-    ctx.fillStyle='#2a2a44'; ctx.fillRect(fx-3,18,6,46);
+    const g=ctx.createRadialGradient(fx,28,4,fx,28,210);
+    g.addColorStop(0,'rgba(220,235,255,0.55)'); g.addColorStop(0.5,'rgba(180,210,255,0.14)'); g.addColorStop(1,'rgba(180,210,255,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(fx,28,210,0,7); ctx.fill();
+    ctx.fillStyle='#dfe6f5'; ctx.fillRect(fx-24,6,48,11);
+    ctx.fillStyle='#2a2a44'; ctx.fillRect(fx-3,16,6,50);
   }
 
   // scrolling banner (tiled by measured width so the loop is seamless in any font)
   ctx.fillStyle='#06060f'; ctx.fillRect(0,GROUND-22,W,22);
-  ctx.fillStyle='#ff7a18'; ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
+  ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   const msg='WORLD CUP SLIME   •   KNOCKOUT 2026   •   USA · MEXICO · CANADA   •   ';
   const mw=ctx.measureText(msg).width || 1;
   const scroll=(G.frame*1.1)%mw;
-  for (let x=-scroll; x<W; x+=mw) ctx.fillText(msg, x, GROUND-7);
+  // tint each repeat with rotating WC + orange accents
+  const bcols=['#ff7a18','#1f6fff','#e4002b','#00a64a']; let bi=0;
+  for (let x=-scroll; x<W; x+=mw){ ctx.fillStyle=bcols[bi++%bcols.length]; ctx.fillText(msg, x, GROUND-7); }
 }
 
 function drawPitch(){
