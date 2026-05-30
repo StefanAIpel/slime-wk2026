@@ -1860,8 +1860,7 @@ showOverlay('menuScreen');
 updateTouchVisibility();
 addEventListener('resize', updateRotateHint);
 addEventListener('orientationchange', ()=>setTimeout(updateRotateHint, 200));
-setTimeout(()=>{ try{ initFromURL(); }catch(e){} }, 0);   // invite link ?j=CODE (PeerJS lazy-loads)
-initFromURL();   // invite link ?j=CODE
+initFromURL();   // invite link ?j=CODE (PeerJS lazy-loads on demand)
 
 // expose for debugging / tests — only on localhost or with ?debug=1 (keeps prod clean)
 if (location.hostname==='localhost' || location.hostname==='127.0.0.1' || /[?&]debug=1\b/.test(location.search)){
