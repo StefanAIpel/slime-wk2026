@@ -1,6 +1,7 @@
 import { chromium } from 'playwright';
 
-const URL = new URL('./index.html', import.meta.url).href;
+// debug=1 exposes window.__G for the test harness (gated off in production)
+const PAGE_URL = new globalThis.URL('./index.html', import.meta.url).href + '?debug=1';
 const errors = [];
 const logs = [];
 
@@ -10,7 +11,7 @@ const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
 page.on('console', m => { logs.push(`[${m.type()}] ${m.text()}`); if (m.type()==='error') errors.push('console: '+m.text()); });
 page.on('pageerror', e => errors.push('pageerror: '+e.message));
 
-await page.goto(URL, { waitUntil: 'load' });
+await page.goto(PAGE_URL, { waitUntil: 'load' });
 await page.waitForTimeout(1500);
 await page.screenshot({ path: 'shot-1-menu.png' });
 

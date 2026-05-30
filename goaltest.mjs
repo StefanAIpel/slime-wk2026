@@ -1,11 +1,11 @@
 import { chromium } from 'playwright';
-const URL = new URL('./index.html', import.meta.url).href;
+const PAGE_URL = new globalThis.URL('./index.html', import.meta.url).href + '?debug=1';
 const errors = [];
 const browser = await chromium.launch({ headless: true, channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
 page.on('pageerror', e => errors.push('pageerror: '+e.message));
 page.on('console', m => { if (m.type()==='error') errors.push('console: '+m.text()); });
-await page.goto(URL, { waitUntil:'load' });
+await page.goto(PAGE_URL, { waitUntil:'load' });
 await page.waitForTimeout(600);
 await page.click('#btn1p');
 await page.waitForTimeout(300);
