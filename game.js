@@ -223,10 +223,11 @@ const keys = {};
 const blockKeys = new Set([' ','ArrowUp','ArrowDown','ArrowLeft','ArrowRight']);
 addEventListener('keydown', e => {
   keys[e.key.toLowerCase()] = true;
-  if (blockKeys.has(e.key)) e.preventDefault();
+  if (e.code) keys[e.code.toLowerCase()] = true;            // also track ShiftLeft/ShiftRight/Space by code
+  if (blockKeys.has(e.key) || e.code==='Space') e.preventDefault();
   if (e.key === 'Escape') onEscape();
 });
-addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; });
+addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; if (e.code) keys[e.code.toLowerCase()] = false; });
 
 // touch-input flags (D / D2 = catch/hold-ball button)
 const touch = { L:false, R:false, J:false, D:false, L2:false, R2:false, J2:false, D2:false };
@@ -267,20 +268,20 @@ function clearPointer(pid){ const prev = activePointers.get(pid); if (prev) setB
 
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
 
-// read keyset -> {left,right,jump,down}  (down = catch/hold the ball)
-function wasdInput(){ return { left: !!keys['a'], right: !!keys['d'], jump: !!keys['w'], down: !!keys['s'] }; }
-function arrowsInput(){ return { left: !!keys['arrowleft'], right: !!keys['arrowright'], jump: !!keys['arrowup'] || !!keys[' '], down: !!keys['arrowdown'] }; }
-// primary human (1P / online): everything together + touchpad 1
+// read keyset -> {left,right,jump,down}.  Hold ball: P1 = Left Shift / S, P2 = Space / Right Shift / ↓
+function wasdInput(){ return { left: !!keys['a'], right: !!keys['d'], jump: !!keys['w'], down: !!keys['s']||!!keys['shiftleft'] }; }
+function arrowsInput(){ return { left: !!keys['arrowleft'], right: !!keys['arrowright'], jump: !!keys['arrowup'], down: !!keys['arrowdown']||!!keys['space']||!!keys['shiftright'] }; }
+// primary human (1P / online): either hand set works; hold ball = Shift / Space / S / ↓
 function humanInput(){
   return {
     left:  !!keys['a'] || !!keys['arrowleft']  || touch.L,
     right: !!keys['d'] || !!keys['arrowright'] || touch.R,
-    jump:  !!keys['w'] || !!keys['arrowup'] || !!keys[' '] || touch.J,
-    down:  !!keys['s'] || !!keys['arrowdown'] || touch.D,
+    jump:  !!keys['w'] || !!keys['arrowup'] || touch.J,
+    down:  !!keys['s'] || !!keys['arrowdown'] || !!keys['shiftleft'] || !!keys['shiftright'] || !!keys['space'] || touch.D,
   };
 }
-function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2, down: !!keys['arrowdown']||touch.D2 }; }
-function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J, down: !!keys['s']||touch.D }; }
+function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2, down: !!keys['arrowdown']||!!keys['space']||!!keys['shiftright']||touch.D2 }; }
+function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J, down: !!keys['s']||!!keys['shiftleft']||touch.D }; }
 
 /* ----------------------------------------------------------------------------
    5. Entities
@@ -809,11 +810,12 @@ function makeNet(){
     _closed:false, _retryT:null, _sendT:0, _lastRecvT:0,
     host(onCode, onStatus, onStart){
       this.isHost=true;
-      const code = randomCode();
+      // reuse this device's code so you can host again later with the same code
+      const code = this.code || store.load('hostcode', null) || randomCode();
       this.code = code;
       try { this.peer = new Peer('SLWK'+code, { debug:1 }); }
       catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
-      this.peer.on('open', ()=> onCode(code));
+      this.peer.on('open', ()=>{ store.save('hostcode', this.code); onCode(this.code); });
       this.peer.on('error', err=>{
         if (String(err).includes('unavailable')) { onStatus('Code taken, getting a new one...', true); this.code=randomCode(); this.peer.destroy(); this._retryT=setTimeout(()=>{ if(this._closed) return; this.host(onCode,onStatus,onStart); },300); }
         else onStatus('Error: '+err, true);
@@ -1174,7 +1176,11 @@ function updateTouchVisibility(){
   $('touch').classList.toggle('show', IS_TOUCH && inGame);
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
   document.body.classList.toggle('m2p', G.mode==='2p');
-  $('playHint').style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
+  const hint = $('playHint');
+  hint.innerHTML = (G.mode==='2p')
+    ? `<b>P1</b> A/D move · W jump · <b>Shift</b> hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · <b>Space</b> hold ball &nbsp;·&nbsp; ESC = pause`
+    : `Move <b>A/D</b> or <b>←/→</b> · jump <b>W</b>/<b>↑</b> · hold ball <b>Shift</b>/<b>Space</b> · double-tap jump = higher · ESC = pause`;
+  hint.style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
   $('quitBtn').classList.toggle('show', inGame);
   $('muteBtn').classList.toggle('show', inGame);
   updateRotateHint();
@@ -1556,8 +1562,8 @@ function hostGame(){
   $('hostCode').textContent='...';
   $('onlineStatus').textContent='Connecting to server...'; $('onlineStatus').className='status';
   G.net.host(
-    code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='Waiting for an opponent. Share the code or link.'; setupShare(code); },
-    (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':'ok'); if(!err) $('hostStart').style.display='inline-block'; },
+    code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='⏳ Waiting for your opponent to join — share the code or link below.'; $('onlineStatus').className='status waiting'; setupShare(code); },
+    (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':(/connected/i.test(msg)?'ok':'waiting')); if(!err) $('hostStart').style.display='inline-block'; },
     null
   );
   $('hostStart').style.display='none';
@@ -1594,22 +1600,36 @@ function openOnlineTeamPick(){
   buildTeamGrid(); showOverlay('teamScreen');
 }
 function waitForGuestTeam(){
-  $('pickLabel').innerHTML='Waiting for opponent to pick a country...';
-  // vraag gast om team; gast stuurt 'pick'
-  // host: zodra gast team stuurt -> start
-  G.net.conn.send({t:'needTeam'});
-  G.net._onGuestTeam = (code)=>{ pickP2=teamByCode(code); beginOnlineMatch(); };
-  // tijdelijke handler in _recv: breid uit
+  $('pickLabel').innerHTML='Waiting for opponent to pick a country…';
+  G.net.conn.send({t:'needTeam', host:pickP1.code});           // tell the guest your team
+  G.net._onGuestTeam = (code)=>{ pickP2=teamByCode(code); showMatchup(true); };   // both known -> confirm screen
   patchNetForTeams();
 }
 function patchNetForTeams(){
   const net=G.net; const origRecv=net._recv.bind(net);
   net._recv=(d)=>{
     if (d.t==='pick'){ if (net._onGuestTeam) net._onGuestTeam(d.code); return; }
-    if (d.t==='needTeam'){ showGuestTeamPick(); return; }
+    if (d.t==='needTeam'){ if (d.host) pickP1=teamByCode(d.host); showGuestTeamPick(); return; }
     if (d.t==='start'){ onGuestStart(d); return; }
     origRecv(d);
   };
+}
+// color-coded confirm: you vs opponent, then the host starts the match
+function teamCardHTML(t){ return `<div class="mc-flag" style="background:${t.flag}"></div><div class="mc-name">${escapeHtml(t.name)}</div>`; }
+function showMatchup(isHost){
+  const you = isHost ? pickP1 : pickP2;
+  const opp = isHost ? pickP2 : pickP1;
+  G.mode = isHost ? 'host' : 'guest'; G.screen = SCREEN.ONLINE;
+  $('matchYou').innerHTML = teamCardHTML(you);
+  $('matchOpp').innerHTML = teamCardHTML(opp);
+  $('matchSide').textContent = isHost ? 'You play on the LEFT' : 'You play on the RIGHT';
+  if (isHost){
+    $('matchStart').style.display=''; $('matchStatus').textContent='Both countries chosen — start when ready!';
+    $('matchStart').onclick = ()=>{ Audio.click(); beginOnlineMatch(); };
+  } else {
+    $('matchStart').style.display='none'; $('matchStatus').textContent='Waiting for the host to start…'; $('matchStatus').className='status waiting';
+  }
+  showOverlay('matchupScreen');
 }
 function beginOnlineMatch(){
   if (G.net) G.net._onGuestTeam=null;        // voorkom dubbele start door 2e 'pick'
@@ -1637,7 +1657,7 @@ function showGuestTeamPick(){
 }
 function sendGuestTeamAndWait(){
   G.net.conn.send({t:'pick', code:pickP2.code});
-  $('pickLabel').innerHTML='Sent! Waiting for host...';
+  showMatchup(false);                                         // show the color-coded matchup, wait for host
 }
 function onGuestStart(d){
   if (typeof d.mid==='number'){ if (d.mid===guestMatchId) return; guestMatchId=d.mid; }  // negeer dubbele 'start'
@@ -1726,6 +1746,7 @@ wire('tMode', toggleMode);
 { const mb=$('muteBtn'); if (mb) mb.onclick = ()=>{ toggleSound(); }; }
 wire('teamBack', backToMenu);
 wire('onlineBack', backToMenu);
+wire('matchCancel', backToMenu);
 wire('setBack', ()=>{ refreshMenuPills(); showOverlay('menuScreen'); });
 wire('btnHost', hostGame);
 wire('btnJoin', joinGame);
@@ -1772,3 +1793,4 @@ initFromURL();   // invite link ?j=CODE
 // expose for debugging / tests
 window.__G = G;
 window.__TEAMS = TEAMS;
+window.__demoMatchup = (a,b,host)=>{ pickP1=teamByCode(a); pickP2=teamByCode(b); showMatchup(!!host); };
