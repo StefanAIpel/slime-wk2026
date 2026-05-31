@@ -240,12 +240,40 @@ addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; if (e.code) 
 const touch = { L:false, R:false, J:false, D:false, L2:false, R2:false, J2:false, D2:false };
 const BTN_PROP = { btnL:'L', btnR:'R', btnJ:'J', btnC:'D', btn2L:'L2', btn2R:'R2', btn2J:'J2', btn2C:'D2' };
 const activePointers = new Map();   // pointerId -> button-id
-function btnIdAt(x,y){
-  const el = document.elementFromPoint(x,y);
-  const b = el && el.closest ? el.closest('.tbtn') : null;
-  return b && BTN_PROP[b.id] ? b.id : null;
+// Hit-testing is coordinate-based against ENLARGED zones (cached) instead of
+// elementFromPoint, so a press just above/below/between buttons still registers
+// — this is what made the slime feel unresponsive on touch.
+let btnZones = [];
+function refreshBtnZones(){
+  btnZones = [];
+  const layer = document.getElementById('touch');
+  if (!layer || !layer.classList.contains('show')) return;
+  const padX = 24, padY = 44;       // grow the tappable area well beyond the visual button
+  layer.querySelectorAll('.pad').forEach(pad=>{
+    if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
+    pad.querySelectorAll('.tbtn').forEach(b=>{
+      if (!BTN_PROP[b.id]) return;
+      const r = b.getBoundingClientRect();
+      if (!r.width) return;
+      btnZones.push({ id:b.id, l:r.left-padX, r:r.right+padX, t:r.top-padY, b:r.bottom+padY,
+                      cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
+    });
+  });
 }
-function setBtn(id, on){ const p = BTN_PROP[id]; if (p) touch[p] = on; }
+function btnIdAt(x,y){
+  let best=null, bestD=Infinity;
+  for (const z of btnZones){
+    if (x>=z.l && x<=z.r && y>=z.t && y<=z.b){
+      const dx=x-z.cx, dy=y-z.cy, d=dx*dx+dy*dy;       // nearest centre wins where zones overlap
+      if (d<bestD){ bestD=d; best=z.id; }
+    }
+  }
+  return best;
+}
+function setBtn(id, on){
+  const p = BTN_PROP[id]; if (p) touch[p] = on;
+  const el = document.getElementById(id); if (el) el.classList.toggle('pressed', on);   // visual feedback
+}
 function routePointer(pid, id){
   const prev = activePointers.get(pid);
   if (prev === id) return;
@@ -255,22 +283,21 @@ function routePointer(pid, id){
 }
 function clearPointer(pid){ const prev = activePointers.get(pid); if (prev) setBtn(prev, false); activePointers.delete(pid); }
 (function bindTouchRouter(){
-  const pad = document.getElementById('touch');
-  if (!pad) return;
-  pad.addEventListener('pointerdown', e=>{
-    if (!e.target.closest || !e.target.closest('.tbtn')) return;
+  addEventListener('pointerdown', e=>{
+    if (!btnZones.length) return;                      // only active while touch controls are shown
+    const id = btnIdAt(e.clientX, e.clientY);
+    if (!id) return;                                   // not near a button -> let the event pass
     e.preventDefault();
-    try { e.target.releasePointerCapture && e.target.releasePointerCapture(e.pointerId); } catch(_){}
-    routePointer(e.pointerId, btnIdAt(e.clientX, e.clientY));
-  });
+    routePointer(e.pointerId, id);
+  }, { passive:false });
   // glijden tussen knoppen: hertarget op basis van vingerpositie
-  window.addEventListener('pointermove', e=>{
+  addEventListener('pointermove', e=>{
     if (!activePointers.has(e.pointerId)) return;
     routePointer(e.pointerId, btnIdAt(e.clientX, e.clientY));
   });
   const end = e=>{ if (activePointers.has(e.pointerId)) clearPointer(e.pointerId); };
-  window.addEventListener('pointerup', end);
-  window.addEventListener('pointercancel', end);
+  addEventListener('pointerup', end);
+  addEventListener('pointercancel', end);
 })();
 
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
@@ -278,17 +305,18 @@ const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in win
 // read keyset -> {left,right,jump,down}.  Hold ball: P1 = Left Shift / S, P2 = Space / Right Shift / ↓
 function wasdInput(){ return { left: !!keys['a'], right: !!keys['d'], jump: !!keys['w'], down: !!keys['s']||!!keys['shiftleft'] }; }
 function arrowsInput(){ return { left: !!keys['arrowleft'], right: !!keys['arrowright'], jump: !!keys['arrowup'], down: !!keys['arrowdown']||!!keys['space']||!!keys['shiftright'] }; }
-// primary human (1P / online): either hand set works; hold ball = Shift / Space / S / ↓
+// primary human (1P / online): arrows or WASD move; jump = ↑/W/Space/RightShift; hold ball = ↓/S
 function humanInput(){
   return {
     left:  !!keys['a'] || !!keys['arrowleft']  || touch.L,
     right: !!keys['d'] || !!keys['arrowright'] || touch.R,
-    jump:  !!keys['w'] || !!keys['arrowup'] || touch.J,
-    down:  !!keys['s'] || !!keys['arrowdown'] || !!keys['shiftleft'] || !!keys['shiftright'] || !!keys['space'] || touch.D,
+    jump:  !!keys['w'] || !!keys['arrowup'] || !!keys['space'] || !!keys['shiftright'] || touch.J,
+    down:  !!keys['s'] || !!keys['arrowdown'] || touch.D,
   };
 }
-function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2, down: !!keys['arrowdown']||!!keys['space']||!!keys['shiftright']||touch.D2 }; }
-function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J, down: !!keys['s']||!!keys['shiftleft']||touch.D }; }
+// local 2P: player 1 = WASD (S = hold), player 2 = arrows (↓ = hold)
+function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J, down: !!keys['s']||touch.D }; }
+function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2, down: !!keys['arrowdown']||touch.D2 }; }
 
 /* ----------------------------------------------------------------------------
    5. Entities
@@ -1248,10 +1276,11 @@ function updateTouchVisibility(){
   $('touch').classList.toggle('show', IS_TOUCH && inGame);
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
   document.body.classList.toggle('m2p', G.mode==='2p');
+  refreshBtnZones();                                   // recompute enlarged tap zones for this layout
   const hint = $('playHint');
   hint.innerHTML = (G.mode==='2p')
-    ? `<b>P1</b> A/D move · W jump · <b>Shift</b> hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · <b>Space</b> hold ball &nbsp;·&nbsp; ESC = pause`
-    : `Move <b>A/D</b> or <b>←/→</b> · jump <b>W</b>/<b>↑</b> · hold ball <b>Shift</b>/<b>Space</b> · double-tap jump = higher · ESC = pause`;
+    ? `<b>P1</b> A/D move · W jump · S hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · ↓ hold ball &nbsp;·&nbsp; ESC = pause`
+    : `Move <b>←/→</b> or <b>A/D</b> · jump <b>Space</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause`;
   hint.style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
   $('quitBtn').classList.toggle('show', inGame);
   $('muteBtn').classList.toggle('show', inGame);
@@ -1904,8 +1933,8 @@ if (IS_TOUCH){ const b=$('btn2p'); if(b){ b.style.display='none'; } }
 startAttract();
 showOverlay('menuScreen');
 updateTouchVisibility();
-addEventListener('resize', updateRotateHint);
-addEventListener('orientationchange', ()=>setTimeout(updateRotateHint, 200));
+addEventListener('resize', ()=>{ updateRotateHint(); refreshBtnZones(); });
+addEventListener('orientationchange', ()=>setTimeout(()=>{ updateRotateHint(); refreshBtnZones(); }, 200));
 initFromURL();   // invite link ?j=CODE (PeerJS lazy-loads on demand)
 
 // expose for debugging / tests — only on localhost or with ?debug=1 (keeps prod clean)

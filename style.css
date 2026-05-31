@@ -260,25 +260,26 @@ html, body {
 #touch.show { display: block; }
 .pad {
   position: absolute; bottom: max(16px, env(safe-area-inset-bottom));
-  pointer-events: auto; display: flex; gap: 14px;
+  pointer-events: none; display: flex; gap: 26px;       /* further apart; hit-testing is coordinate-based */
 }
-#padMove1 { left: max(34px, env(safe-area-inset-left)); }
-#padAct1  { right: max(34px, env(safe-area-inset-right)); }
-#pad2     { right: max(34px, env(safe-area-inset-right)); }
+#padMove1 { left: max(44px, env(safe-area-inset-left)); }
+#padAct1  { right: max(44px, env(safe-area-inset-right)); }
+#pad2     { right: max(44px, env(safe-area-inset-right)); }
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
-body.m2p #padAct1 { left: max(34px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
+body.m2p #padAct1 { left: max(44px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 60px; height: 60px; border-radius: 50%;
+  width: 108px; height: 64px; border-radius: 32px;      /* oblong pill, bigger */
   background: rgba(255,122,24,.20);
   border: 3px solid rgba(255,174,59,.7);
-  color: var(--ink); font-size: 22px;
+  color: var(--ink); font-size: 24px;
   display: flex; align-items: center; justify-content: center;
-  touch-action: none; opacity: .92;
+  touch-action: none; opacity: .92; pointer-events: none;
 }
-.tbtn:active { background: rgba(255,122,24,.5); }
+.tbtn:active, .tbtn.pressed { background: rgba(255,122,24,.5); }
 .tbtn.jump { background: rgba(52,209,122,.22); border-color: rgba(52,209,122,.7); }
+.tbtn.jump:active, .tbtn.jump.pressed { background: rgba(52,209,122,.5); }
 .tbtn.catch { background: rgba(124,192,238,.22); border-color: rgba(124,192,238,.75); }
-.tbtn.catch:active { background: rgba(124,192,238,.55); }
+.tbtn.catch:active, .tbtn.catch.pressed { background: rgba(124,192,238,.55); }
 /* reserve a strip below the pitch on touch so the buttons sit under it (follow the ball clearly) */
 @media (pointer: coarse){
   /* smaller reserved strip so the pitch grows; buttons overlap its bottom ~corners by ~30% */
@@ -288,7 +289,7 @@ body.m2p #padAct1 { left: max(34px, env(safe-area-inset-left)); right: auto; bot
 /* a bit bigger on larger touch screens (tablets), still a tidy corner overlay */
 @media (pointer: coarse) and (min-width: 760px){
   :root { --padb: 84px; }
-  .tbtn { width: 76px; height: 76px; font-size: 28px; }
+  .tbtn { width: 136px; height: 78px; font-size: 30px; border-radius: 39px; }
   body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 100px); }
 }
 
