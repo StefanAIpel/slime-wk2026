@@ -863,11 +863,29 @@ const TURN_SERVERS = [
   { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
   { urls: 'turn:0.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },   // PeerJS default relay
 ];
+// Cloudflare TURN: short-lived creds minted server-side by the slime-turn edge
+// function (the CF API token stays out of the client). Fetched once per session
+// when entering the Online screen; falls back to the best-effort relays below.
+const TURN_API = 'https://eymkdhdmekcxbapmyask.supabase.co/functions/v1/slime-turn';
+const SB_ANON  = 'sb_publishable_Iizoz0duFVLID2xYpphhGw_kUPUuXUI';
+let _iceTried = false, _iceServer = null;
+async function refreshIce(){
+  if (_iceTried) return; _iceTried = true;
+  try {
+    const ctrl = new AbortController(); const t = setTimeout(()=>ctrl.abort(), 4500);
+    const res = await fetch(TURN_API, { method:'POST', headers:{ apikey:SB_ANON, Authorization:'Bearer '+SB_ANON }, signal:ctrl.signal });
+    clearTimeout(t);
+    if (res.ok){ const j = await res.json(); if (j && Array.isArray(j.iceServers) && j.iceServers.length) _iceServer = j.iceServers; }
+  } catch(_){}
+}
 function iceServers(){
-  const override = store.load('ice', null);              // runtime TURN override (array), no redeploy needed
+  const override = store.load('ice', null);              // manual runtime override always wins
+  if (Array.isArray(override) && override.length)
+    return [{ urls:['stun:stun.l.google.com:19302'] }, ...override];
+  if (_iceServer) return _iceServer;                     // Cloudflare TURN (includes its own STUN)
   return [
     { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
-    ...(Array.isArray(override) && override.length ? override : TURN_SERVERS),
+    ...TURN_SERVERS,                                      // best-effort fallback until CF is configured
   ];
 }
 function peerOpts(){ return { debug:1, config:{ iceServers: iceServers() } }; }
@@ -1598,7 +1616,7 @@ async function goOnline(){
   $('hostArea').style.display='none'; $('joinArea').style.display='none'; $('onlinePeerWarn').style.display='none';
   $('btnHost').disabled=true; $('btnJoin').disabled=true;
   $('onlineStatus').textContent='Loading online…'; $('onlineStatus').className='status';
-  const ok=await ensurePeer();
+  const [ok] = await Promise.all([ensurePeer(), refreshIce()]);   // warm TURN creds alongside PeerJS
   if (ok){ $('btnHost').disabled=false; $('btnJoin').disabled=false; $('onlineStatus').textContent=''; }
   else { peerUnavailable(); $('onlineStatus').textContent=''; }
 }
