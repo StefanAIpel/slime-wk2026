@@ -1925,6 +1925,21 @@ function rematch(){
   else startMatch();
   updateTouchVisibility();
 }
+// after a match: ask whether to keep the same teams or pick new ones, then rematch
+function askRematch(){
+  if (G.mode==='host' && G.net && !G.net.connected){ onConnectionLost(); return; }
+  askConfirm({ title:'REMATCH', msg:'Keep the same teams or pick new ones?',
+    yes:'New teams', no:'Same teams',          // confirmNo is the primary-styled button → "Same teams"
+    onYes:rematchNewTeams, onNo:rematch });
+}
+function rematchNewTeams(){
+  if (G.mode==='host' && G.net){
+    if (!G.net.connected){ onConnectionLost(); return; }
+    openOnlineTeamPick();                       // re-run the host→guest team handshake (guest re-picks on needTeam)
+  } else {
+    openMatchSetup();                           // local: back to setup + team select, same mode
+  }
+}
 
 function onEscape(){
   // actief (online) potje of online-overlay: terug naar menu (geen pauze online)
@@ -1997,7 +2012,7 @@ function hostStartMatch(){
 }
 function openOnlineTeamPick(){
   G.mode='host'; G.screen=SCREEN.TEAM;
-  $('pickLabel').innerHTML='Host: pick <b>your</b> country (left)';
+  $('pickLabel').innerHTML='Host: pick <b>your</b> country';   // sides are randomised at kickoff
   buildTeamGrid(); showOverlay('teamScreen');
 }
 function waitForGuestTeam(){
@@ -2007,7 +2022,8 @@ function waitForGuestTeam(){
   patchNetForTeams();
 }
 function patchNetForTeams(){
-  const net=G.net; const origRecv=net._recv.bind(net);
+  const net=G.net; if (!net || net._teamsPatched) return; net._teamsPatched=true;   // idempotent: a rematch re-uses the same patched net
+  const origRecv=net._recv.bind(net);
   net._recv=(d)=>{
     if (d.t==='pick'){ if (net._onGuestTeam) net._onGuestTeam(d.code); return; }
     if (d.t==='needTeam'){ if (d.host) pickP1=teamByCode(d.host); showGuestTeamPick(); return; }
@@ -2171,7 +2187,7 @@ wire('quickCancel', cancelQuick);
 wire('onlineSubBack', backToOnlineModes);
 wire('hostStart', hostStartMatch);
 wire('joinGo', joinConnect);
-wire('overRematch', rematch);
+wire('overRematch', askRematch);
 wire('overMenu', backToMenu);
 wire('btnSound', toggleSound);
 wire('btnShare', shareGame);
