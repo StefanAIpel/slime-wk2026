@@ -38,7 +38,12 @@ html, body {
 #stage {
   position: fixed; inset: 0;
   display: flex; align-items: center; justify-content: center;
-  background: radial-gradient(circle at 50% 35%, #1a1838 0%, #07070f 80%);
+  /* WC2026 stadium atmosphere fills the letterbox edges: orange glow up top,
+     green pitch glow at the bottom, deep stadium-blue in the middle */
+  background:
+    radial-gradient(135% 95% at 50% -18%, rgba(255,122,24,.22), transparent 56%),
+    radial-gradient(120% 80% at 50% 118%, rgba(31,143,58,.20), transparent 60%),
+    radial-gradient(90% 70% at 50% 42%, #16203f 0%, #0b1024 52%, #06060f 100%);
 }
 #game {
   width:  min(100vw, calc((100vh - var(--padb)) * 1056 / 600));
@@ -268,29 +273,31 @@ html, body {
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
 body.m2p #padAct1 { left: max(44px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 108px; height: 64px; border-radius: 32px;      /* oblong pill, bigger */
-  background: rgba(255,122,24,.20);
-  border: 3px solid rgba(255,174,59,.7);
-  color: var(--ink); font-size: 24px;
+  width: 128px; height: 44px; border-radius: 12px;      /* flat & wide, low profile, subtle corners */
+  background: linear-gradient(180deg, rgba(255,172,72,.30), rgba(255,122,24,.13));
+  border: 1.5px solid rgba(255,190,95,.62);
+  box-shadow: 0 5px 15px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 6px rgba(0,0,0,.22);
+  color: #fff; font-size: 23px; text-shadow: 0 1px 2px rgba(0,0,0,.45);
   display: flex; align-items: center; justify-content: center;
-  touch-action: none; opacity: .92; pointer-events: none;
+  touch-action: none; pointer-events: none;
+  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
+  transition: filter .06s ease, transform .06s ease;
 }
-.tbtn:active, .tbtn.pressed { background: rgba(255,122,24,.5); }
-.tbtn.jump { background: rgba(52,209,122,.22); border-color: rgba(52,209,122,.7); }
-.tbtn.jump:active, .tbtn.jump.pressed { background: rgba(52,209,122,.5); }
-.tbtn.catch { background: rgba(124,192,238,.22); border-color: rgba(124,192,238,.75); }
-.tbtn.catch:active, .tbtn.catch.pressed { background: rgba(124,192,238,.55); }
+.tbtn.pressed { filter: brightness(1.32); transform: translateY(1px); }
+.tbtn.jump  { background: linear-gradient(180deg, rgba(74,226,142,.32), rgba(52,209,122,.13)); border-color: rgba(96,236,162,.62); }
+.tbtn.catch { background: linear-gradient(180deg, rgba(150,206,246,.32), rgba(124,192,238,.13)); border-color: rgba(155,208,248,.66); }
 /* reserve a strip below the pitch on touch so the buttons sit under it (follow the ball clearly) */
 @media (pointer: coarse){
-  /* smaller reserved strip so the pitch grows; buttons overlap its bottom ~corners by ~30% */
-  :root { --padb: 62px; }
+  /* tiny reserved strip so the pitch fills more of the screen; the flat buttons
+     overlap its bottom edge and read as a low HUD bar */
+  :root { --padb: 42px; }
   #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
 }
-/* a bit bigger on larger touch screens (tablets), still a tidy corner overlay */
+/* a bit bigger on larger touch screens (tablets), still a tidy low overlay */
 @media (pointer: coarse) and (min-width: 760px){
-  :root { --padb: 84px; }
-  .tbtn { width: 136px; height: 78px; font-size: 30px; border-radius: 39px; }
-  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 100px); }
+  :root { --padb: 60px; }
+  .tbtn { width: 168px; height: 52px; font-size: 28px; border-radius: 14px; }
+  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 88px); }
 }
 
 /* ---- Rotate device hint (zichtbaarheid via JS: alleen tijdens het spelen) ---- */
