@@ -214,6 +214,9 @@ const Audio = (() => {
     // real final-whistle stinger (from the uploaded mp3)
     endWhistle(){ if(!settings.sound) return; if(!sfxWhistle) media(); if(sfxWhistle){ try{ sfxWhistle.currentTime=0; sfxWhistle.play().catch(()=>{}); }catch(e){} } },
     click(){ if(!ac||!settings.sound) return; const t=ac.currentTime; osc('sine',520,t,0.03,0.06,null,1400); },
+    // rising 3-note chime when an online opponent connects ("matched!")
+    matched(){ if(!ac||!settings.sound) return; const t=ac.currentTime;
+      [[523,0],[659,0.10],[784,0.20]].forEach(([f,dt])=>osc('triangle',f,t+dt,0.12,0.16,null,2200)); },
     setSound(on){ if(on) resumeMusic(); else pauseMusic(); },
     setVolume(v){ if(master) master.gain.value = 0.6*v; if(bgm) bgm.volume = 0.5*v; if(sfxWhistle) sfxWhistle.volume = 0.9*v; },
     pause:pauseMusic, resume:resumeMusic,
@@ -367,6 +370,8 @@ const G = {
   goalTimer: 0,            // frames in GOAL-state
   lastScorer: 0,
   winner: 0,
+  swap: false,             // online: teams swapped L/R this match
+  mySlot: 1,               // online: which slot (1=left/p1, 2=right/p2) the local player controls
   shake: 0,
   flash: 0,
   particles: [],
@@ -842,9 +847,20 @@ function assignInputs(frozen){
     G.p1.input = frozen?{left:false,right:false,jump:false}:p1KeyInput();
     G.p2.input = frozen?{left:false,right:false,jump:false}:p2KeyInput();
   } else if (G.mode==='host'){
-    G.p1.input = frozen?{left:false,right:false,jump:false}:humanInput();
-    G.p2.input = frozen?{left:false,right:false,jump:false}:(G.net?G.net.guestInput:{left:false,right:false,jump:false});
+    const FZ={left:false,right:false,jump:false,down:false};
+    const me  = frozen?FZ:humanInput();
+    const opp = frozen?FZ:(G.net?G.net.guestInput:FZ);
+    // mySlot=2 means the host plays the RIGHT slime (random sides); route inputs accordingly
+    if (G.mySlot===2){ G.p2.input=me; G.p1.input=opp; }
+    else { G.p1.input=me; G.p2.input=opp; }
   }
+}
+// Online: p1 is always the LEFT slime, p2 the RIGHT (keeps the engine invariant);
+// the random `swap` only decides which team sits on which side.
+function buildOnlineSlimes(hostTeam, guestTeam, swap){
+  G.p1 = makeSlime('left',  swap ? guestTeam : hostTeam);
+  G.p2 = makeSlime('right', swap ? hostTeam  : guestTeam);
+  G.ball = makeBall();
 }
 
 function faceBall(s){
@@ -1346,6 +1362,7 @@ function buildTeamGrid(){
   TEAMS.forEach(t=>{
     const el=document.createElement('div');
     el.className='team'+(t.featured?' featured':'');
+    el.dataset.code=t.code;
     el.innerHTML=`<div class="flag" style="background:${t.flag}"></div>
                   <div class="code">${t.code}</div><div class="name">${t.name}</div>`;
     el.onclick=()=>pickTeam(t,el);
@@ -1549,13 +1566,23 @@ function wkResolveAndAdvance(userWon){
     wkShowResult(false);
   }
 }
-// leaderboard points for a World Cup run: difficulty × rounds won + champion bonus + goal diff
+// Leaderboard points for a World Cup run (granular, so scores are near-unique):
+//   base per round survived  +  (goals_for − goals_against)         ... gameplay
+//   all × difficulty factor  ×  win/loss factor (champion vs knocked out)
 function wkPoints(){
   const wk=G.wk; const champ = wk.champion===wk.team;
   const mult = (WK_DIFF_MULT[wk.diffMode]||2);
   const roundsWon = champ ? 4 : wk.round;
-  let gd=0; wk.rounds.forEach(rd=>rd.forEach(m=>{ if(m.user && m.played){ const uf=m.a===wk.team?m.sa:m.sb, ua=m.a===wk.team?m.sb:m.sa; gd+=(uf-ua); }}));
-  return Math.max(0, (roundsWon*mult*10 + (champ?mult*30:0) + Math.max(0,gd)*3)|0);
+  // aggregate the user's goals across every match they actually played
+  let gf=0, ga=0;
+  wk.rounds.forEach(rd=>rd.forEach(m=>{ if(m.user && m.played){
+    const uf=m.a===wk.team?m.sa:m.sb, ua=m.a===wk.team?m.sb:m.sa; gf+=uf; ga+=ua;
+  }}));
+  const winFactor = champ ? 1.5 : (roundsWon>0 ? 1.0 : 0.6);     // win/loss bonus
+  const base = roundsWon*8 + (champ?40:0);                        // reward progress + the title
+  const goalPts = (gf - ga)*4;                                    // goal difference matters
+  const floor = gf*mult;                                          // participation floor: goals always pay a little
+  return Math.max(floor|0, Math.round((base + goalPts) * mult * winFactor / 2));
 }
 function wkShowResult(champion){
   const wk=G.wk; const pts=wkPoints(); wk._pts=pts;
@@ -1717,7 +1744,7 @@ function onQuickHostStatus(msg, err){
     quickActive=false; if(quickT){clearInterval(quickT);quickT=null;}
     if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} } quickCode='';
     $('quickArea').style.display='none';
-    olStatus('Opponent connected!','ok');
+    Audio.matched(); olStatus('✅ Opponent found!','ok');
     openOnlineTeamPick();                        // straight into team pick (same flow as the code host)
     return;
   }
@@ -1730,7 +1757,7 @@ function showGameOver(){
   let who;
   if (G.mode==='1p') who = G.winner===1?'YOU WIN!':'COMPUTER WINS';
   else if (G.mode==='2p') who = 'PLAYER '+G.winner+' WINS!';
-  else { const meWon = (G.mode==='host' && G.winner===1)||(G.mode==='guest' && G.winner===2); who = meWon?'YOU WIN!':'OPPONENT WINS'; }
+  else { const meWon = G.winner===(G.mySlot||(G.mode==='host'?1:2)); who = meWon?'YOU WIN!':'OPPONENT WINS'; }
   $('overTitle').textContent=who;
   let sub=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${escapeHtml(winTeam.name)} — ${G.score[0]} : ${G.score[1]}`;
   // online: only the host can start a rematch
@@ -1807,6 +1834,9 @@ function rematch(){
   if (G.mode==='host' && G.net){
     if (!G.net.connected){ onConnectionLost(); return; }   // tegenstander weg
     hostMatchId++;
+    G.swap = Math.random()<0.5;                // re-roll sides each rematch
+    G.mySlot = G.swap ? 2 : 1;
+    buildOnlineSlimes(pickP1, pickP2, G.swap);
     startMatch();
     G.net.startGame(startPayload());
   } else if (G.mode==='guest'){ /* alleen de host herstart; knop is verborgen */ }
@@ -1839,7 +1869,7 @@ function quitButton(){
 
 /* ---- Online flow ---- */
 let hostMatchId=0, guestMatchId=-1, guestPickSent=false;
-function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings.toWin, matchMode:G.matchMode, matchMin:G.matchMin, mid:hostMatchId }; }
+function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, swap:G.swap?1:0, toWin:settings.toWin, matchMode:G.matchMode, matchMin:G.matchMin, mid:hostMatchId }; }
 
 async function hostGame(){
   Audio.unlock();
@@ -1851,7 +1881,8 @@ async function hostGame(){
   $('onlineStatus').textContent='Connecting to server...'; $('onlineStatus').className='status';
   G.net.host(
     code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='⏳ Waiting for your opponent to join — share the code or link below.'; $('onlineStatus').className='status waiting'; setupShare(code); },
-    (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':(/connected/i.test(msg)?'ok':'waiting')); if(!err) $('hostStart').style.display='inline-block'; },
+    (msg,err)=>{ const conn=/connected/i.test(msg); if(conn){ Audio.matched(); msg='✅ Opponent connected! Tap “Pick team & start”.'; }
+      $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':(conn?'ok':'waiting')); if(!err) $('hostStart').style.display='inline-block'; },
     null
   );
   $('hostStart').style.display='none';
@@ -1910,7 +1941,7 @@ function showMatchup(isHost){
   G.mode = isHost ? 'host' : 'guest'; G.screen = SCREEN.ONLINE;
   $('matchYou').innerHTML = teamCardHTML(you);
   $('matchOpp').innerHTML = teamCardHTML(opp);
-  $('matchSide').textContent = isHost ? 'You play on the LEFT' : 'You play on the RIGHT';
+  $('matchSide').textContent = 'Sides are randomised — watch the kickoff! ⚽';
   if (isHost){
     $('matchStart').style.display=''; $('matchStatus').textContent='Both countries chosen — start when ready!';
     $('matchStart').onclick = ()=>{ Audio.click(); beginOnlineMatch(); };
@@ -1923,7 +1954,9 @@ function beginOnlineMatch(){
   if (G.net) G.net._onGuestTeam=null;        // voorkom dubbele start door 2e 'pick'
   G.mode='host';
   hostMatchId++;
-  G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
+  G.swap = Math.random()<0.5;                // random sides: who plays left/right
+  G.mySlot = G.swap ? 2 : 1;                 // host drives p2 (right) when swapped
+  buildOnlineSlimes(pickP1, pickP2, G.swap);  // pickP1=host team, pickP2=guest team
   startMatch();
   G.net.startGame(startPayload());           // mid in payload dedupe't aan gastzijde
 }
@@ -1936,13 +1969,18 @@ async function joinConnect(){
   if (code.length<4){ $('onlineStatus').textContent='Enter the 4-letter code.'; $('onlineStatus').className='status err'; return; }
   $('onlineStatus').textContent='Connecting...'; $('onlineStatus').className='status';
   if (!(await ensurePeer())){ peerUnavailable(); $('onlineStatus').textContent='Online unavailable (offline?).'; $('onlineStatus').className='status err'; return; }
-  G.net.join(code, (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':'ok'); }, null);
+  G.net.join(code, (msg,err)=>{ const conn=/connected/i.test(msg); if(conn) Audio.matched();
+    $('onlineStatus').textContent=conn?'✅ '+msg:msg; $('onlineStatus').className='status '+(err?'err':'ok'); }, null);
   patchNetForTeams();
 }
 function showGuestTeamPick(){
   G.mode='guest'; G.screen=SCREEN.TEAM; guestPickSent=false;
-  $('pickLabel').innerHTML='Pick <b>your</b> country (right)';
-  buildTeamGrid(); showOverlay('teamScreen');
+  // show which country the host took, then prompt for yours
+  const host = pickP1 ? `<span class="mc-flag tiny" style="background:${pickP1.flag}"></span>${escapeHtml(pickP1.name)}` : 'the host';
+  $('pickLabel').innerHTML=`Opponent picked ${host}.<br>Now pick <b>your</b> country`;
+  buildTeamGrid();
+  if (pickP1) document.querySelectorAll('#teamGrid .team').forEach(el=>{ if(el.dataset.code===pickP1.code) el.classList.add('opppick'); });  // mark host's team (non-blocking)
+  showOverlay('teamScreen');
 }
 function sendGuestTeamAndWait(){
   G.net.conn.send({t:'pick', code:pickP2.code});
@@ -1951,10 +1989,12 @@ function sendGuestTeamAndWait(){
 function onGuestStart(d){
   if (typeof d.mid==='number'){ if (d.mid===guestMatchId) return; guestMatchId=d.mid; }  // negeer dubbele 'start'
   pickP1=teamByCode(d.p1); pickP2=teamByCode(d.p2);
+  G.swap = !!d.swap;
+  G.mySlot = G.swap ? 1 : 2;                  // guest plays the side the host didn't take
   G.toWin=d.toWin||5;                         // niet de lokale settings muteren
   G.matchMode=d.matchMode||'goals'; G.matchMin=d.matchMin||2;
   G.matchTime=G.matchMin*3600; G.golden=false;
-  G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
+  buildOnlineSlimes(pickP1, pickP2, G.swap);  // same side assignment as the host
   G.score=[0,0]; G.winner=0; G.lastScorer=0; overShown=false;
   G.netTarget=null;                           // stale OVER-state weg (fix online revanche)
   G.countdown=180; G.screen=SCREEN.COUNT;     // aftelling tonen i.p.v. PLAY-flits
