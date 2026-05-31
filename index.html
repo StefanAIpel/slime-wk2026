@@ -69,37 +69,45 @@
     <h2 class="title small-title">ONLINE</h2>
     <div class="subtitle">P2P connection · no account needed</div>
     <div class="online-box">
-      <div class="btn-row">
-        <button id="btnQuick" class="btn small">⚡ QUICK MATCH</button>
-      </div>
-      <div class="btn-row">
-        <button id="btnHost" class="btn small secondary">START GAME (host)</button>
-        <button id="btnJoin" class="btn small secondary">ENTER CODE (join)</button>
+      <!-- step 1: choose a mode -->
+      <div class="btn-row" id="onlineModes">
+        <button id="btnModeFriend" class="btn small">👥 Play a friend</button>
+        <button id="btnModeQuick" class="btn small">⚡ Quick match</button>
       </div>
 
+      <!-- step 2a: play a friend (host or join) -->
+      <div id="friendPanel" style="display:none">
+        <div class="btn-row">
+          <button id="btnHost" class="btn small">🎮 Host a game</button>
+          <button id="btnJoin" class="btn small secondary">🔑 Enter a code</button>
+        </div>
+
+        <div id="hostArea" style="display:none">
+          <div class="subtitle">Code for your opponent:</div>
+          <div class="code-display" id="hostCode">…</div>
+          <div class="btn-row" id="shareRow" style="display:none">
+            <button id="waShare" class="btn small">📲 WhatsApp</button>
+            <button id="copyLink" class="btn small secondary">🔗 Copy link</button>
+          </div>
+          <button id="hostStart" class="btn small" style="display:none; margin-top:10px;">▶ Pick team & start</button>
+        </div>
+
+        <div id="joinArea" style="display:none">
+          <div class="subtitle">Enter the host's code:</div>
+          <input id="joinCode" class="code-input" maxlength="4" placeholder="????" autocomplete="off" autocapitalize="characters">
+          <button id="joinGo" class="btn small">Connect</button>
+        </div>
+      </div>
+
+      <!-- step 2b: quick match -->
       <div id="quickArea" style="display:none">
         <div class="subtitle" style="margin-top:6px;">⚡ Finding you an opponent…</div>
         <button id="quickCancel" class="btn small secondary" style="margin-top:8px;">Cancel</button>
       </div>
 
-      <div id="hostArea" style="display:none">
-        <div class="subtitle">Code for your opponent:</div>
-        <div class="code-display" id="hostCode">…</div>
-        <div class="btn-row" id="shareRow" style="display:none">
-          <button id="waShare" class="btn small">📲 WhatsApp</button>
-          <button id="copyLink" class="btn small secondary">🔗 Copy link</button>
-        </div>
-        <button id="hostStart" class="btn small" style="display:none; margin-top:10px;">▶ Pick team & start</button>
-      </div>
-
-      <div id="joinArea" style="display:none">
-        <div class="subtitle">Enter the host's code:</div>
-        <input id="joinCode" class="code-input" maxlength="4" placeholder="????" autocomplete="off" autocapitalize="characters">
-        <button id="joinGo" class="btn small">Connect</button>
-      </div>
-
       <div class="status" id="onlineStatus"></div>
       <div class="status err" id="onlinePeerWarn" style="display:none">⚠ Online needs internet (PeerJS failed to load). Local modes still work.</div>
+      <button id="onlineSubBack" class="btn secondary small" style="display:none; margin-top:8px;">‹ Back</button>
     </div>
     <button id="onlineBack" class="btn secondary small">‹ Back</button>
   </div>
