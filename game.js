@@ -370,6 +370,8 @@ const G = {
   goalTimer: 0,            // frames in GOAL-state
   lastScorer: 0,
   winner: 0,
+  swap: false,             // online: teams swapped L/R this match
+  mySlot: 1,               // online: which slot (1=left/p1, 2=right/p2) the local player controls
   shake: 0,
   flash: 0,
   particles: [],
@@ -845,9 +847,20 @@ function assignInputs(frozen){
     G.p1.input = frozen?{left:false,right:false,jump:false}:p1KeyInput();
     G.p2.input = frozen?{left:false,right:false,jump:false}:p2KeyInput();
   } else if (G.mode==='host'){
-    G.p1.input = frozen?{left:false,right:false,jump:false}:humanInput();
-    G.p2.input = frozen?{left:false,right:false,jump:false}:(G.net?G.net.guestInput:{left:false,right:false,jump:false});
+    const FZ={left:false,right:false,jump:false,down:false};
+    const me  = frozen?FZ:humanInput();
+    const opp = frozen?FZ:(G.net?G.net.guestInput:FZ);
+    // mySlot=2 means the host plays the RIGHT slime (random sides); route inputs accordingly
+    if (G.mySlot===2){ G.p2.input=me; G.p1.input=opp; }
+    else { G.p1.input=me; G.p2.input=opp; }
   }
+}
+// Online: p1 is always the LEFT slime, p2 the RIGHT (keeps the engine invariant);
+// the random `swap` only decides which team sits on which side.
+function buildOnlineSlimes(hostTeam, guestTeam, swap){
+  G.p1 = makeSlime('left',  swap ? guestTeam : hostTeam);
+  G.p2 = makeSlime('right', swap ? hostTeam  : guestTeam);
+  G.ball = makeBall();
 }
 
 function faceBall(s){
@@ -1744,7 +1757,7 @@ function showGameOver(){
   let who;
   if (G.mode==='1p') who = G.winner===1?'YOU WIN!':'COMPUTER WINS';
   else if (G.mode==='2p') who = 'PLAYER '+G.winner+' WINS!';
-  else { const meWon = (G.mode==='host' && G.winner===1)||(G.mode==='guest' && G.winner===2); who = meWon?'YOU WIN!':'OPPONENT WINS'; }
+  else { const meWon = G.winner===(G.mySlot||(G.mode==='host'?1:2)); who = meWon?'YOU WIN!':'OPPONENT WINS'; }
   $('overTitle').textContent=who;
   let sub=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${escapeHtml(winTeam.name)} — ${G.score[0]} : ${G.score[1]}`;
   // online: only the host can start a rematch
@@ -1821,6 +1834,9 @@ function rematch(){
   if (G.mode==='host' && G.net){
     if (!G.net.connected){ onConnectionLost(); return; }   // tegenstander weg
     hostMatchId++;
+    G.swap = Math.random()<0.5;                // re-roll sides each rematch
+    G.mySlot = G.swap ? 2 : 1;
+    buildOnlineSlimes(pickP1, pickP2, G.swap);
     startMatch();
     G.net.startGame(startPayload());
   } else if (G.mode==='guest'){ /* alleen de host herstart; knop is verborgen */ }
@@ -1853,7 +1869,7 @@ function quitButton(){
 
 /* ---- Online flow ---- */
 let hostMatchId=0, guestMatchId=-1, guestPickSent=false;
-function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings.toWin, matchMode:G.matchMode, matchMin:G.matchMin, mid:hostMatchId }; }
+function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, swap:G.swap?1:0, toWin:settings.toWin, matchMode:G.matchMode, matchMin:G.matchMin, mid:hostMatchId }; }
 
 async function hostGame(){
   Audio.unlock();
@@ -1925,7 +1941,7 @@ function showMatchup(isHost){
   G.mode = isHost ? 'host' : 'guest'; G.screen = SCREEN.ONLINE;
   $('matchYou').innerHTML = teamCardHTML(you);
   $('matchOpp').innerHTML = teamCardHTML(opp);
-  $('matchSide').textContent = isHost ? 'You play on the LEFT' : 'You play on the RIGHT';
+  $('matchSide').textContent = 'Sides are randomised — watch the kickoff! ⚽';
   if (isHost){
     $('matchStart').style.display=''; $('matchStatus').textContent='Both countries chosen — start when ready!';
     $('matchStart').onclick = ()=>{ Audio.click(); beginOnlineMatch(); };
@@ -1938,7 +1954,9 @@ function beginOnlineMatch(){
   if (G.net) G.net._onGuestTeam=null;        // voorkom dubbele start door 2e 'pick'
   G.mode='host';
   hostMatchId++;
-  G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
+  G.swap = Math.random()<0.5;                // random sides: who plays left/right
+  G.mySlot = G.swap ? 2 : 1;                 // host drives p2 (right) when swapped
+  buildOnlineSlimes(pickP1, pickP2, G.swap);  // pickP1=host team, pickP2=guest team
   startMatch();
   G.net.startGame(startPayload());           // mid in payload dedupe't aan gastzijde
 }
@@ -1971,10 +1989,12 @@ function sendGuestTeamAndWait(){
 function onGuestStart(d){
   if (typeof d.mid==='number'){ if (d.mid===guestMatchId) return; guestMatchId=d.mid; }  // negeer dubbele 'start'
   pickP1=teamByCode(d.p1); pickP2=teamByCode(d.p2);
+  G.swap = !!d.swap;
+  G.mySlot = G.swap ? 1 : 2;                  // guest plays the side the host didn't take
   G.toWin=d.toWin||5;                         // niet de lokale settings muteren
   G.matchMode=d.matchMode||'goals'; G.matchMin=d.matchMin||2;
   G.matchTime=G.matchMin*3600; G.golden=false;
-  G.p1=makeSlime('left', pickP1); G.p2=makeSlime('right', pickP2); G.ball=makeBall();
+  buildOnlineSlimes(pickP1, pickP2, G.swap);  // same side assignment as the host
   G.score=[0,0]; G.winner=0; G.lastScorer=0; overShown=false;
   G.netTarget=null;                           // stale OVER-state weg (fix online revanche)
   G.countdown=180; G.screen=SCREEN.COUNT;     // aftelling tonen i.p.v. PLAY-flits
