@@ -17,6 +17,8 @@ await page.screenshot({ path: 'shot-1-menu.png' });
 
 // --- 1P flow ---
 await page.click('#btn1p');
+await page.waitForTimeout(300);
+await page.click('#setupPlay');                  // Friendly setup -> choose teams
 await page.waitForTimeout(400);
 await page.screenshot({ path: 'shot-2-teams.png' });
 // kies eerste team (Nederland)
@@ -49,6 +51,8 @@ await page.screenshot({ path: 'shot-4-after.png' });
 await page.evaluate(() => { try{ backToMenu(); }catch(e){} });
 await page.waitForTimeout(300);
 await page.click('#btn2p');
+await page.waitForTimeout(300);
+await page.click('#setupPlay');                  // 2P setup -> choose teams
 await page.waitForTimeout(300);
 await page.click('#teamGrid .team:nth-child(2)');
 await page.waitForTimeout(200);

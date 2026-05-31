@@ -258,14 +258,15 @@ function refreshBtnZones(){
   const layer = document.getElementById('touch');
   if (!layer || !layer.classList.contains('show')) return;
   const padX = 30, padY = 44;       // grow the tappable area well beyond the visual button
-  const EG = 22, vw = window.innerWidth;   // keep hit zones clear of the screen-edge gesture strip (iOS)
+  const EG = 22, vw = window.innerWidth, vh = window.innerHeight, EGB = 26;   // keep hit zones off the iOS edge-gesture strips (sides + bottom home-indicator)
   layer.querySelectorAll('.pad').forEach(pad=>{
     if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
     pad.querySelectorAll('.tbtn').forEach(b=>{
       if (!BTN_PROP[b.id]) return;
       const r = b.getBoundingClientRect();
       if (!r.width) return;
-      btnZones.push({ id:b.id, l:Math.max(EG, r.left-padX), r:Math.min(vw-EG, r.right+padX), t:r.top-padY, b:r.bottom+padY,
+      btnZones.push({ id:b.id, l:Math.max(EG, r.left-padX), r:Math.min(vw-EG, r.right+padX),
+                      t:r.top-padY, b:Math.min(vh-EGB, r.bottom+padY),
                       cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
     });
   });
@@ -1056,6 +1057,13 @@ function drawStadium(){
     ctx.lineTo(W,yEdge+h); ctx.quadraticCurveTo(CENTER,yMid+h,0,yEdge+h); ctx.closePath(); ctx.fill(); };
   band(70, 150, GROUND*0.34, '#0e1838');                 // upper tier
   band(GROUND*0.52, GROUND*0.60, GROUND*0.40, '#0b1430'); // lower tier (closer/darker)
+  // roof edge + tier separation lines so the bowl reads clearly
+  ctx.save(); ctx.lineWidth=2;
+  ctx.strokeStyle='rgba(120,150,220,0.45)';
+  ctx.beginPath(); ctx.moveTo(0,70); ctx.quadraticCurveTo(CENTER,150,W,70); ctx.stroke();          // upper roof rim
+  ctx.strokeStyle='rgba(90,120,190,0.35)';
+  ctx.beginPath(); ctx.moveTo(0,GROUND*0.52); ctx.quadraticCurveTo(CENTER,GROUND*0.60,W,GROUND*0.52); ctx.stroke(); // tier gap
+  ctx.restore();
 
   // crowd: blue stands twinkling with orange (NL) + red/green/white (WC) accents
   const t=G.frame*0.05;
@@ -1071,13 +1079,27 @@ function drawStadium(){
   ctx.save(); ctx.strokeStyle='rgba(150,200,255,0.85)'; ctx.lineWidth=2.5; ctx.shadowColor='rgba(120,180,255,0.9)'; ctx.shadowBlur=10;
   ctx.beginPath(); ctx.moveTo(0,GROUND*0.50); ctx.quadraticCurveTo(CENTER,GROUND*0.585,W,GROUND*0.50); ctx.stroke(); ctx.restore();
 
-  // floodlights (stronger glow cones + pylons)
-  for (const fx of [W*0.12, W*0.88]){
-    const g=ctx.createRadialGradient(fx,28,4,fx,28,210);
-    g.addColorStop(0,'rgba(220,235,255,0.55)'); g.addColorStop(0.5,'rgba(180,210,255,0.14)'); g.addColorStop(1,'rgba(180,210,255,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(fx,28,210,0,7); ctx.fill();
-    ctx.fillStyle='#dfe6f5'; ctx.fillRect(fx-24,6,48,11);
-    ctx.fillStyle='#2a2a44'; ctx.fillRect(fx-3,16,6,50);
+  // floodlights: a slim pylon + an angled lamp bank (grid of lit cells) casting a soft glow cone
+  for (const fx of [W*0.10, W*0.90]){
+    const inward = fx<CENTER ? 1 : -1;          // tilt the lamp head toward the pitch
+    const headY = 16, poleH = GROUND*0.42, gx = fx+inward*8;
+    // glow cone projected down-inward
+    const g=ctx.createRadialGradient(gx,headY+4,6,gx,headY+4,250);
+    g.addColorStop(0,'rgba(228,240,255,0.50)'); g.addColorStop(0.5,'rgba(175,208,255,0.12)'); g.addColorStop(1,'rgba(175,208,255,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(gx,headY+4,250,0,7); ctx.fill();
+    // pylon (two-tone for roundness)
+    ctx.fillStyle='#454b69'; ctx.fillRect(fx-3, headY, 6, poleH);
+    ctx.fillStyle='#2c3048'; ctx.fillRect(fx+(inward>0?1:-3), headY, 2, poleH);
+    // lamp bank, tilted toward the pitch
+    ctx.save(); ctx.translate(fx, headY); ctx.rotate(inward*0.20);
+    ctx.fillStyle='#9aa2bd'; ctx.fillRect(-27,-13,54,20);          // housing
+    ctx.fillStyle='#6c7290'; ctx.fillRect(-27,-13,54,3);           // top frame
+    for (let i=0;i<4;i++) for (let j=0;j<2;j++){                   // 4×2 grid of lit cells
+      const lx=-19+i*12.7, ly=-6+j*10;
+      ctx.fillStyle='rgba(255,250,224,0.96)'; ctx.beginPath(); ctx.arc(lx,ly,4,0,7); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.arc(lx-0.6,ly-0.6,1.6,0,7); ctx.fill();
+    }
+    ctx.restore();
   }
 
   // scrolling banner (tiled by measured width so the loop is seamless in any font)
@@ -1128,28 +1150,37 @@ function drawSlime(s){
 
   ctx.save();
   ctx.translate(s.x, s.y); ctx.scale(sx,sy);
-  // body (halve cirkel) met gradient
-  const g=ctx.createLinearGradient(0,-r,0,0);
-  g.addColorStop(0, lighten(s.team.color,40));
-  g.addColorStop(0.5, s.team.color);
-  g.addColorStop(1, darken(s.team.color,30));
+  // body: radial gradient lit from upper-left → rounder, sharper read
+  const g=ctx.createRadialGradient(-r*0.32,-r*0.55,r*0.12, 0,-r*0.10,r*1.18);
+  g.addColorStop(0,   lighten(s.team.color,55));
+  g.addColorStop(0.45, s.team.color);
+  g.addColorStop(1,   darken(s.team.color,44));
   ctx.fillStyle=g;
   ctx.beginPath(); ctx.arc(0,0,r,Math.PI,0); ctx.closePath(); ctx.fill();
-  // trim-streep
-  ctx.fillStyle=s.team.trim; ctx.globalAlpha=0.9;
-  ctx.beginPath(); ctx.arc(0,0,r,Math.PI,0); ctx.arc(0,0,r-7,0,Math.PI,true); ctx.closePath(); ctx.fill();
+  // trim ring
+  ctx.fillStyle=s.team.trim; ctx.globalAlpha=0.92;
+  ctx.beginPath(); ctx.arc(0,0,r-3,Math.PI,0); ctx.arc(0,0,r-8,0,Math.PI,true); ctx.closePath(); ctx.fill();
   ctx.globalAlpha=1;
-  // highlight
-  ctx.fillStyle='rgba(255,255,255,0.22)';
-  ctx.beginPath(); ctx.ellipse(-r*0.35,-r*0.5,r*0.22,r*0.12,-0.5,0,7); ctx.fill();
+  // crisp rim outline (darker team shade) for definition
+  ctx.lineJoin='round'; ctx.strokeStyle=darken(s.team.color,52); ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.arc(0,0,r-1.2,Math.PI,0); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(-r+1,0); ctx.lineTo(r-1,0); ctx.stroke();    // base edge
+  // glossy specular (sharp dot + soft sheen)
+  ctx.fillStyle='rgba(255,255,255,0.45)';
+  ctx.beginPath(); ctx.ellipse(-r*0.38,-r*0.54,r*0.19,r*0.10,-0.6,0,7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.14)';
+  ctx.beginPath(); ctx.ellipse(-r*0.10,-r*0.30,r*0.46,r*0.22,-0.5,0,7); ctx.fill();
   ctx.restore();
 
-  // oog (op vaste schermpositie, niet meegeschaald)
+  // eye (fixed screen position, not squashed): white + thin rim + pupil + catchlight
   const eyeYBase = s.y - r*0.55;
   const eyeX = s.x + (s.side==='left'?14:-14);
-  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(eyeX, eyeYBase, 13, 0, 7); ctx.fill();
-  ctx.fillStyle='#0a0a16';
-  ctx.beginPath(); ctx.arc(eyeX + s.eyeX*5, eyeYBase + s.eyeY*5, 6, 0, 7); ctx.fill();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(eyeX, eyeYBase, 12, 0, 7); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=1.5;
+  ctx.beginPath(); ctx.arc(eyeX, eyeYBase, 12, 0, 7); ctx.stroke();
+  const px=eyeX + s.eyeX*5, py=eyeYBase + s.eyeY*5;
+  ctx.fillStyle='#0a0a16'; ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.fill();
+  ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(px-2, py-2, 1.8, 0, 7); ctx.fill();
   // (the no-camping warning is drawn on the ground via drawCampZones, like the original)
 }
 
@@ -1363,8 +1394,7 @@ function buildTeamGrid(){
     const el=document.createElement('div');
     el.className='team'+(t.featured?' featured':'');
     el.dataset.code=t.code;
-    el.innerHTML=`<div class="flag" style="background:${t.flag}"></div>
-                  <div class="code">${t.code}</div><div class="name">${t.name}</div>`;
+    el.innerHTML=`<div class="flag" style="background:${t.flag}"></div><div class="code">${t.code}</div>`;
     el.onclick=()=>pickTeam(t,el);
     grid.appendChild(el);
   });
@@ -1530,7 +1560,7 @@ function showWKStage(){
   $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">▶ Play vs ${opp?escapeHtml(opp.name):'?'}</button>`+
                           `<button id="wkQuit" class="btn secondary">Main menu</button>`;
   $('wkPlay').onclick = ()=>{ Audio.click(); wkStartMatch(); };
-  $('wkQuit').onclick = ()=>{ Audio.click(); backToMenu(); };
+  $('wkQuit').onclick = ()=>{ Audio.click(); askEndWK(backToMenu, showWKStage); };
   showOverlay('wkScreen');
 }
 function wkStartMatch(){
@@ -1626,8 +1656,43 @@ async function submitWKRun(){
   $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit'; if(!ok) $('wkSubmit').disabled=false;
 }
 // ---- menu knoppen ----
-function go1p(){ Audio.unlock(); G.mode='1p'; openTeamSelect('Pick <b>your</b> country'); }
-function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openTeamSelect('Player <b>1</b> (left): pick your country'); }
+function go1p(){ Audio.unlock(); G.mode='1p'; openMatchSetup(); }
+function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openMatchSetup(); }
+// match setup AFTER choosing Friendly / 2 Players (difficulty + format), mirroring World Cup mode
+function openMatchSetup(){
+  const is1p = G.mode==='1p';
+  $('setupTitle').textContent = is1p ? '⚽ FRIENDLY' : '👥 2 PLAYERS';
+  $('setupDiffWrap').style.display = is1p ? '' : 'none';   // no AI difficulty in 2P
+  renderSetupPills();
+  G.screen=SCREEN.TEAM;
+  showOverlay('setupScreen');
+}
+function startTeamSelect(){
+  if (G.mode==='2p'){ pickStage=0; openTeamSelect('Player <b>1</b> (left): pick your country'); }
+  else openTeamSelect('Pick <b>your</b> country');
+}
+function renderSetupPills(){
+  if (G.mode==='1p'){
+    const dr=$('setupDiffRow');
+    dr.innerHTML=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','World Cup']]
+      .map(([k,l])=>`<button class="pill${settings.diff===k?' active':''}" data-d="${k}">${l}</button>`).join('');
+    dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); settings.diff=p.dataset.d; store.save('diff',settings.diff); renderSetupPills(); });
+  }
+  const isGoals=settings.matchMode!=='time';
+  const fr=$('setupFmtRow');
+  fr.innerHTML=`<button class="pill mode${isGoals?' active':''}" data-set="goals">Goals</button>`+
+               `<button class="pill mode${!isGoals?' active':''}" data-set="time">Timed</button>`+
+               `<span class="pill-sep"></span>`+
+               (isGoals?[3,5,7].map(n=>`<button class="pill${settings.toWin===n?' active':''}" data-win="${n}">${n}</button>`).join('')
+                       :[1,2,4].map(n=>`<button class="pill${settings.matchMin===n?' active':''}" data-min="${n}">${n}m</button>`).join(''));
+  fr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click();
+    if(p.dataset.set==='goals'){ settings.matchMode='goals'; store.save('matchMode','goals'); }
+    else if(p.dataset.set==='time'){ settings.matchMode='time'; store.save('matchMode','time'); }
+    else if(p.dataset.win){ settings.toWin=+p.dataset.win; store.save('toWin',settings.toWin); G.toWin=settings.toWin; }
+    else if(p.dataset.min){ settings.matchMin=+p.dataset.min; store.save('matchMin',settings.matchMin); }
+    renderSetupPills();
+  });
+}
 function openTeamSelect(label){ pickStage=0; pickP1=pickP2=null; G.screen=SCREEN.TEAM; $('pickLabel').innerHTML=label; buildTeamGrid(); showOverlay('teamScreen'); }
 
 /* ---- Lazy script loading (keep PeerJS + leaderboard out of the initial render path) ---- */
@@ -1765,6 +1830,7 @@ function showGameOver(){
   else { $('overRematch').style.display=''; }
   $('overSub').innerHTML=sub;
   setupLbSubmit();
+  { const ol=$('overLeaders'); if(ol) ol.style.display='none'; }   // high scores are World Cup-only — not after a friendly/2P/online match
   showOverlay('overScreen');
   updateTouchVisibility();
 }
@@ -1808,6 +1874,22 @@ function fmtDate(s){ if(!s) return ''; const d=new Date(s); if(isNaN(d.getTime()
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else { showOverlay('menuScreen'); } }
 
+// lightweight confirm dialog (used to guard quitting an in-progress World Cup)
+let _cfYes=null, _cfNo=null;
+function askConfirm(o){
+  $('confirmTitle').textContent = o.title||'Are you sure?';
+  $('confirmMsg').textContent   = o.msg||'';
+  $('confirmYes').textContent   = o.yes||'Yes';
+  $('confirmNo').textContent    = o.no||'Cancel';
+  _cfYes=o.onYes||null; _cfNo=o.onNo||null;
+  showOverlay('confirmScreen');
+}
+function wkInProgress(){ return G.wkMode && G.wk && !G.wk.champion; }
+function askEndWK(onYes, onNo){
+  if (!wkInProgress()){ onYes(); return; }                      // nothing to lose -> no nag
+  askConfirm({ title:'END WORLD CUP?', msg:'You’ll lose your tournament progress.',
+    yes:'End tournament', no:'Keep playing', onYes, onNo });
+}
 function backToMenu(){
   if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} }   // release any waiting lobby slot
   quickActive=false; if(quickT){clearTimeout(quickT);quickT=null;} quickCode='';
@@ -2069,7 +2151,11 @@ wire('btn2p', go2p);
 wire('btnOnline', goOnline);
 wire('btnSettings', openSettings);
 wire('pauseResume', resumeGame);
-wire('pauseQuit', backToMenu);
+wire('pauseQuit', ()=>askEndWK(backToMenu, ()=>showOverlay('pauseScreen')));   // confirm before abandoning a WC run
+wire('setupPlay', startTeamSelect);
+wire('setupBack', backToMenu);
+wire('confirmYes', ()=>{ const f=_cfYes; _cfYes=_cfNo=null; if(f) f(); });
+wire('confirmNo',  ()=>{ const f=_cfNo;  _cfYes=_cfNo=null; if(f) f(); else backToMenu(); });
 wire('tMode', toggleMode);
 { const qb=$('quitBtn'); if (qb) qb.onclick = quitButton; }
 { const mb=$('muteBtn'); if (mb) mb.onclick = ()=>{ toggleSound(); }; }
