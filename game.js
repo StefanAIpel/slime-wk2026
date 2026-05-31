@@ -12,7 +12,11 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 const W = 1056, H = 600;             // logical resolution (~10% wider field)
-canvas.width = W; canvas.height = H;
+// Hi-DPI backing store: render at device pixel ratio (capped at 2) so the HUD,
+// flags and score come out crisp instead of nearest-neighbour upscaled.
+const DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
+ctx.scale(DPR, DPR);
 ctx.imageSmoothingEnabled = false;
 
 const GROUND   = H - 52;             // ground level (y of the pitch surface)
@@ -25,15 +29,17 @@ const BAR_Y    = GROUND - GOAL_H;    // y of the crossbar
 const BAR_TH   = 8;
 
 // physics tuning (per 60fps tick)
-const SLIME_SPEED = 6.93;            // ~10% faster
+const SLIME_SPEED = 7.6;             // ground speed (snappier traversal)
 const SLIME_JUMP  = 14.4;
 const SLIME_GRAV  = 0.72;
+const COYOTE_FRAMES = 6;             // jump grace after leaving the ground (~100ms @60fps)
+const JUMP_BUFFER_FRAMES = 4;        // tiny pre-land buffer (~67ms): a touch-early tap still fires on landing
 const BALL_GRAV   = 0.34;
 const BALL_REST   = 0.86;            // wall/bar damping
 const BALL_MAX    = 22;              // speed limit
 
 /* ----------------------------------------------------------------------------
-   1. Teams  (20-country pool; Netherlands featured/default).
+   1. Teams  (22-country pool; Netherlands featured/default).
    stripes = mini-flag (horizontal bands top->bottom). strength = bracket-sim seed.
    A tournament randomly draws 16 of these (your pick + 15 others).
    ---------------------------------------------------------------------------- */
@@ -78,6 +84,10 @@ const TEAMS = [
     flag:'linear-gradient(#fff,#fff) center/100% 30% no-repeat, linear-gradient(#fff,#fff) center/30% 100% no-repeat, #d52b1e' },
   { code:'COL', name:'Colombia',    color:'#fcd116', trim:'#003893', strength:80, stripes:['#fcd116','#003893','#ce1126'],
     flag:'linear-gradient(#fcd116 50%,#003893 50% 75%,#ce1126 75%)' },
+  { code:'RSA', name:'South Africa', color:'#157f3c', trim:'#ffffff', strength:73, stripes:['#de3831','#007a4d','#002395'],
+    flag:'linear-gradient(#de3831 0 33%,#007a4d 33% 66%,#002395 66%)' },
+  { code:'SWE', name:'Sweden',      color:'#fecc00', trim:'#1f5fa6', strength:80, stripes:['#006aa7','#fecc00','#006aa7'],
+    flag:'linear-gradient(#fecc00,#fecc00) center/100% 30% no-repeat, linear-gradient(#fecc00,#fecc00) 34% 50%/16% 100% no-repeat, #006aa7' },
 ];
 const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 
@@ -236,12 +246,40 @@ addEventListener('keyup', e => { keys[e.key.toLowerCase()] = false; if (e.code) 
 const touch = { L:false, R:false, J:false, D:false, L2:false, R2:false, J2:false, D2:false };
 const BTN_PROP = { btnL:'L', btnR:'R', btnJ:'J', btnC:'D', btn2L:'L2', btn2R:'R2', btn2J:'J2', btn2C:'D2' };
 const activePointers = new Map();   // pointerId -> button-id
-function btnIdAt(x,y){
-  const el = document.elementFromPoint(x,y);
-  const b = el && el.closest ? el.closest('.tbtn') : null;
-  return b && BTN_PROP[b.id] ? b.id : null;
+// Hit-testing is coordinate-based against ENLARGED zones (cached) instead of
+// elementFromPoint, so a press just above/below/between buttons still registers
+// — this is what made the slime feel unresponsive on touch.
+let btnZones = [];
+function refreshBtnZones(){
+  btnZones = [];
+  const layer = document.getElementById('touch');
+  if (!layer || !layer.classList.contains('show')) return;
+  const padX = 24, padY = 44;       // grow the tappable area well beyond the visual button
+  layer.querySelectorAll('.pad').forEach(pad=>{
+    if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
+    pad.querySelectorAll('.tbtn').forEach(b=>{
+      if (!BTN_PROP[b.id]) return;
+      const r = b.getBoundingClientRect();
+      if (!r.width) return;
+      btnZones.push({ id:b.id, l:r.left-padX, r:r.right+padX, t:r.top-padY, b:r.bottom+padY,
+                      cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
+    });
+  });
 }
-function setBtn(id, on){ const p = BTN_PROP[id]; if (p) touch[p] = on; }
+function btnIdAt(x,y){
+  let best=null, bestD=Infinity;
+  for (const z of btnZones){
+    if (x>=z.l && x<=z.r && y>=z.t && y<=z.b){
+      const dx=x-z.cx, dy=y-z.cy, d=dx*dx+dy*dy;       // nearest centre wins where zones overlap
+      if (d<bestD){ bestD=d; best=z.id; }
+    }
+  }
+  return best;
+}
+function setBtn(id, on){
+  const p = BTN_PROP[id]; if (p) touch[p] = on;
+  const el = document.getElementById(id); if (el) el.classList.toggle('pressed', on);   // visual feedback
+}
 function routePointer(pid, id){
   const prev = activePointers.get(pid);
   if (prev === id) return;
@@ -251,22 +289,21 @@ function routePointer(pid, id){
 }
 function clearPointer(pid){ const prev = activePointers.get(pid); if (prev) setBtn(prev, false); activePointers.delete(pid); }
 (function bindTouchRouter(){
-  const pad = document.getElementById('touch');
-  if (!pad) return;
-  pad.addEventListener('pointerdown', e=>{
-    if (!e.target.closest || !e.target.closest('.tbtn')) return;
+  addEventListener('pointerdown', e=>{
+    if (!btnZones.length) return;                      // only active while touch controls are shown
+    const id = btnIdAt(e.clientX, e.clientY);
+    if (!id) return;                                   // not near a button -> let the event pass
     e.preventDefault();
-    try { e.target.releasePointerCapture && e.target.releasePointerCapture(e.pointerId); } catch(_){}
-    routePointer(e.pointerId, btnIdAt(e.clientX, e.clientY));
-  });
+    routePointer(e.pointerId, id);
+  }, { passive:false });
   // glijden tussen knoppen: hertarget op basis van vingerpositie
-  window.addEventListener('pointermove', e=>{
+  addEventListener('pointermove', e=>{
     if (!activePointers.has(e.pointerId)) return;
     routePointer(e.pointerId, btnIdAt(e.clientX, e.clientY));
   });
   const end = e=>{ if (activePointers.has(e.pointerId)) clearPointer(e.pointerId); };
-  window.addEventListener('pointerup', end);
-  window.addEventListener('pointercancel', end);
+  addEventListener('pointerup', end);
+  addEventListener('pointercancel', end);
 })();
 
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
@@ -274,17 +311,18 @@ const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in win
 // read keyset -> {left,right,jump,down}.  Hold ball: P1 = Left Shift / S, P2 = Space / Right Shift / ↓
 function wasdInput(){ return { left: !!keys['a'], right: !!keys['d'], jump: !!keys['w'], down: !!keys['s']||!!keys['shiftleft'] }; }
 function arrowsInput(){ return { left: !!keys['arrowleft'], right: !!keys['arrowright'], jump: !!keys['arrowup'], down: !!keys['arrowdown']||!!keys['space']||!!keys['shiftright'] }; }
-// primary human (1P / online): either hand set works; hold ball = Shift / Space / S / ↓
+// primary human (1P / online): arrows or WASD move; jump = ↑/W/Space/RightShift; hold ball = ↓/S
 function humanInput(){
   return {
     left:  !!keys['a'] || !!keys['arrowleft']  || touch.L,
     right: !!keys['d'] || !!keys['arrowright'] || touch.R,
-    jump:  !!keys['w'] || !!keys['arrowup'] || touch.J,
-    down:  !!keys['s'] || !!keys['arrowdown'] || !!keys['shiftleft'] || !!keys['shiftright'] || !!keys['space'] || touch.D,
+    jump:  !!keys['w'] || !!keys['arrowup'] || !!keys['space'] || !!keys['shiftright'] || touch.J,
+    down:  !!keys['s'] || !!keys['arrowdown'] || touch.D,
   };
 }
-function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2, down: !!keys['arrowdown']||!!keys['space']||!!keys['shiftright']||touch.D2 }; }
-function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J, down: !!keys['s']||!!keys['shiftleft']||touch.D }; }
+// local 2P: player 1 = WASD (S = hold), player 2 = arrows (↓ = hold)
+function p1KeyInput(){ return { left: !!keys['a']||touch.L, right: !!keys['d']||touch.R, jump: !!keys['w']||touch.J, down: !!keys['s']||touch.D }; }
+function p2KeyInput(){ return { left: !!keys['arrowleft']||touch.L2, right: !!keys['arrowright']||touch.R2, jump: !!keys['arrowup']||touch.J2, down: !!keys['arrowdown']||touch.D2 }; }
 
 /* ----------------------------------------------------------------------------
    5. Entities
@@ -300,6 +338,7 @@ function makeSlime(side, team){
     hang:0, penalty:0,     // anti-goal-camping timer + penalty flash
     holding:false, holdT:0, catchCD:0,   // ball-catch (hold down) state
     jumpWasDown:false, lastJumpFrame:-99, canDouble:false,   // double-tap = double jump
+    coyote:0, jumpBuffer:0,                                   // jump grace (coyote + small pre-land buffer)
     aiCatchT:0,                          // AI hold-ball timer
     input:{left:false,right:false,jump:false,down:false},
   };
@@ -376,20 +415,27 @@ function updateSlime(s){
   s.x += s.vx;
   // full-field movement (you can chase the opponent to steal a held ball)
   s.x = clamp(s.x, SLIME_R*0.5, W - SLIME_R*0.5);
-  // jumping — a quick double-tap gives one mid-air boost (double jump)
+  // jumping — double-tap = one mid-air boost; plus coyote grace + a tiny pre-land buffer
   const edge = i.jump && !s.jumpWasDown;
   s.jumpWasDown = i.jump;
+  if (s.onGround) s.coyote = COYOTE_FRAMES; else if (s.coyote>0) s.coyote--;
+  if (s.jumpBuffer>0) s.jumpBuffer--;
   if (edge){
-    if (s.onGround){
-      s.vy = -SLIME_JUMP; s.onGround=false; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
+    if (s.onGround || s.coyote>0){
+      s.vy = -SLIME_JUMP; s.onGround=false; s.coyote=0; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
     } else if (s.canDouble && (G.frame - s.lastJumpFrame) < 16){
       s.vy = -SLIME_JUMP * 1.05; s.canDouble=false; s.squash=-0.20; Audio.jump();   // double-jump boost
+    } else {
+      s.jumpBuffer = JUMP_BUFFER_FRAMES;   // pressed a touch early -> remember briefly
     }
   }
   s.vy += SLIME_GRAV; s.y += s.vy;
   if (s.y >= GROUND){
     if (!s.onGround) s.squash = 0.22;
     s.y = GROUND; s.vy = 0; s.onGround = true; s.canDouble=false;
+    if (s.jumpBuffer>0){                    // buffered tap just before landing -> fire on touchdown
+      s.jumpBuffer=0; s.coyote=0; s.vy=-SLIME_JUMP; s.onGround=false; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
+    }
   }
   s.squash *= 0.82;
   // ogen volgen de bal
@@ -804,6 +850,28 @@ function lerpBall(e,t){ if(!t)return; e.x+=(t.x-e.x)*0.5; e.y+=(t.y-e.y)*0.5; e.
 /* ----------------------------------------------------------------------------
    12. Online netcode  (PeerJS, host-authoritative)
    ---------------------------------------------------------------------------- */
+/* WebRTC ICE servers. STUN alone fails when both players sit behind symmetric
+   NAT (common on mobile data / CGNAT), so a TURN relay is required for reliable
+   cross-network play — e.g. iOS on cellular <-> Android on Wi-Fi.
+   Public anonymous TURN is best-effort and may be rate-limited/down. For
+   guaranteed mobile play, get a FREE TURN account (metered.ca = 20GB/mo, or
+   expressturn.com = 1000GB/mo) and either edit TURN_SERVERS below, or — with no
+   redeploy — paste your servers in the browser console and reconnect:
+     store.save('ice', [{urls:'turn:HOST:PORT', username:'U', credential:'C'}]) */
+const TURN_SERVERS = [
+  { urls: 'turn:openrelay.metered.ca:443', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:openrelay.metered.ca:443?transport=tcp', username: 'openrelayproject', credential: 'openrelayproject' },
+  { urls: 'turn:0.peerjs.com:3478', username: 'peerjs', credential: 'peerjsp' },   // PeerJS default relay
+];
+function iceServers(){
+  const override = store.load('ice', null);              // runtime TURN override (array), no redeploy needed
+  return [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+    ...(Array.isArray(override) && override.length ? override : TURN_SERVERS),
+  ];
+}
+function peerOpts(){ return { debug:1, config:{ iceServers: iceServers() } }; }
+
 function makeNet(){
   return {
     peer:null, conn:null, isHost:false, code:'',
@@ -815,7 +883,7 @@ function makeNet(){
       // reuse this device's code so you can host again later with the same code
       const code = this.code || store.load('hostcode', null) || randomCode();
       this.code = code;
-      try { this.peer = new Peer('SLWK'+code, { debug:1 }); }
+      try { this.peer = new Peer('SLWK'+code, peerOpts()); }
       catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=>{ store.save('hostcode', this.code); onCode(this.code); });
       this.peer.on('error', err=>{
@@ -836,12 +904,13 @@ function makeNet(){
         c.on('open', ()=>{ this.connected=true; this._lastRecvT=performance.now(); onStatus('Opponent connected!', false); });
         c.on('data', d=>this._recv(d));
         c.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Connection lost', true); });
+        c.on('iceStateChanged', s=>{ console.log('[net] ICE(host)', s); if (s==='failed' && !this.connected) onStatus('Could not link up (NAT/firewall) — a TURN server is needed.', true); });
       });
       this._onStart = onStart;
     },
     join(code, onStatus, onStart){
       this.isHost=false;
-      try { this.peer = new Peer({ debug:1 }); }
+      try { this.peer = new Peer(peerOpts()); }
       catch(e){ onStatus('PeerJS not loaded — check your internet', true); return; }
       this.peer.on('open', ()=>{
         onStatus('Connecting…', false);
@@ -849,12 +918,13 @@ function makeNet(){
         // don't hang on "Connecting…" forever if the host isn't there
         this._joinT = setTimeout(()=>{
           if (this.connected || this._closed) return;
-          onStatus('No game found with code '+code+' — check it and try again.', true);
+          onStatus('Couldn’t link up — check the code, try the same Wi-Fi, or set up a TURN server.', true);
           try{ this.conn&&this.conn.close(); }catch(_){}
         }, 15000);
         this.conn.on('open', ()=>{ clearTimeout(this._joinT); this.connected=true; this._lastRecvT=performance.now(); onStatus('Connected! Waiting for host…', false); });
         this.conn.on('data', d=>this._recv(d));
         this.conn.on('close', ()=>{ this.connected=false; this.lostConnection=true; onStatus('Connection lost', true); });
+        this.conn.on('iceStateChanged', s=>{ console.log('[net] ICE(join)', s); if (s==='failed' && !this.connected){ clearTimeout(this._joinT); onStatus('Could not link up (NAT/firewall) — a TURN server is needed.', true); } });
       });
       this.peer.on('error', err=>{
         if (err && err.type==='peer-unavailable'){ clearTimeout(this._joinT); onStatus('No game found with code '+code+' — check it and try again.', true); }
@@ -1101,35 +1171,36 @@ function drawParticles(){
 }
 
 function drawScoreboard(){
-  const w=244, h=54, x=CENTER-w/2, y=14;
-  ctx.fillStyle='rgba(6,6,16,0.85)'; roundRect(x,y,w,h,10); ctx.fill();
-  ctx.strokeStyle='#2c2c55'; ctx.lineWidth=2; roundRect(x,y,w,h,10); ctx.stroke();
+  const SC=2;                                       // ~2x bigger HUD (flags + score)
+  const w=244*SC, h=54*SC, x=CENTER-w/2, y=12;
+  ctx.fillStyle='rgba(6,6,16,0.85)'; roundRect(x,y,w,h,10*SC); ctx.fill();
+  ctx.strokeStyle='#2c2c55'; ctx.lineWidth=2; roundRect(x,y,w,h,10*SC); ctx.stroke();
   // flags
-  drawMiniFlag(G.p1.team, x+10, y+11, 40, 27);
-  drawMiniFlag(G.p2.team, x+w-50, y+11, 40, 27);
+  drawMiniFlag(G.p1.team, x+10*SC, y+11*SC, 40*SC, 27*SC);
+  drawMiniFlag(G.p2.team, x+w-50*SC, y+11*SC, 40*SC, 27*SC);
   // codes
   ctx.textBaseline='alphabetic';
-  ctx.font=FONT(12,800); ctx.textAlign='center';
-  ctx.fillStyle=G.p1.team.color; ctx.fillText(G.p1.team.code, x+30, y+50);
-  ctx.fillStyle=G.p2.team.color; ctx.fillText(G.p2.team.code, x+w-30, y+50);
+  ctx.font=FONT(12*SC,800); ctx.textAlign='center';
+  ctx.fillStyle=G.p1.team.color; ctx.fillText(G.p1.team.code, x+30*SC, y+50*SC);
+  ctx.fillStyle=G.p2.team.color; ctx.fillText(G.p2.team.code, x+w-30*SC, y+50*SC);
   // score
-  ctx.fillStyle='#fff'; ctx.font=FONT(28,900);
-  ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+38);
+  ctx.fillStyle='#fff'; ctx.font=FONT(28*SC,900);
+  ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+38*SC);
   // sub-line: match clock (time mode) or goal target
   ctx.textAlign='center';
   if (G.matchMode==='time'){
     if (G.golden){
-      ctx.font=FONT(12,800); ctx.fillStyle = (G.frame>>4&1)?'#ffae3b':'#ff5470';
-      ctx.fillText('GOLDEN GOAL', CENTER, y+h+14);
+      ctx.font=FONT(12*SC,800); ctx.fillStyle = (G.frame>>4&1)?'#ffae3b':'#ff5470';
+      ctx.fillText('GOLDEN GOAL', CENTER, y+h+14*SC);
     } else {
       const sec=Math.max(0,Math.ceil(G.matchTime/60));
       const txt=(sec/60|0)+':'+String(sec%60).padStart(2,'0');
-      ctx.font=FONT(16,800); ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
-      ctx.fillText(txt, CENTER, y+h+15);
+      ctx.font=FONT(16*SC,800); ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
+      ctx.fillText(txt, CENTER, y+h+15*SC);
     }
   } else {
-    ctx.font=FONT(11,700); ctx.fillStyle='#9a9ad0';
-    ctx.fillText('FIRST TO '+G.toWin, CENTER, y+h+13);
+    ctx.font=FONT(11*SC,700); ctx.fillStyle='#9a9ad0';
+    ctx.fillText('FIRST TO '+G.toWin, CENTER, y+h+13*SC);
   }
 }
 
@@ -1219,10 +1290,11 @@ function updateTouchVisibility(){
   $('touch').classList.toggle('show', IS_TOUCH && inGame);
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
   document.body.classList.toggle('m2p', G.mode==='2p');
+  refreshBtnZones();                                   // recompute enlarged tap zones for this layout
   const hint = $('playHint');
   hint.innerHTML = (G.mode==='2p')
-    ? `<b>P1</b> A/D move · W jump · <b>Shift</b> hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · <b>Space</b> hold ball &nbsp;·&nbsp; ESC = pause`
-    : `Move <b>A/D</b> or <b>←/→</b> · jump <b>W</b>/<b>↑</b> · hold ball <b>Shift</b>/<b>Space</b> · double-tap jump = higher · ESC = pause`;
+    ? `<b>P1</b> A/D move · W jump · S hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · ↓ hold ball &nbsp;·&nbsp; ESC = pause`
+    : `Move <b>←/→</b> or <b>A/D</b> · jump <b>Space</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause`;
   hint.style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
   $('quitBtn').classList.toggle('show', inGame);
   $('muteBtn').classList.toggle('show', inGame);
@@ -1875,8 +1947,8 @@ if (IS_TOUCH){ const b=$('btn2p'); if(b){ b.style.display='none'; } }
 startAttract();
 showOverlay('menuScreen');
 updateTouchVisibility();
-addEventListener('resize', updateRotateHint);
-addEventListener('orientationchange', ()=>setTimeout(updateRotateHint, 200));
+addEventListener('resize', ()=>{ updateRotateHint(); refreshBtnZones(); });
+addEventListener('orientationchange', ()=>setTimeout(()=>{ updateRotateHint(); refreshBtnZones(); }, 200));
 initFromURL();   // invite link ?j=CODE (PeerJS lazy-loads on demand)
 
 // expose for debugging / tests — only on localhost or with ?debug=1 (keeps prod clean)
