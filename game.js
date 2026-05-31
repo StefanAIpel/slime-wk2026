@@ -255,13 +255,14 @@ function refreshBtnZones(){
   const layer = document.getElementById('touch');
   if (!layer || !layer.classList.contains('show')) return;
   const padX = 30, padY = 44;       // grow the tappable area well beyond the visual button
+  const EG = 22, vw = window.innerWidth;   // keep hit zones clear of the screen-edge gesture strip (iOS)
   layer.querySelectorAll('.pad').forEach(pad=>{
     if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
     pad.querySelectorAll('.tbtn').forEach(b=>{
       if (!BTN_PROP[b.id]) return;
       const r = b.getBoundingClientRect();
       if (!r.width) return;
-      btnZones.push({ id:b.id, l:r.left-padX, r:r.right+padX, t:r.top-padY, b:r.bottom+padY,
+      btnZones.push({ id:b.id, l:Math.max(EG, r.left-padX), r:Math.min(vw-EG, r.right+padX), t:r.top-padY, b:r.bottom+padY,
                       cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
     });
   });
@@ -687,6 +688,7 @@ function startMatch(){
   G.attract=false;
   G.score=[0,0]; G.winner=0; G.particles=[]; G.lastScorer=0;
   if (G.wkMode){ G.matchMode='time'; G.matchMin=(G.wk && G.wk.min) || settings.wkMin || 2; }   // World Cup: time mode, chosen length
+  else if (G.mode==='host'){ G.matchMode='time'; G.matchMin=2; }   // online: standard 2-minute timed games
   else { G.matchMode=settings.matchMode; G.matchMin=settings.matchMin; }
   G.toWin = settings.toWin;
   G.golden = false;
@@ -822,8 +824,9 @@ function updateAntiCamp(){
     if (inCampZone(s)) s.hang++; else s.hang = Math.max(0, s.hang - 3);
     if (s.hang >= CAMP_MAX){
       s.hang = 0; s.penalty = 70;
-      s.x = s.side==='left' ? W*0.30 : W*0.70;     // weggestuurd naar eigen helft-midden
-      s.vy = -SLIME_JUMP*0.5; s.onGround = false;   // klein sprongetje
+      s.x = s.side==='left' ? W*0.42 : W*0.58;     // hard penalty: shoved almost to mid-field
+      s.vx = (s.side==='left'?1:-1) * 7;
+      s.vy = -SLIME_JUMP*0.5; s.onGround = false;
       Audio.whistle();
     }
     if (s.penalty > 0) s.penalty--;
@@ -1021,7 +1024,7 @@ function render(){
 function drawStadium(){
   // night sky
   const sky = ctx.createLinearGradient(0,0,0,GROUND);
-  sky.addColorStop(0,'#0a1430'); sky.addColorStop(0.55,'#152554'); sky.addColorStop(1,'#26345f');
+  sky.addColorStop(0,'#142048'); sky.addColorStop(0.55,'#22356f'); sky.addColorStop(1,'#324884');   // lighter WC-tinted night sky
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND+6);
 
   // subtle WC 2026 colour sweeps across the upper stands (USA/Mexico/Canada: red · blue · green)
@@ -1153,6 +1156,13 @@ function drawCampZones(){
     const bx = isLeft ? zx+zw : zx;
     ctx.strokeStyle=`rgba(${col},${Math.min(1,a+0.55)})`; ctx.lineWidth=3;
     ctx.beginPath(); ctx.moveTo(bx, GROUND); ctx.lineTo(bx, H); ctx.stroke();
+    // build-up meter above the slime so the penalty is telegraphed
+    if (s.hang > 8 || s.penalty > 0){
+      const mw=72, mh=7, mx=s.x-mw/2, my=s.y-SLIME_R-30;
+      const f = s.penalty>0 ? 1 : Math.min(1, s.hang/CAMP_MAX);
+      ctx.fillStyle='rgba(8,10,24,0.8)'; ctx.fillRect(mx-2,my-2,mw+4,mh+4);
+      ctx.fillStyle = f>0.75?'#ff5470':(f>0.45?'#ffae3b':'#7cc0ee'); ctx.fillRect(mx,my,mw*f,mh);
+    }
   });
 }
 
@@ -1613,35 +1623,60 @@ function ensureLeaderboard(){
   if (window.Leaderboard) return Promise.resolve(true);
   return loadScript('leaderboard.js').then(()=>!!window.Leaderboard).catch(()=>false);
 }
-function peerUnavailable(){ $('btnHost').disabled=true; $('btnJoin').disabled=true; $('onlinePeerWarn').style.display='block'; }
+function peerUnavailable(){ const f=$('btnModeFriend'),q=$('btnModeQuick'); if(f)f.disabled=true; if(q)q.disabled=true; $('onlinePeerWarn').style.display='block'; }
 
 async function goOnline(){
   Audio.unlock(); G.screen=SCREEN.ONLINE; showOverlay('onlineScreen');
   endQuick();                                              // clear any prior quick-match state
-  $('hostArea').style.display='none'; $('joinArea').style.display='none'; $('quickArea').style.display='none'; $('onlinePeerWarn').style.display='none';
-  $('btnHost').disabled=true; $('btnJoin').disabled=true; $('btnQuick').disabled=true;
+  showOnlineModes();                                       // step 1: pick a mode
+  $('btnModeFriend').disabled=true; $('btnModeQuick').disabled=true;
   $('onlineStatus').textContent='Loading online…'; $('onlineStatus').className='status';
   const [ok] = await Promise.all([ensurePeer(), refreshIce()]);   // warm TURN creds alongside PeerJS
-  if (ok){ $('btnHost').disabled=false; $('btnJoin').disabled=false; $('btnQuick').disabled=false; $('onlineStatus').textContent=''; }
+  if (ok){ $('btnModeFriend').disabled=false; $('btnModeQuick').disabled=false; $('onlineStatus').textContent=''; }
   else { peerUnavailable(); $('onlineStatus').textContent=''; }
+}
+function showOnlineModes(){
+  $('onlineModes').style.display='flex';
+  $('friendPanel').style.display='none'; $('quickArea').style.display='none';
+  $('hostArea').style.display='none'; $('joinArea').style.display='none';
+  $('onlinePeerWarn').style.display='none'; $('onlineSubBack').style.display='none';
+  $('onlineBack').style.display='inline-block';
+  olStatus('');
+}
+function showFriendPanel(){
+  Audio.click();
+  $('onlineModes').style.display='none'; $('quickArea').style.display='none';
+  $('friendPanel').style.display='block';
+  $('hostArea').style.display='none'; $('joinArea').style.display='none';
+  $('onlineSubBack').style.display='inline-block'; $('onlineBack').style.display='none';
+  olStatus('Host a game, or enter a friend’s code.');
+}
+function startQuickMode(){
+  $('onlineModes').style.display='none'; $('friendPanel').style.display='none';
+  $('onlineSubBack').style.display='inline-block'; $('onlineBack').style.display='none';
+  quickMatch();
+}
+function backToOnlineModes(){
+  Audio.click();
+  cancelQuickSearch();                 // release any lobby slot + close the peer
+  endQuick();
+  showOnlineModes();
 }
 
 /* ---- Quick Match: server-matchmade opponent via the Supabase lobby ---- */
 function olStatus(msg, cls){ $('onlineStatus').textContent = msg; $('onlineStatus').className = 'status' + (cls ? ' '+cls : ''); }
 function ensureLobby(){ return ensureLeaderboard().then(()=> !!window.Lobby); }
 let quickActive=false, quickT=null, quickCode='';
-function endQuick(){ quickActive=false; if(quickT){clearTimeout(quickT); quickT=null;} quickCode=''; const q=$('btnQuick'); if(q) q.disabled=false; $('btnHost').disabled=false; $('btnJoin').disabled=false; }
-function quickReset(){ endQuick(); $('quickArea').style.display='none'; }
+function endQuick(){ quickActive=false; if(quickT){clearInterval(quickT); quickT=null;} quickCode=''; }
+function quickReset(){ endQuick(); $('quickArea').style.display='none'; showOnlineModes(); }
 function cancelQuickSearch(){
   if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} }
   try{ G.net && G.net.close(); }catch(_){} G.net=null;
 }
-function cancelQuick(){ Audio.click(); cancelQuickSearch(); olStatus(''); quickReset(); }
+function cancelQuick(){ backToOnlineModes(); }
 async function quickMatch(){
   Audio.unlock();
-  $('hostArea').style.display='none'; $('joinArea').style.display='none'; $('onlinePeerWarn').style.display='none';
-  $('quickArea').style.display='block';
-  $('btnQuick').disabled=$('btnHost').disabled=$('btnJoin').disabled=true;
+  $('quickArea').style.display='block'; $('onlinePeerWarn').style.display='none';
   olStatus('Loading…');
   const [okP, okL] = await Promise.all([ensurePeer(), ensureLobby(), refreshIce()]);
   if (!okP){ peerUnavailable(); olStatus('Online unavailable (offline?).','err'); quickReset(); return; }
@@ -1660,25 +1695,26 @@ async function onQuickOpen(code){
   if (m.role==='guest' && m.host_code){
     // an opponent was already waiting -> drop our host peer and join them
     try{ G.net.close(); }catch(_){}
-    quickActive=false; if(quickT){clearTimeout(quickT);quickT=null;} quickCode='';
+    quickActive=false; if(quickT){clearInterval(quickT);quickT=null;} quickCode='';
     olStatus('Opponent found! Connecting…','ok');
     G.mode='guest'; G.net=makeNet();
     G.net.join(m.host_code, (msg,err)=>olStatus(msg, err?'err':'ok'), null);
     patchNetForTeams();
   } else {
-    // we're the waiting host now — wait for someone to join (or give up)
-    olStatus('⚡ Searching for an opponent…','waiting');
-    quickT = setTimeout(()=>{
-      if(!quickActive) return;
-      cancelQuickSearch();
-      olStatus('No opponents right now — try again, or use a code.','err');
-      quickReset();
-    }, 45000);
+    // we're the waiting host now — wait up to 2 min for someone to join, with a countdown
+    let left = 120;
+    const showWait = ()=>olStatus('⚡ Searching for an opponent… '+(left/60|0)+':'+String(left%60).padStart(2,'0'),'waiting');
+    showWait();
+    quickT = setInterval(()=>{
+      if(!quickActive){ clearInterval(quickT); quickT=null; return; }
+      if(--left <= 0){ clearInterval(quickT); quickT=null; cancelQuickSearch(); olStatus('No opponents in 2 min — try again, or use a code.','err'); quickReset(); return; }
+      showWait();
+    }, 1000);
   }
 }
 function onQuickHostStatus(msg, err){
   if (/connected/i.test(msg)){                 // a guest joined our hosted game
-    quickActive=false; if(quickT){clearTimeout(quickT);quickT=null;}
+    quickActive=false; if(quickT){clearInterval(quickT);quickT=null;}
     if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} } quickCode='';
     $('quickArea').style.display='none';
     olStatus('Opponent connected!','ok');
@@ -1838,7 +1874,7 @@ function initFromURL(){
   if (!m) return;
   const code = m[1].toUpperCase();
   try { history.replaceState(null,'',location.pathname); } catch(e){}
-  goOnline(); joinGame(); $('joinCode').value = code;
+  goOnline(); showFriendPanel(); joinGame(); $('joinCode').value = code;
   setTimeout(()=>{ try{ joinConnect(); }catch(e){} }, 500);
 }
 function hostStartMatch(){
@@ -2001,10 +2037,12 @@ wire('teamBack', backToMenu);
 wire('onlineBack', backToMenu);
 wire('matchCancel', backToMenu);
 wire('setBack', ()=>{ refreshMenuPills(); showOverlay('menuScreen'); });
+wire('btnModeFriend', showFriendPanel);
+wire('btnModeQuick', startQuickMode);
 wire('btnHost', hostGame);
 wire('btnJoin', joinGame);
-wire('btnQuick', quickMatch);
 wire('quickCancel', cancelQuick);
+wire('onlineSubBack', backToOnlineModes);
 wire('hostStart', hostStartMatch);
 wire('joinGo', joinConnect);
 wire('overRematch', rematch);

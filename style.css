@@ -83,11 +83,11 @@ html, body {
   line-height: .92;
   letter-spacing: -1.5px;
   margin: 0;
-  color: var(--oranje);
+  color: var(--ink);
   text-transform: uppercase;
-  text-shadow: 0 2px 20px rgba(255,122,24,.35), 0 8px 26px rgba(0,0,0,.55);
+  text-shadow: 0 2px 18px rgba(255,122,24,.28), 0 8px 26px rgba(0,0,0,.55);
 }
-.title .accent { color: var(--ink); display:block; font-size: 1em; letter-spacing: 4px; text-shadow: 0 6px 26px rgba(0,0,0,.55); }
+.title .accent { color: #37d6d0; display:block; font-size: .46em; letter-spacing: 3px; margin-top: 4px; text-shadow: 0 2px 14px rgba(55,214,208,.35); }
 .title.small-title { font-size: clamp(20px, 4.6vw, 36px); letter-spacing: 1px; line-height: 1.1; }
 .subtitle { color: var(--muted); font-size: clamp(12px, 1.8vw, 15px); margin: 2px 0 6px; line-height:1.6; font-weight: 500; }
 
@@ -267,11 +267,11 @@ html, body {
   position: absolute; bottom: max(16px, env(safe-area-inset-bottom));
   pointer-events: none; display: flex; gap: 18px;       /* tight pair; hit-testing is coordinate-based */
 }
-#padMove1 { left: max(44px, env(safe-area-inset-left)); }
-#padAct1  { right: max(44px, env(safe-area-inset-right)); }
-#pad2     { right: max(44px, env(safe-area-inset-right)); }
+#padMove1 { left: max(56px, env(safe-area-inset-left)); }
+#padAct1  { right: max(56px, env(safe-area-inset-right)); }
+#pad2     { right: max(56px, env(safe-area-inset-right)); }
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
-body.m2p #padAct1 { left: max(44px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
+body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
   width: 78px; height: 44px; border-radius: 12px;       /* compact corner pads (2 thumbs), low profile */
   background: linear-gradient(180deg, rgba(255,172,72,.30), rgba(255,122,24,.13));
@@ -290,13 +290,13 @@ body.m2p #padAct1 { left: max(44px, env(safe-area-inset-left)); right: auto; bot
 @media (pointer: coarse){
   /* tiny reserved strip so the pitch fills more of the screen; the flat buttons
      overlap its bottom edge and read as a low HUD bar */
-  :root { --padb: 56px; }
+  :root { --padb: 72px; }
   #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
 }
 /* a bit bigger on larger touch screens (tablets), still a tidy low overlay */
 @media (pointer: coarse) and (min-width: 760px){
-  :root { --padb: 72px; }
-  .tbtn { width: 104px; height: 52px; font-size: 26px; border-radius: 13px; }
+  :root { --padb: 84px; }
+  .tbtn { width: 140px; height: 58px; font-size: 28px; border-radius: 14px; }
   body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 88px); }
 }
 
