@@ -1925,9 +1925,15 @@ function rematch(){
   else startMatch();
   updateTouchVisibility();
 }
-// after a match: ask whether to keep the same teams or pick new ones, then rematch
+// after a match: Friendly/2P can keep OR re-pick teams. Online keeps the proven
+// same-teams rematch for now — the online "new teams" handshake is deferred until
+// it can be checked on two devices.
 function askRematch(){
-  if (G.mode==='host' && G.net && !G.net.connected){ onConnectionLost(); return; }
+  if (G.mode==='host' && G.net){
+    if (!G.net.connected){ onConnectionLost(); return; }
+    rematch();                                 // online: straight same-teams rematch (no dialog yet)
+    return;
+  }
   askConfirm({ title:'REMATCH', msg:'Keep the same teams or pick new ones?',
     yes:'New teams', no:'Same teams',          // confirmNo is the primary-styled button → "Same teams"
     onYes:rematchNewTeams, onNo:rematch });
