@@ -185,6 +185,10 @@ html, body {
 }
 .team:hover { transform: translateY(-3px); border-color: var(--oranje2); }
 .team.sel { border-color: var(--oranje); box-shadow: 0 0 0 2px var(--oranje), 0 0 18px rgba(255,122,24,.5); }
+/* online: show which country the opponent already took */
+.team.opppick { border-color: #37d6d0; box-shadow: 0 0 0 2px #37d6d0, 0 0 16px rgba(55,214,208,.45); position: relative; }
+.team.opppick::after { content: 'OPP'; position: absolute; top: 2px; right: 4px; font-size: 9px; font-weight: 800; color: #37d6d0; letter-spacing: 1px; }
+.mc-flag.tiny { display:inline-block; width:18px; height:12px; border-radius:2px; vertical-align:middle; margin-right:5px; }
 /* (no pre-selected highlight — only .sel marks an actual pick) */
 .team .flag {
   width: 64px; height: 42px; border-radius: 4px;

@@ -214,6 +214,9 @@ const Audio = (() => {
     // real final-whistle stinger (from the uploaded mp3)
     endWhistle(){ if(!settings.sound) return; if(!sfxWhistle) media(); if(sfxWhistle){ try{ sfxWhistle.currentTime=0; sfxWhistle.play().catch(()=>{}); }catch(e){} } },
     click(){ if(!ac||!settings.sound) return; const t=ac.currentTime; osc('sine',520,t,0.03,0.06,null,1400); },
+    // rising 3-note chime when an online opponent connects ("matched!")
+    matched(){ if(!ac||!settings.sound) return; const t=ac.currentTime;
+      [[523,0],[659,0.10],[784,0.20]].forEach(([f,dt])=>osc('triangle',f,t+dt,0.12,0.16,null,2200)); },
     setSound(on){ if(on) resumeMusic(); else pauseMusic(); },
     setVolume(v){ if(master) master.gain.value = 0.6*v; if(bgm) bgm.volume = 0.5*v; if(sfxWhistle) sfxWhistle.volume = 0.9*v; },
     pause:pauseMusic, resume:resumeMusic,
@@ -1346,6 +1349,7 @@ function buildTeamGrid(){
   TEAMS.forEach(t=>{
     const el=document.createElement('div');
     el.className='team'+(t.featured?' featured':'');
+    el.dataset.code=t.code;
     el.innerHTML=`<div class="flag" style="background:${t.flag}"></div>
                   <div class="code">${t.code}</div><div class="name">${t.name}</div>`;
     el.onclick=()=>pickTeam(t,el);
@@ -1727,7 +1731,7 @@ function onQuickHostStatus(msg, err){
     quickActive=false; if(quickT){clearInterval(quickT);quickT=null;}
     if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} } quickCode='';
     $('quickArea').style.display='none';
-    olStatus('Opponent connected!','ok');
+    Audio.matched(); olStatus('✅ Opponent found!','ok');
     openOnlineTeamPick();                        // straight into team pick (same flow as the code host)
     return;
   }
@@ -1861,7 +1865,8 @@ async function hostGame(){
   $('onlineStatus').textContent='Connecting to server...'; $('onlineStatus').className='status';
   G.net.host(
     code=>{ $('hostCode').textContent=code; $('onlineStatus').textContent='⏳ Waiting for your opponent to join — share the code or link below.'; $('onlineStatus').className='status waiting'; setupShare(code); },
-    (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':(/connected/i.test(msg)?'ok':'waiting')); if(!err) $('hostStart').style.display='inline-block'; },
+    (msg,err)=>{ const conn=/connected/i.test(msg); if(conn){ Audio.matched(); msg='✅ Opponent connected! Tap “Pick team & start”.'; }
+      $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':(conn?'ok':'waiting')); if(!err) $('hostStart').style.display='inline-block'; },
     null
   );
   $('hostStart').style.display='none';
@@ -1946,13 +1951,18 @@ async function joinConnect(){
   if (code.length<4){ $('onlineStatus').textContent='Enter the 4-letter code.'; $('onlineStatus').className='status err'; return; }
   $('onlineStatus').textContent='Connecting...'; $('onlineStatus').className='status';
   if (!(await ensurePeer())){ peerUnavailable(); $('onlineStatus').textContent='Online unavailable (offline?).'; $('onlineStatus').className='status err'; return; }
-  G.net.join(code, (msg,err)=>{ $('onlineStatus').textContent=msg; $('onlineStatus').className='status '+(err?'err':'ok'); }, null);
+  G.net.join(code, (msg,err)=>{ const conn=/connected/i.test(msg); if(conn) Audio.matched();
+    $('onlineStatus').textContent=conn?'✅ '+msg:msg; $('onlineStatus').className='status '+(err?'err':'ok'); }, null);
   patchNetForTeams();
 }
 function showGuestTeamPick(){
   G.mode='guest'; G.screen=SCREEN.TEAM; guestPickSent=false;
-  $('pickLabel').innerHTML='Pick <b>your</b> country (right)';
-  buildTeamGrid(); showOverlay('teamScreen');
+  // show which country the host took, then prompt for yours
+  const host = pickP1 ? `<span class="mc-flag tiny" style="background:${pickP1.flag}"></span>${escapeHtml(pickP1.name)}` : 'the host';
+  $('pickLabel').innerHTML=`Opponent picked ${host}.<br>Now pick <b>your</b> country`;
+  buildTeamGrid();
+  if (pickP1) document.querySelectorAll('#teamGrid .team').forEach(el=>{ if(el.dataset.code===pickP1.code) el.classList.add('opppick'); });  // mark host's team (non-blocking)
+  showOverlay('teamScreen');
 }
 function sendGuestTeamAndWait(){
   G.net.conn.send({t:'pick', code:pickP2.code});
