@@ -1549,13 +1549,23 @@ function wkResolveAndAdvance(userWon){
     wkShowResult(false);
   }
 }
-// leaderboard points for a World Cup run: difficulty × rounds won + champion bonus + goal diff
+// Leaderboard points for a World Cup run (granular, so scores are near-unique):
+//   base per round survived  +  (goals_for − goals_against)         ... gameplay
+//   all × difficulty factor  ×  win/loss factor (champion vs knocked out)
 function wkPoints(){
   const wk=G.wk; const champ = wk.champion===wk.team;
   const mult = (WK_DIFF_MULT[wk.diffMode]||2);
   const roundsWon = champ ? 4 : wk.round;
-  let gd=0; wk.rounds.forEach(rd=>rd.forEach(m=>{ if(m.user && m.played){ const uf=m.a===wk.team?m.sa:m.sb, ua=m.a===wk.team?m.sb:m.sa; gd+=(uf-ua); }}));
-  return Math.max(0, (roundsWon*mult*10 + (champ?mult*30:0) + Math.max(0,gd)*3)|0);
+  // aggregate the user's goals across every match they actually played
+  let gf=0, ga=0;
+  wk.rounds.forEach(rd=>rd.forEach(m=>{ if(m.user && m.played){
+    const uf=m.a===wk.team?m.sa:m.sb, ua=m.a===wk.team?m.sb:m.sa; gf+=uf; ga+=ua;
+  }}));
+  const winFactor = champ ? 1.5 : (roundsWon>0 ? 1.0 : 0.6);     // win/loss bonus
+  const base = roundsWon*8 + (champ?40:0);                        // reward progress + the title
+  const goalPts = (gf - ga)*4;                                    // goal difference matters
+  const floor = gf*mult;                                          // participation floor: goals always pay a little
+  return Math.max(floor|0, Math.round((base + goalPts) * mult * winFactor / 2));
 }
 function wkShowResult(champion){
   const wk=G.wk; const pts=wkPoints(); wk._pts=pts;
