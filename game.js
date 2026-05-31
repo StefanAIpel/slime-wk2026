@@ -84,7 +84,7 @@ const TEAMS = [
     flag:'linear-gradient(#fff,#fff) center/100% 30% no-repeat, linear-gradient(#fff,#fff) center/30% 100% no-repeat, #d52b1e' },
   { code:'COL', name:'Colombia',    color:'#fcd116', trim:'#003893', strength:80, stripes:['#fcd116','#003893','#ce1126'],
     flag:'linear-gradient(#fcd116 50%,#003893 50% 75%,#ce1126 75%)' },
-  { code:'RSA', name:'South Africa', color:'#157f3c', trim:'#ffffff', strength:73, stripes:['#de3831','#007a4d','#002395'],
+  { code:'RSA', name:'South Africa', color:'#eef1ee', trim:'#138a43', strength:73, stripes:['#de3831','#007a4d','#002395'],
     flag:'linear-gradient(#de3831 0 33%,#007a4d 33% 66%,#002395 66%)' },
   { code:'SWE', name:'Sweden',      color:'#fecc00', trim:'#1f5fa6', strength:80, stripes:['#006aa7','#fecc00','#006aa7'],
     flag:'linear-gradient(#fecc00,#fecc00) center/100% 30% no-repeat, linear-gradient(#fecc00,#fecc00) 34% 50%/16% 100% no-repeat, #006aa7' },
@@ -94,8 +94,8 @@ const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 const AI_LEVELS = {
   easy:     { label:'Easy',      speed:0.50, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false },
   normal:   { label:'Normal',    speed:0.78, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false },
-  hard:     { label:'Hard',      speed:1.00, react:22,  jump:0.12,  predict:38, mistake:0.04, smart:true  },
-  worldcup: { label:'World Cup', speed:1.18, react:6,   jump:0.22,  predict:58, mistake:0.0,  smart:true  },
+  hard:     { label:'Hard',      speed:1.02, react:18,  jump:0.13,  predict:44, mistake:0.03, smart:true, defend:0.38 },
+  worldcup: { label:'World Cup', speed:1.20, react:5,   jump:0.22,  predict:66, mistake:0.0,  smart:true, defend:0.55 },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -254,7 +254,7 @@ function refreshBtnZones(){
   btnZones = [];
   const layer = document.getElementById('touch');
   if (!layer || !layer.classList.contains('show')) return;
-  const padX = 24, padY = 44;       // grow the tappable area well beyond the visual button
+  const padX = 30, padY = 44;       // grow the tappable area well beyond the visual button
   layer.querySelectorAll('.pad').forEach(pad=>{
     if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
     pad.querySelectorAll('.tbtn').forEach(b=>{
@@ -601,6 +601,10 @@ function computeAI(s){
     else {
       tx = predictBallX(p.predict);
       if (b.x < CENTER-60 && b.vx<=0) tx = tx*0.4 + myGoalX*0.6;   // ball far away -> hold near goal
+      else if (p.defend && (b.x > CENTER-40 || b.vx > 0.5)){       // threat on our half / incoming -> hold a goal-side line
+        tx = tx + (myGoalX - tx) * p.defend;
+        if (b.x > W*0.66) tx = Math.max(tx, b.x + SLIME_R*0.3);    // never let the ball get goal-side of you near our goal
+      }
     }
     tx += (Math.random()-0.5) * (p.mistake*300);
     aiState.targetX = clamp(tx, SLIME_R*0.5, W-SLIME_R*0.5);
