@@ -824,8 +824,9 @@ function updateAntiCamp(){
     if (inCampZone(s)) s.hang++; else s.hang = Math.max(0, s.hang - 3);
     if (s.hang >= CAMP_MAX){
       s.hang = 0; s.penalty = 70;
-      s.x = s.side==='left' ? W*0.30 : W*0.70;     // weggestuurd naar eigen helft-midden
-      s.vy = -SLIME_JUMP*0.5; s.onGround = false;   // klein sprongetje
+      s.x = s.side==='left' ? W*0.42 : W*0.58;     // hard penalty: shoved almost to mid-field
+      s.vx = (s.side==='left'?1:-1) * 7;
+      s.vy = -SLIME_JUMP*0.5; s.onGround = false;
       Audio.whistle();
     }
     if (s.penalty > 0) s.penalty--;
@@ -1023,7 +1024,7 @@ function render(){
 function drawStadium(){
   // night sky
   const sky = ctx.createLinearGradient(0,0,0,GROUND);
-  sky.addColorStop(0,'#0a1430'); sky.addColorStop(0.55,'#152554'); sky.addColorStop(1,'#26345f');
+  sky.addColorStop(0,'#142048'); sky.addColorStop(0.55,'#22356f'); sky.addColorStop(1,'#324884');   // lighter WC-tinted night sky
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND+6);
 
   // subtle WC 2026 colour sweeps across the upper stands (USA/Mexico/Canada: red · blue · green)
@@ -1155,6 +1156,13 @@ function drawCampZones(){
     const bx = isLeft ? zx+zw : zx;
     ctx.strokeStyle=`rgba(${col},${Math.min(1,a+0.55)})`; ctx.lineWidth=3;
     ctx.beginPath(); ctx.moveTo(bx, GROUND); ctx.lineTo(bx, H); ctx.stroke();
+    // build-up meter above the slime so the penalty is telegraphed
+    if (s.hang > 8 || s.penalty > 0){
+      const mw=72, mh=7, mx=s.x-mw/2, my=s.y-SLIME_R-30;
+      const f = s.penalty>0 ? 1 : Math.min(1, s.hang/CAMP_MAX);
+      ctx.fillStyle='rgba(8,10,24,0.8)'; ctx.fillRect(mx-2,my-2,mw+4,mh+4);
+      ctx.fillStyle = f>0.75?'#ff5470':(f>0.45?'#ffae3b':'#7cc0ee'); ctx.fillRect(mx,my,mw*f,mh);
+    }
   });
 }
 
