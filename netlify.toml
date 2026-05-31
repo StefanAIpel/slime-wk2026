@@ -33,3 +33,15 @@
   for = "/service-worker.js"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
+
+# Revalidate the app's JS/CSS so a new deploy is picked up on next load
+# (paired with the network-first service worker — no manual cache-clearing needed)
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
