@@ -37,7 +37,7 @@ const BALL_REST   = 0.86;            // wall/bar damping
 const BALL_MAX    = 22;              // speed limit
 
 /* ----------------------------------------------------------------------------
-   1. Teams  (20-country pool; Netherlands featured/default).
+   1. Teams  (22-country pool; Netherlands featured/default).
    stripes = mini-flag (horizontal bands top->bottom). strength = bracket-sim seed.
    A tournament randomly draws 16 of these (your pick + 15 others).
    ---------------------------------------------------------------------------- */
@@ -82,6 +82,10 @@ const TEAMS = [
     flag:'linear-gradient(#fff,#fff) center/100% 30% no-repeat, linear-gradient(#fff,#fff) center/30% 100% no-repeat, #d52b1e' },
   { code:'COL', name:'Colombia',    color:'#fcd116', trim:'#003893', strength:80, stripes:['#fcd116','#003893','#ce1126'],
     flag:'linear-gradient(#fcd116 50%,#003893 50% 75%,#ce1126 75%)' },
+  { code:'RSA', name:'South Africa', color:'#157f3c', trim:'#ffffff', strength:73, stripes:['#de3831','#007a4d','#002395'],
+    flag:'linear-gradient(#de3831 0 33%,#007a4d 33% 66%,#002395 66%)' },
+  { code:'SWE', name:'Sweden',      color:'#fecc00', trim:'#1f5fa6', strength:80, stripes:['#006aa7','#fecc00','#006aa7'],
+    flag:'linear-gradient(#fecc00,#fecc00) center/100% 30% no-repeat, linear-gradient(#fecc00,#fecc00) 34% 50%/16% 100% no-repeat, #006aa7' },
 ];
 const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 
