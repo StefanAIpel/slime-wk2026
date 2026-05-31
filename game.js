@@ -29,9 +29,11 @@ const BAR_Y    = GROUND - GOAL_H;    // y of the crossbar
 const BAR_TH   = 8;
 
 // physics tuning (per 60fps tick)
-const SLIME_SPEED = 6.93;            // ~10% faster
+const SLIME_SPEED = 7.6;             // ground speed (snappier traversal)
 const SLIME_JUMP  = 14.4;
 const SLIME_GRAV  = 0.72;
+const COYOTE_FRAMES = 6;             // jump grace after leaving the ground (~100ms @60fps)
+const JUMP_BUFFER_FRAMES = 4;        // tiny pre-land buffer (~67ms): a touch-early tap still fires on landing
 const BALL_GRAV   = 0.34;
 const BALL_REST   = 0.86;            // wall/bar damping
 const BALL_MAX    = 22;              // speed limit
@@ -336,6 +338,7 @@ function makeSlime(side, team){
     hang:0, penalty:0,     // anti-goal-camping timer + penalty flash
     holding:false, holdT:0, catchCD:0,   // ball-catch (hold down) state
     jumpWasDown:false, lastJumpFrame:-99, canDouble:false,   // double-tap = double jump
+    coyote:0, jumpBuffer:0,                                   // jump grace (coyote + small pre-land buffer)
     aiCatchT:0,                          // AI hold-ball timer
     input:{left:false,right:false,jump:false,down:false},
   };
@@ -412,20 +415,27 @@ function updateSlime(s){
   s.x += s.vx;
   // full-field movement (you can chase the opponent to steal a held ball)
   s.x = clamp(s.x, SLIME_R*0.5, W - SLIME_R*0.5);
-  // jumping — a quick double-tap gives one mid-air boost (double jump)
+  // jumping — double-tap = one mid-air boost; plus coyote grace + a tiny pre-land buffer
   const edge = i.jump && !s.jumpWasDown;
   s.jumpWasDown = i.jump;
+  if (s.onGround) s.coyote = COYOTE_FRAMES; else if (s.coyote>0) s.coyote--;
+  if (s.jumpBuffer>0) s.jumpBuffer--;
   if (edge){
-    if (s.onGround){
-      s.vy = -SLIME_JUMP; s.onGround=false; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
+    if (s.onGround || s.coyote>0){
+      s.vy = -SLIME_JUMP; s.onGround=false; s.coyote=0; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
     } else if (s.canDouble && (G.frame - s.lastJumpFrame) < 16){
       s.vy = -SLIME_JUMP * 1.05; s.canDouble=false; s.squash=-0.20; Audio.jump();   // double-jump boost
+    } else {
+      s.jumpBuffer = JUMP_BUFFER_FRAMES;   // pressed a touch early -> remember briefly
     }
   }
   s.vy += SLIME_GRAV; s.y += s.vy;
   if (s.y >= GROUND){
     if (!s.onGround) s.squash = 0.22;
     s.y = GROUND; s.vy = 0; s.onGround = true; s.canDouble=false;
+    if (s.jumpBuffer>0){                    // buffered tap just before landing -> fire on touchdown
+      s.jumpBuffer=0; s.coyote=0; s.vy=-SLIME_JUMP; s.onGround=false; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
+    }
   }
   s.squash *= 0.82;
   // ogen volgen de bal
