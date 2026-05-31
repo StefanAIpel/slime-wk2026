@@ -255,13 +255,14 @@ function refreshBtnZones(){
   const layer = document.getElementById('touch');
   if (!layer || !layer.classList.contains('show')) return;
   const padX = 30, padY = 44;       // grow the tappable area well beyond the visual button
+  const EG = 22, vw = window.innerWidth;   // keep hit zones clear of the screen-edge gesture strip (iOS)
   layer.querySelectorAll('.pad').forEach(pad=>{
     if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
     pad.querySelectorAll('.tbtn').forEach(b=>{
       if (!BTN_PROP[b.id]) return;
       const r = b.getBoundingClientRect();
       if (!r.width) return;
-      btnZones.push({ id:b.id, l:r.left-padX, r:r.right+padX, t:r.top-padY, b:r.bottom+padY,
+      btnZones.push({ id:b.id, l:Math.max(EG, r.left-padX), r:Math.min(vw-EG, r.right+padX), t:r.top-padY, b:r.bottom+padY,
                       cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
     });
   });
@@ -687,6 +688,7 @@ function startMatch(){
   G.attract=false;
   G.score=[0,0]; G.winner=0; G.particles=[]; G.lastScorer=0;
   if (G.wkMode){ G.matchMode='time'; G.matchMin=(G.wk && G.wk.min) || settings.wkMin || 2; }   // World Cup: time mode, chosen length
+  else if (G.mode==='host'){ G.matchMode='time'; G.matchMin=2; }   // online: standard 2-minute timed games
   else { G.matchMode=settings.matchMode; G.matchMin=settings.matchMin; }
   G.toWin = settings.toWin;
   G.golden = false;
@@ -1666,14 +1668,15 @@ async function onQuickOpen(code){
     G.net.join(m.host_code, (msg,err)=>olStatus(msg, err?'err':'ok'), null);
     patchNetForTeams();
   } else {
-    // we're the waiting host now — wait for someone to join (or give up)
-    olStatus('⚡ Searching for an opponent…','waiting');
-    quickT = setTimeout(()=>{
-      if(!quickActive) return;
-      cancelQuickSearch();
-      olStatus('No opponents right now — try again, or use a code.','err');
-      quickReset();
-    }, 45000);
+    // we're the waiting host now — wait up to 2 min for someone to join, with a countdown
+    let left = 120;
+    const showWait = ()=>olStatus('⚡ Searching for an opponent… '+(left/60|0)+':'+String(left%60).padStart(2,'0'),'waiting');
+    showWait();
+    quickT = setInterval(()=>{
+      if(!quickActive){ clearInterval(quickT); quickT=null; return; }
+      if(--left <= 0){ clearInterval(quickT); quickT=null; cancelQuickSearch(); olStatus('No opponents in 2 min — try again, or use a code.','err'); quickReset(); return; }
+      showWait();
+    }, 1000);
   }
 }
 function onQuickHostStatus(msg, err){
