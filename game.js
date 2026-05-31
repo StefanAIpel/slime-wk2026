@@ -1613,12 +1613,75 @@ function peerUnavailable(){ $('btnHost').disabled=true; $('btnJoin').disabled=tr
 
 async function goOnline(){
   Audio.unlock(); G.screen=SCREEN.ONLINE; showOverlay('onlineScreen');
-  $('hostArea').style.display='none'; $('joinArea').style.display='none'; $('onlinePeerWarn').style.display='none';
-  $('btnHost').disabled=true; $('btnJoin').disabled=true;
+  endQuick();                                              // clear any prior quick-match state
+  $('hostArea').style.display='none'; $('joinArea').style.display='none'; $('quickArea').style.display='none'; $('onlinePeerWarn').style.display='none';
+  $('btnHost').disabled=true; $('btnJoin').disabled=true; $('btnQuick').disabled=true;
   $('onlineStatus').textContent='Loading online…'; $('onlineStatus').className='status';
   const [ok] = await Promise.all([ensurePeer(), refreshIce()]);   // warm TURN creds alongside PeerJS
-  if (ok){ $('btnHost').disabled=false; $('btnJoin').disabled=false; $('onlineStatus').textContent=''; }
+  if (ok){ $('btnHost').disabled=false; $('btnJoin').disabled=false; $('btnQuick').disabled=false; $('onlineStatus').textContent=''; }
   else { peerUnavailable(); $('onlineStatus').textContent=''; }
+}
+
+/* ---- Quick Match: server-matchmade opponent via the Supabase lobby ---- */
+function olStatus(msg, cls){ $('onlineStatus').textContent = msg; $('onlineStatus').className = 'status' + (cls ? ' '+cls : ''); }
+function ensureLobby(){ return ensureLeaderboard().then(()=> !!window.Lobby); }
+let quickActive=false, quickT=null, quickCode='';
+function endQuick(){ quickActive=false; if(quickT){clearTimeout(quickT); quickT=null;} quickCode=''; const q=$('btnQuick'); if(q) q.disabled=false; $('btnHost').disabled=false; $('btnJoin').disabled=false; }
+function quickReset(){ endQuick(); $('quickArea').style.display='none'; }
+function cancelQuickSearch(){
+  if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} }
+  try{ G.net && G.net.close(); }catch(_){} G.net=null;
+}
+function cancelQuick(){ Audio.click(); cancelQuickSearch(); olStatus(''); quickReset(); }
+async function quickMatch(){
+  Audio.unlock();
+  $('hostArea').style.display='none'; $('joinArea').style.display='none'; $('onlinePeerWarn').style.display='none';
+  $('quickArea').style.display='block';
+  $('btnQuick').disabled=$('btnHost').disabled=$('btnJoin').disabled=true;
+  olStatus('Loading…');
+  const [okP, okL] = await Promise.all([ensurePeer(), ensureLobby(), refreshIce()]);
+  if (!okP){ peerUnavailable(); olStatus('Online unavailable (offline?).','err'); quickReset(); return; }
+  if (!okL || !window.Lobby){ olStatus('Matchmaking unavailable (offline?).','err'); quickReset(); return; }
+  quickActive=true; quickCode='';
+  G.mode='host'; G.net=makeNet(); G.net.code=randomCode();   // fresh ephemeral code (not the stored host code)
+  olStatus('Connecting to server…');
+  G.net.host(onQuickOpen, onQuickHostStatus, null);
+}
+async function onQuickOpen(code){
+  if (!quickActive) return;
+  quickCode = code;                                          // the code our peer is registered under
+  let m=null; try{ m = await window.Lobby.findOrWait(code, store.load('lbname','')); }catch(_){}
+  if (!quickActive) return;
+  if (!m){ olStatus('Matchmaking error — try again.','err'); cancelQuickSearch(); quickReset(); return; }
+  if (m.role==='guest' && m.host_code){
+    // an opponent was already waiting -> drop our host peer and join them
+    try{ G.net.close(); }catch(_){}
+    quickActive=false; if(quickT){clearTimeout(quickT);quickT=null;} quickCode='';
+    olStatus('Opponent found! Connecting…','ok');
+    G.mode='guest'; G.net=makeNet();
+    G.net.join(m.host_code, (msg,err)=>olStatus(msg, err?'err':'ok'), null);
+    patchNetForTeams();
+  } else {
+    // we're the waiting host now — wait for someone to join (or give up)
+    olStatus('⚡ Searching for an opponent…','waiting');
+    quickT = setTimeout(()=>{
+      if(!quickActive) return;
+      cancelQuickSearch();
+      olStatus('No opponents right now — try again, or use a code.','err');
+      quickReset();
+    }, 45000);
+  }
+}
+function onQuickHostStatus(msg, err){
+  if (/connected/i.test(msg)){                 // a guest joined our hosted game
+    quickActive=false; if(quickT){clearTimeout(quickT);quickT=null;}
+    if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} } quickCode='';
+    $('quickArea').style.display='none';
+    olStatus('Opponent connected!','ok');
+    openOnlineTeamPick();                        // straight into team pick (same flow as the code host)
+    return;
+  }
+  olStatus(msg, err ? 'err' : (/waiting|searching/i.test(msg) ? 'waiting' : ''));
 }
 
 function showGameOver(){
@@ -1679,6 +1742,8 @@ function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<'
 function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else { showOverlay('menuScreen'); } }
 
 function backToMenu(){
+  if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} }   // release any waiting lobby slot
+  quickActive=false; if(quickT){clearTimeout(quickT);quickT=null;} quickCode='';
   if (G.net){ G.net.close(); G.net=null; }
   G.mode='1p'; G.screen=SCREEN.MENU; G.paused=false; overShown=false;
   G.wkMode=false; G.wk=null; G.golden=false;
@@ -1738,6 +1803,7 @@ function startPayload(){ return { p1:pickP1.code, p2:pickP2.code, toWin:settings
 
 async function hostGame(){
   Audio.unlock();
+  $('quickArea').style.display='none';
   if (!(await ensurePeer())){ peerUnavailable(); return; }
   G.mode='host'; G.net=makeNet();
   $('hostArea').style.display='block'; $('joinArea').style.display='none';
@@ -1823,7 +1889,7 @@ function beginOnlineMatch(){
 }
 function joinGame(){
   Audio.unlock(); G.mode='guest'; G.net=makeNet();
-  $('hostArea').style.display='none'; $('joinArea').style.display='block';
+  $('hostArea').style.display='none'; $('quickArea').style.display='none'; $('joinArea').style.display='block';
 }
 async function joinConnect(){
   const code=$('joinCode').value.trim().toUpperCase();
@@ -1933,6 +1999,8 @@ wire('matchCancel', backToMenu);
 wire('setBack', ()=>{ refreshMenuPills(); showOverlay('menuScreen'); });
 wire('btnHost', hostGame);
 wire('btnJoin', joinGame);
+wire('btnQuick', quickMatch);
+wire('quickCancel', cancelQuick);
 wire('hostStart', hostStartMatch);
 wire('joinGo', joinConnect);
 wire('overRematch', rematch);

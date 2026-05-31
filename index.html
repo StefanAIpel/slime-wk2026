@@ -70,8 +70,16 @@
     <div class="subtitle">P2P connection · no account needed</div>
     <div class="online-box">
       <div class="btn-row">
-        <button id="btnHost" class="btn small">START GAME (host)</button>
+        <button id="btnQuick" class="btn small">⚡ QUICK MATCH</button>
+      </div>
+      <div class="btn-row">
+        <button id="btnHost" class="btn small secondary">START GAME (host)</button>
         <button id="btnJoin" class="btn small secondary">ENTER CODE (join)</button>
+      </div>
+
+      <div id="quickArea" style="display:none">
+        <div class="subtitle" style="margin-top:6px;">⚡ Finding you an opponent…</div>
+        <button id="quickCancel" class="btn small secondary" style="margin-top:8px;">Cancel</button>
       </div>
 
       <div id="hostArea" style="display:none">
@@ -204,6 +212,24 @@
   <!-- PeerJS (online, optional) -->
   <!-- PeerJS (online) and leaderboard.js load on demand from game.js — kept out of the initial render path -->
   <script src="game.js"></script>
-  <script>if('serviceWorker' in navigator){addEventListener('load',()=>navigator.serviceWorker.register('service-worker.js').catch(()=>{}));}</script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').then(reg => {
+        reg.update().catch(()=>{});
+        // re-check for a new version whenever the (installed) app is reopened/refocused
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(()=>{}); });
+      }).catch(()=>{});
+      // when a fresh service worker takes control, reload once so the newest version shows automatically
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        const g = window.__G;
+        if (g && (g.screen === 'play' || g.screen === 'count' || g.screen === 'goal')) return;  // don't interrupt a live match
+        reloaded = true; location.reload();
+      });
+    });
+  }
+  </script>
 </body>
 </html>

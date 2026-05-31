@@ -44,5 +44,24 @@
     } catch (e) { return null; }
   }
 
+  // --- Quick-match lobby (atomic pairing via SECURITY DEFINER RPCs) ---
+  async function rpc(fn, args) {
+    try {
+      const res = await fetch(`${URL}/rest/v1/rpc/${fn}`, {
+        method: 'POST', headers, body: JSON.stringify(args || {}),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (e) { return null; }
+  }
+  window.Lobby = {
+    // returns { role:'host'|'guest', host_code:string|null } or null on error
+    async findOrWait(code, name) {
+      const r = await rpc('slime_find_or_wait', { p_code: code, p_name: name || null });
+      return Array.isArray(r) ? (r[0] || null) : (r && r.role ? r : null);
+    },
+    cancel(code) { return rpc('slime_cancel', { p_code: code }); },
+  };
+
   window.Leaderboard = { submit, top, enabled: true };
 })();
