@@ -41,11 +41,9 @@
       </div>
       <div class="grp-label">Multiplayer</div>
       <div class="mode-row">
-        <button id="btn2p" class="btn mode">2 Players · same device</button>
-        <button id="btnOnline" class="btn mode">🌐 Online</button>
+        <button id="btn2p" class="btn mode wc-green">2 Players · same device</button>
+        <button id="btnOnline" class="btn mode wc-blue">🌐 Online</button>
       </div>
-      <div class="len-label">Match format · Friendly &amp; 2 Players</div>
-      <div class="len-row" id="lenRow"></div>
       <div class="btn-row">
         <button id="btnSound" class="btn secondary small" aria-label="sound on/off">🔊</button>
         <button id="btnShare" class="btn secondary small" aria-label="Share">📤</button>
@@ -125,6 +123,34 @@
     <div class="btn-row">
       <button id="matchStart" class="btn">▶ Start match</button>
       <button id="matchCancel" class="btn secondary">Cancel</button>
+    </div>
+  </div>
+
+  <!-- ======================= MATCH SETUP (Friendly / 2 Players) ======================= -->
+  <div id="setupScreen" class="overlay">
+    <h2 class="title small-title" id="setupTitle">FRIENDLY</h2>
+    <div class="subtitle">Pick your level &amp; match format</div>
+    <div class="menu-card" style="gap:14px; max-width:460px;">
+      <div id="setupDiffWrap" style="width:100%;">
+        <div class="grp-label">Computer level</div>
+        <div class="len-row" id="setupDiffRow"></div>
+      </div>
+      <div class="grp-label">Match format</div>
+      <div class="len-row" id="setupFmtRow"></div>
+      <div class="btn-row">
+        <button id="setupPlay" class="btn">▶ Choose teams</button>
+        <button id="setupBack" class="btn secondary">‹ Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= CONFIRM DIALOG ======================= -->
+  <div id="confirmScreen" class="overlay">
+    <h2 class="title small-title" id="confirmTitle">ARE YOU SURE?</h2>
+    <div class="subtitle" id="confirmMsg"></div>
+    <div class="btn-row">
+      <button id="confirmYes" class="btn secondary">Yes</button>
+      <button id="confirmNo" class="btn">Cancel</button>
     </div>
   </div>
 

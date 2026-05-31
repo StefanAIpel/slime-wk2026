@@ -9,6 +9,8 @@ await page.goto(PAGE_URL, { waitUntil:'load' });
 await page.waitForTimeout(600);
 await page.click('#btn1p');
 await page.waitForTimeout(300);
+await page.click('#setupPlay');                  // Friendly setup -> choose teams
+await page.waitForTimeout(300);
 await page.click('#teamGrid .team:first-child');
 await page.waitForTimeout(3400);                 // countdown klaar
 console.log('screen=' + await page.evaluate(()=>window.__G.screen));

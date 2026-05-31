@@ -87,7 +87,13 @@ html, body {
   text-transform: uppercase;
   text-shadow: 0 2px 18px rgba(255,122,24,.28), 0 8px 26px rgba(0,0,0,.55);
 }
-.title .accent { color: #37d6d0; display:block; font-size: .46em; letter-spacing: 3px; margin-top: 4px; text-shadow: 0 2px 14px rgba(55,214,208,.35); }
+.title .accent {
+  display:block; font-size:.6em; letter-spacing:3px; margin-top:6px; font-weight:900;
+  background:linear-gradient(95deg,#3b86ff 0%, #e4002b 52%, #00a64a 100%);   /* United 2026 tricolor */
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:#3b86ff;
+  text-shadow:none; filter:drop-shadow(0 2px 12px rgba(43,111,255,.40));
+}
 .title.small-title { font-size: clamp(20px, 4.6vw, 36px); letter-spacing: 1px; line-height: 1.1; }
 .subtitle { color: var(--muted); font-size: clamp(12px, 1.8vw, 15px); margin: 2px 0 6px; line-height:1.6; font-weight: 500; }
 
@@ -149,7 +155,9 @@ html, body {
 /* mode buttons + match-length pills */
 .mode-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; }
 .btn.mode { min-width: 0; flex: 1 1 40%; padding: 12px 10px; }
-.btn.mode.wc2026 { background: linear-gradient(180deg,#ffd585,#ff7a18); border-bottom-color:#9c4708; }
+.btn.mode.wc2026 { background: linear-gradient(110deg,#2b6fff 0%,#2b6fff 46%,#e4002b 74%,#00a64a 100%); color:#fff; border-bottom-color:#0a3aa0; text-shadow:0 1px 3px rgba(0,0,0,.4); box-shadow:0 4px 16px rgba(43,111,255,.30); }
+.btn.mode.wc-blue  { background: linear-gradient(180deg,#4f97ff,#1f5fe0); color:#fff; border-bottom-color:#0a3aa0; box-shadow:0 4px 14px rgba(31,95,224,.26); }
+.btn.mode.wc-green { background: linear-gradient(180deg,#3fc06a,#1f8f3a); color:#fff; border-bottom-color:#0c5a22; box-shadow:0 4px 14px rgba(31,143,58,.24); }
 .grp-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--oranje2); font-weight: 800; width: 100%; text-align: left; margin: 4px 0 -2px; }
 .grp-label span { color: var(--muted); font-weight: 600; letter-spacing: .5px; text-transform: none; }
 .len-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
@@ -168,9 +176,9 @@ html, body {
 /* ---- Team select grid ---- */
 .team-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 10px;
-  width: 100%; max-width: 720px;
+  grid-template-columns: repeat(auto-fill, minmax(68px, 1fr));
+  gap: 8px;
+  width: 100%; max-width: 680px;
   max-height: 56vh; overflow-y: auto;
   padding: 6px;
 }
@@ -179,8 +187,8 @@ html, body {
   background: var(--panel2);
   border: 2px solid var(--line);
   border-radius: 8px;
-  padding: 8px 6px 10px;
-  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 6px 4px;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
   transition: transform .08s, border-color .12s, box-shadow .12s;
 }
 .team:hover { transform: translateY(-3px); border-color: var(--oranje2); }
@@ -191,11 +199,10 @@ html, body {
 .mc-flag.tiny { display:inline-block; width:18px; height:12px; border-radius:2px; vertical-align:middle; margin-right:5px; }
 /* (no pre-selected highlight — only .sel marks an actual pick) */
 .team .flag {
-  width: 64px; height: 42px; border-radius: 4px;
+  width: 46px; height: 31px; border-radius: 3px;
   border: 2px solid #000; box-shadow: inset 0 0 0 1px rgba(255,255,255,.15);
 }
 .team .code { font-size: 12px; font-weight: 800; color: var(--oranje2); letter-spacing: .5px; }
-.team .name { font-size: 9px; color: var(--muted); line-height: 1.3; text-transform: uppercase; letter-spacing: .3px; }
 
 .pick-label { font-size: clamp(9px,1.8vw,13px); color: var(--ink); }
 .pick-label b { color: var(--oranje2); }
@@ -268,7 +275,7 @@ html, body {
 #touch { position: fixed; inset: 0; z-index: 12; display: none; pointer-events: none; }
 #touch.show { display: block; }
 .pad {
-  position: absolute; bottom: max(16px, env(safe-area-inset-bottom));
+  position: absolute; bottom: max(22px, calc(env(safe-area-inset-bottom) + 10px));   /* lift clear of the iOS home-indicator swipe strip */
   pointer-events: none; display: flex; gap: 18px;       /* tight pair; hit-testing is coordinate-based */
 }
 #padMove1 { left: max(56px, env(safe-area-inset-left)); }
@@ -408,7 +415,7 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
   background: linear-gradient(90deg,#e4002b 0 33%,#ffffff 33% 38%,#0b3d91 38% 71%,#ffffff 71% 76%,#00843d 76% 100%); }
 /* World Cup mode gets a subtly themed (USA/Mexico/Canada) backdrop + hero button */
 #wkScreen { background: radial-gradient(120% 90% at 50% 0%, rgba(11,61,145,.34) 0%, rgba(6,6,16,.9) 55%, rgba(0,132,61,.18) 100%); }
-.btn.hero.wc2026 { background: linear-gradient(180deg,#ffd585,#ff7a18); border-bottom-color:#9c4708; }
+.btn.hero.wc2026 { background: linear-gradient(110deg,#2b6fff 0%,#2b6fff 46%,#e4002b 74%,#00a64a 100%); color:#fff; border-bottom-color:#0a3aa0; text-shadow:0 1px 3px rgba(0,0,0,.4); box-shadow:0 6px 22px rgba(43,111,255,.38); }
 /* World Cup 2026 branding on the tournament screen */
 .wk-host { font-weight: 800; letter-spacing: 1.5px; color: var(--oranje2); }
 .wk-venue { color: var(--ink); font-weight: 600; }

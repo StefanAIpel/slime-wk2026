@@ -42,6 +42,7 @@ const modeVal = await page.evaluate(()=>document.querySelector('#tMode .val').te
 console.log('MODE_TOGGLE=' + modeVal);
 await page.click('#setBack'); await page.waitForTimeout(100);
 await page.click('#btn1p'); await page.waitForTimeout(200);
+await page.click('#setupPlay'); await page.waitForTimeout(200);
 await page.click('#teamGrid .team:first-child');
 await poll(()=>window.__G.screen==='play', 9000, 'time-play');
 // draw + clock to 0 -> golden goal
@@ -56,6 +57,7 @@ console.log('GOLDEN_OVER screen=' + await page.evaluate(()=>window.__G.screen) +
 // ===== Pause / quit =====
 await page.click('#overMenu'); await page.waitForTimeout(150);
 await page.click('#btn1p'); await page.waitForTimeout(150);
+await page.click('#setupPlay'); await page.waitForTimeout(150);
 await page.click('#teamGrid .team:first-child');
 await poll(()=>window.__G.screen==='play', 9000, 'pause-play');
 await page.click('#quitBtn'); await page.waitForTimeout(150);
