@@ -62,8 +62,10 @@ await poll(host, ()=>window.__G.screen==='over', 8000, 'host-over');
 await poll(guest, ()=>document.getElementById('overScreen').classList.contains('show'), 8000, 'guest-over-overlay');
 console.log('GUEST_OVER_SHOWN ✓ ; guest rematch-knop verborgen=' + await guest.evaluate(()=>getComputedStyle(document.getElementById('overRematch')).display==='none'));
 
-// REVANCHE door host -> guest moet weer gaan spelen en overlay verdwijnen
+// REVANCHE door host -> kies "Same teams" -> guest moet weer gaan spelen en overlay verdwijnen
 await host.click('#overRematch');
+await host.waitForTimeout(200);
+await host.click('#confirmNo');          // keep/new dialog: confirmNo = "Same teams"
 await poll(guest, ()=>!document.getElementById('overScreen').classList.contains('show') && ['count','play'].includes(window.__G.screen), 10000, 'guest-rematch');
 console.log('REMATCH guest_screen=' + await screenOf(guest) + ' overlay_weg ✓');
 
