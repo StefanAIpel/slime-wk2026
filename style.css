@@ -441,6 +441,8 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
 .lb-row .who  { color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .lb-row .tcode{ color: var(--muted); font-size: 8px; }
 .lb-row .sc   { color: var(--good); font-weight: 800; font-variant-numeric: tabular-nums; }
+.lb-row.you { box-shadow: 0 0 0 2px var(--oranje); background: linear-gradient(90deg, rgba(255,122,24,.34), rgba(255,122,24,.08)); }
+.lb-you { font-size: clamp(11px,1.7vw,13px); font-weight: 800; color: var(--oranje2); text-align: center; padding: 8px; margin-bottom: 4px; background: rgba(255,122,24,.12); border: 1px solid var(--line); border-radius: 8px; }
 .wk-score { font-size: 16px; font-weight: 800; color: var(--oranje2); margin: 8px 0 2px; }
 /* World Cup result: score + save panel, shown above the bracket so it's reachable on mobile */
 .wk-result { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 0 auto; }
