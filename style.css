@@ -421,6 +421,13 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
   .tag { display: none; }
   .team-grid { max-height: 62vh; }
 }
+/* Rules tab: keep it compact in ANY landscape that's short-ish (some phones report a
+   landscape height just over 620, which slipped past the rule above). */
+@media (orientation: landscape) and (max-height: 820px) {
+  .rules-box { padding: 9px 14px; gap: 5px; max-height: 84vh; }
+  .rules-h { font-size: 9px; }
+  .rules-t { font-size: 11px; line-height: 1.45; }
+}
 
 /* ---- Leaderboard ---- */
 #lbList { gap: 4px; font-size: 9px; }
