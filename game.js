@@ -1694,6 +1694,14 @@ function openMatchSetup(kind){
   $('setupDiffWrap').style.display = kind==='2p' ? 'none' : '';          // no AI difficulty in 2P
   $('setupFmtLabel').textContent = kind==='wk' ? 'Match length' : 'Match format';
   $('setupPlay').innerHTML = kind==='wk' ? '▶ Continue to country' : '▶ Continue to teams';
+  // desktop: show which keys to use before the match (esp. for 2 players)
+  const sk=$('setupKeys');
+  if (sk){
+    sk.style.display = IS_TOUCH ? 'none' : 'block';
+    sk.innerHTML = kind==='2p'
+      ? '⌨ <b>Player 1</b> A / D · W jump · S hold ball &nbsp;·&nbsp; <b>Player 2</b> ← / → · ↑ jump · ↓ hold ball'
+      : '⌨ Move <b>A</b>/<b>D</b> or <b>←</b>/<b>→</b> · jump <b>W</b> / <b>↑</b> / <b>Space</b> · hold ball <b>S</b> / <b>↓</b>';
+  }
   renderSetupPills();
   G.screen=SCREEN.TEAM;
   showOverlay('setupScreen');
