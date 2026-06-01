@@ -133,10 +133,10 @@ function flagImage(code){ if (typeof Image==='undefined') return null;   // non-
 TEAMS.forEach(t=>{ t.flag = flagBg(t.code); });   // supersede the old gradient approximations
 
 const AI_LEVELS = {
-  easy:     { label:'Easy',      speed:0.50, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false },
-  normal:   { label:'Normal',    speed:0.78, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false },
-  hard:     { label:'Hard',      speed:1.02, react:18,  jump:0.13,  predict:44, mistake:0.03, smart:true, defend:0.38 },
-  worldcup: { label:'World Cup', speed:1.20, react:5,   jump:0.22,  predict:66, mistake:0.0,  smart:true, defend:0.55 },
+  easy:     { label:'Easy',      speed:0.50, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false, attack:0.00 },
+  normal:   { label:'Normal',    speed:0.78, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false, attack:0.22 },
+  hard:     { label:'Hard',      speed:1.02, react:18,  jump:0.13,  predict:44, mistake:0.03, smart:true, defend:0.38, attack:0.58, catch:0.07 },
+  worldcup: { label:'World Cup', speed:1.22, react:5,   jump:0.22,  predict:66, mistake:0.0,  smart:true, defend:0.50, attack:0.92, catch:0.16 },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -769,8 +769,12 @@ function computeAI(s){
     if (oppHolds) tx = b.held.x;                       // chase the holder to steal
     else {
       tx = predictBallX(p.predict);
-      if (b.x < CENTER-60 && b.vx<=0) tx = tx*0.4 + myGoalX*0.6;   // ball far away -> hold near goal
-      else if (p.defend && (b.x > CENTER-40 || b.vx > 0.5)){       // threat on our half / incoming -> hold a goal-side line
+      const attack = p.attack || 0;
+      if (b.x < CENTER-60 && b.vx<=0){                            // loose ball idling on the opponent half
+        const hold  = tx*0.4 + myGoalX*0.6;                       // passive: sit back near our goal
+        const press = b.x + SLIME_R*0.45;                         // aggressive: step in from the goal-side to knock it upfield
+        tx = hold + (press - hold) * attack;                      // higher levels press the ball instead of letting it lie
+      } else if (p.defend && (b.x > CENTER-40 || b.vx > 0.5)){    // threat on our half / incoming -> hold a goal-side line
         tx = tx + (myGoalX - tx) * p.defend;
         if (b.x > W*0.66) tx = Math.max(tx, b.x + SLIME_R*0.3);    // never let the ball get goal-side of you near our goal
       }
@@ -788,7 +792,7 @@ function computeAI(s){
 
   // smart levels: occasionally CLAMP the ball, then throw it toward the opponent's goal
   if (p.smart){
-    if (s.aiCatchT<=0 && !b.held && s.catchCD<=0 && horiz<SLIME_R && b.y>s.y-SLIME_R-BALL_R-24 && b.y<=s.y+2 && Math.random()<0.05)
+    if (s.aiCatchT<=0 && !b.held && s.catchCD<=0 && horiz<SLIME_R && b.y>s.y-SLIME_R-BALL_R-24 && b.y<=s.y+2 && Math.random()<(p.catch||0.05))
       s.aiCatchT = 24 + (Math.random()*46|0);
     if (s.aiCatchT>0 && (s.holding || (!b.held && s.catchCD<=0))){ inp.down=true; s.aiCatchT--; }
     else s.aiCatchT = 0;
