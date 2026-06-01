@@ -222,6 +222,21 @@ html, body {
 .pick-label { font-size: clamp(9px,1.8vw,13px); color: var(--ink); }
 .pick-label b { color: var(--oranje2); }
 
+/* Desktop (mouse): the menu icon buttons + country cards were tiny — scale them up */
+@media (pointer: fine){
+  .icon-row .btn.small { padding: 11px 20px; font-size: 20px; }
+  .team-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; max-width: 880px; }
+  .team .flag { width: 68px; height: 45px; }
+  .team .code { font-size: 15px; }
+  .pick-label { font-size: 16px; }
+}
+/* Large tablets: bigger country cards too (phones in landscape stay compact) */
+@media (pointer: coarse) and (min-width: 1000px){
+  .team-grid { grid-template-columns: repeat(auto-fill, minmax(94px, 1fr)); gap: 11px; max-width: 840px; }
+  .team .flag { width: 62px; height: 41px; }
+  .team .code { font-size: 14px; }
+}
+
 /* ---- Online panel ---- */
 .online-box {
   background: var(--panel2);
