@@ -11,7 +11,7 @@
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
-const W = 1056, H = 600;             // logical resolution (~10% wider field)
+const W = 1160, H = 600;             // logical resolution (longer field; goals are edge-anchored so this is safe)
 // Hi-DPI backing store: render at device pixel ratio (capped at 2) so the HUD,
 // flags and score come out crisp instead of nearest-neighbour upscaled.
 const DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
@@ -213,7 +213,7 @@ const I18N = {
     championsTag:' Champions: <b>{name}</b>.', points:'points', submitPts:'🏆 Submit {n} pts', submitted:'✓ Submitted',
     submitting:'Submitting...', submittedOk:'Submitted! ⚽', submitFail:'Failed (offline?)',
     paused:'PAUSED', pressEsc:'Press ESC to resume', quitLeaves:'Quitting leaves the tournament',
-    resume:'Resume', quitMenu:'Quit to menu',
+    resume:'Resume', quitMenu:'Quit to menu', pauseBtn:'⏸ Pause', quitBtn2:'✕ Quit',
     rotate:'Rotate your device to landscape<br>for the best experience ⚽',
     playHint:'Move <b>←/→</b> or <b>A/D</b> · jump <b>Space</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause',
     playHint2p:'<b>P1</b> A/D move · W jump · S hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · ↓ hold ball &nbsp;·&nbsp; ESC = pause',
@@ -259,7 +259,7 @@ const I18N = {
     championsTag:' Kampioen: <b>{name}</b>.', points:'punten', submitPts:'🏆 Verstuur {n} ptn', submitted:'✓ Verstuurd',
     submitting:'Versturen...', submittedOk:'Verstuurd! ⚽', submitFail:'Mislukt (offline?)',
     paused:'GEPAUZEERD', pressEsc:'Druk ESC om door te gaan', quitLeaves:'Stoppen verlaat het toernooi',
-    resume:'Doorgaan', quitMenu:'Terug naar menu',
+    resume:'Doorgaan', quitMenu:'Terug naar menu', pauseBtn:'⏸ Pauze', quitBtn2:'✕ Stoppen',
     rotate:'Draai je toestel horizontaal<br>voor de beste ervaring ⚽',
     playHint:'Beweeg <b>←/→</b> of <b>A/D</b> · springen <b>Spatie</b>/<b>↑</b> · bal vasthouden <b>↓</b>/<b>S</b> · dubbeltik = hoger · ESC = pauze',
     playHint2p:'<b>S1</b> A/D bewegen · W springen · S bal vast &nbsp;·&nbsp; <b>S2</b> ←/→ bewegen · ↑ springen · ↓ bal vast &nbsp;·&nbsp; ESC = pauze',
@@ -1534,6 +1534,8 @@ function hideAllOverlays(){ document.querySelectorAll('.overlay').forEach(o=>o.c
 function showOverlay(id){ hideAllOverlays(); $(id).classList.add('show'); }
 function updateTouchVisibility(){
   const inGame = (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL) && !G.paused;
+  // desktop: windowed play frame (title + ~half-screen pitch + Pause/Quit) while a match is on screen
+  document.body.classList.toggle('deskgame', !IS_TOUCH && (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL));
   $('touch').classList.toggle('show', IS_TOUCH && inGame);
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
   document.body.classList.toggle('m2p', G.mode==='2p');
@@ -2352,6 +2354,8 @@ wire('pauseResume', resumeGame);
 wire('pauseQuit', ()=>askEndWK(backToMenu, ()=>showOverlay('pauseScreen')));   // confirm before abandoning a WC run
 wire('setupPlay', startTeamSelect);
 wire('setupBack', backToMenu);
+wire('stagePause', quitButton);
+wire('stageQuit', ()=>askEndWK(backToMenu, ()=>{}));   // desktop frame: quit to menu (guarded mid-tournament)
 wire('confirmYes', ()=>{ const f=_cfYes; _cfYes=_cfNo=null; if(f) f(); });
 wire('confirmNo',  ()=>{ const f=_cfNo;  _cfYes=_cfNo=null; if(f) f(); else backToMenu(); });
 wire('tMode', toggleMode);
