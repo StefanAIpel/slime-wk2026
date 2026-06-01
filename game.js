@@ -217,6 +217,11 @@ const I18N = {
     rotate:'Rotate your device to landscape<br>for the best experience ⚽',
     playHint:'Move <b>←/→</b> or <b>A/D</b> · jump <b>Space</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause',
     playHint2p:'<b>P1</b> A/D move · W jump · S hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · ↓ hold ball &nbsp;·&nbsp; ESC = pause',
+    rulesTitle:'HOW TO PLAY', rulesControls:'Controls', rulesMoves:'Moves', rulesRules:'Rules', rulesModes:'Modes', rulesBtn:'❓ How to play',
+    rulesControlsTxt:'<b>Move</b> A/D or ←/→ · <b>Jump</b> W / ↑ / Space · <b>Catch &amp; hold ball</b> S / ↓<br><b>2 players</b> — Player 1: A/D · W · S &nbsp;·&nbsp; Player 2: ←/→ · ↑ · ↓',
+    rulesMovesTxt:'<b>Double jump</b> — tap jump again in mid-air for an extra boost to reach high balls.<br><b>Catch &amp; throw</b> — hold the catch key by the ball to grab it (up to ~3s), then release to throw it upfield.',
+    rulesRulesTxt:'<b>No goal-hanging</b> — lingering in your own goal area gets you sent out (mind the warning flash).<br><b>Golden goal</b> — a tied timed match goes to sudden death: the next goal wins.',
+    rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.',
   },
   nl: {
     teamLeft:'TEAM LINKS', teamRight:'TEAM RECHTS', tagline:'slime voetbal · een moderne remake ⚽',
@@ -263,6 +268,11 @@ const I18N = {
     rotate:'Draai je toestel horizontaal<br>voor de beste ervaring ⚽',
     playHint:'Beweeg <b>←/→</b> of <b>A/D</b> · springen <b>Spatie</b>/<b>↑</b> · bal vasthouden <b>↓</b>/<b>S</b> · dubbeltik = hoger · ESC = pauze',
     playHint2p:'<b>S1</b> A/D bewegen · W springen · S bal vast &nbsp;·&nbsp; <b>S2</b> ←/→ bewegen · ↑ springen · ↓ bal vast &nbsp;·&nbsp; ESC = pauze',
+    rulesTitle:'ZO SPEEL JE', rulesControls:'Besturing', rulesMoves:'Acties', rulesRules:'Regels', rulesModes:'Modi', rulesBtn:'❓ Zo speel je',
+    rulesControlsTxt:'<b>Bewegen</b> A/D of ←/→ · <b>Springen</b> W / ↑ / Spatie · <b>Bal vangen/vasthouden</b> S / ↓<br><b>2 spelers</b> — Speler 1: A/D · W · S &nbsp;·&nbsp; Speler 2: ←/→ · ↑ · ↓',
+    rulesMovesTxt:'<b>Dubbele sprong</b> — tik in de lucht nogmaals op springen voor een extra zet naar hoge ballen.<br><b>Vangen en gooien</b> — houd de vang-toets ingedrukt bij de bal om hem te pakken (max ~3s), laat los om hem naar voren te gooien.',
+    rulesRulesTxt:'<b>Niet in je goal hangen</b> — te lang in je eigen doelgebied blijven stuurt je weg (let op de waarschuwing).<br><b>Golden goal</b> — een gelijke wedstrijd op tijd gaat naar sudden death: de volgende goal wint.',
+    rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.',
   },
 };
 const NL_NAMES = { NED:'Nederland', ARG:'Argentinië', BRA:'Brazilië', FRA:'Frankrijk', ENG:'Engeland', ESP:'Spanje',
@@ -2354,6 +2364,8 @@ wire('pauseResume', resumeGame);
 wire('pauseQuit', ()=>askEndWK(backToMenu, ()=>showOverlay('pauseScreen')));   // confirm before abandoning a WC run
 wire('setupPlay', startTeamSelect);
 wire('setupBack', backToMenu);
+wire('btnRules', ()=>showOverlay('rulesScreen'));
+wire('rulesBack', ()=>showOverlay('menuScreen'));
 wire('stagePause', quitButton);
 wire('stageQuit', ()=>askEndWK(backToMenu, ()=>{}));   // desktop frame: quit to menu (guarded mid-tournament)
 wire('confirmYes', ()=>{ const f=_cfYes; _cfYes=_cfNo=null; if(f) f(); });
