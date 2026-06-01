@@ -186,6 +186,7 @@ const I18N = {
     online:'ONLINE', onlineSub:'P2P connection · no account needed',
     playFriend:'👥 Play a friend', quickMatch:'⚡ Quick match',
     onlineIntro:'⏱ <b>2-minute</b> timed matches — most goals wins.<br><b>👥 Play a friend</b> — share a code with someone you know.<br><b>⚡ Quick match</b> — get paired with a random online player.',
+    lobbyCount:'🟢 {w} searching · {p} in a match', lobbyEmpty:'🟢 No one online right now',
     hostGame:'🎮 Host a game', enterCode:'🔑 Enter a code', codeForOpp:'Code for your opponent:',
     waShare:'📲 WhatsApp', copyLink:'🔗 Copy link', pickStart:'▶ Pick team & start',
     enterHostCode:'Enter the host’s code:', connect:'Connect', findingOpp:'⚡ Finding you an opponent…', cancel:'Cancel',
@@ -237,6 +238,7 @@ const I18N = {
     online:'ONLINE', onlineSub:'P2P-verbinding · geen account nodig',
     playFriend:'👥 Tegen een vriend', quickMatch:'⚡ Snelle match',
     onlineIntro:'⏱ <b>2-minuten</b> wedstrijden — meeste goals wint.<br><b>👥 Tegen een vriend</b> — deel een code met iemand die je kent.<br><b>⚡ Snelle match</b> — speel tegen een willekeurige speler.',
+    lobbyCount:'🟢 {w} zoeken · {p} in een wedstrijd', lobbyEmpty:'🟢 Niemand online op dit moment',
     hostGame:'🎮 Maak een spel', enterCode:'🔑 Voer code in', codeForOpp:'Code voor je tegenstander:',
     waShare:'📲 WhatsApp', copyLink:'🔗 Kopieer link', pickStart:'▶ Kies team & start',
     enterHostCode:'Voer de code van de host in:', connect:'Verbinden', findingOpp:'⚡ Tegenstander zoeken…', cancel:'Annuleren',
@@ -1918,10 +1920,30 @@ async function goOnline(){
   const [ok] = await Promise.all([ensurePeer(), refreshIce()]);   // warm TURN creds alongside PeerJS
   if (ok){ $('btnModeFriend').disabled=false; $('btnModeQuick').disabled=false; $('onlineStatus').textContent=''; }
   else { peerUnavailable(); $('onlineStatus').textContent=''; }
+  ensureLobby().then(hasLobby=>{ if (hasLobby) startOnlineCount(); });   // live quick-match lobby count
+}
+let onlineCountT=null;
+function updateOnlineCount(){
+  const el=$('onlineCount'); if(!el) return;
+  if (!window.Lobby || !window.Lobby.count){ el.textContent=''; return; }
+  window.Lobby.count().then(c=>{
+    if (G.screen!==SCREEN.ONLINE || !el) return;
+    if (!c){ el.textContent=''; return; }
+    el.innerHTML = (c.waiting + c.playing === 0) ? t('lobbyEmpty') : t('lobbyCount', { w:c.waiting, p:c.playing });
+  }).catch(()=>{});
+}
+function startOnlineCount(){
+  updateOnlineCount();
+  if (onlineCountT) clearInterval(onlineCountT);
+  onlineCountT = setInterval(()=>{
+    if (G.screen!==SCREEN.ONLINE){ clearInterval(onlineCountT); onlineCountT=null; return; }   // self-clear when we leave online
+    updateOnlineCount();
+  }, 8000);
 }
 function showOnlineModes(){
   $('onlineModes').style.display='flex';
   $('onlineIntro').style.display='block';
+  $('onlineCount').style.display='block';
   $('friendPanel').style.display='none'; $('quickArea').style.display='none';
   $('hostArea').style.display='none'; $('joinArea').style.display='none';
   $('onlinePeerWarn').style.display='none'; $('onlineSubBack').style.display='none';
@@ -1931,6 +1953,7 @@ function showOnlineModes(){
 function showFriendPanel(){
   Audio.click();
   $('onlineModes').style.display='none'; $('onlineIntro').style.display='none'; $('quickArea').style.display='none';
+  $('onlineCount').style.display='none';
   $('friendPanel').style.display='block';
   $('hostArea').style.display='none'; $('joinArea').style.display='none';
   $('onlineSubBack').style.display='inline-block'; $('onlineBack').style.display='none';

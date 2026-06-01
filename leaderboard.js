@@ -61,6 +61,12 @@
       return Array.isArray(r) ? (r[0] || null) : (r && r.role ? r : null);
     },
     cancel(code) { return rpc('slime_cancel', { p_code: code }); },
+    // aggregate-only lobby activity: { waiting, playing } or null on error
+    async count() {
+      const r = await rpc('slime_online_count', {});
+      const row = Array.isArray(r) ? r[0] : r;
+      return row ? { waiting: row.waiting | 0, playing: row.playing | 0 } : null;
+    },
   };
 
   window.Leaderboard = { submit, top, enabled: true };
