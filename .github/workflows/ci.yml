@@ -7,6 +7,10 @@ on:
     branches: ["**"]
 
 jobs:
+  # Always-on gate: syntax + ESLint + the headless logic suite (deterministic, no browser).
+  # The Playwright browser tests (smoke/goal/wk/lb) are environment-sensitive (they exit on
+  # any console error, and the online ones need a live peer/Supabase), so they're run
+  # manually — see README. They now use bundled Chromium and honour BASE_URL for http runs.
   test:
     runs-on: ubuntu-latest
     steps:
@@ -14,11 +18,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      # Static site, no runtime deps. CI runs the deterministic, offline checks:
-      # syntax + the headless logic suite (brackettest). The Playwright browser
-      # tests (smoke/goal/wk/lb) need a browser + network (PeerJS broker, Supabase)
-      # and lbtest writes a real leaderboard row, so they're run manually, not in CI.
-      - name: Syntax check
+          cache: "npm"
+      - run: npm ci
+      - name: Check (syntax + lint)
         run: npm run check
       - name: Logic tests (headless, no browser)
         run: npm run test:logic

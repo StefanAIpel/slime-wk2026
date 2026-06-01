@@ -1,11 +1,13 @@
 import { chromium } from 'playwright';
 
-// debug=1 exposes window.__G for the test harness (gated off in production)
-const PAGE_URL = new globalThis.URL('./index.html', import.meta.url).href + '?debug=1';
+// debug=1 exposes window.__G for the test harness (gated off in production).
+// BASE_URL (e.g. http://127.0.0.1:8080 in CI) serves over http so the service worker
+// registers cleanly; falls back to the local file:// URL for manual runs.
+const PAGE_URL = (process.env.BASE_URL ? process.env.BASE_URL.replace(/\/+$/,'') + '/index.html' : new globalThis.URL('./index.html', import.meta.url).href) + '?debug=1';
 const errors = [];
 const logs = [];
 
-const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1000, height: 640 } });
 
 page.on('console', m => { logs.push(`[${m.type()}] ${m.text()}`); if (m.type()==='error') errors.push('console: '+m.text()); });
