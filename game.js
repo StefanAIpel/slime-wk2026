@@ -139,8 +139,8 @@ TEAMS.forEach(t=>{ t.flag = flagBg(t.code); });   // supersede the old gradient 
 const AI_LEVELS = {
   easy:     { label:'Easy',      speed:0.50, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false, attack:0.00 },
   normal:   { label:'Normal',    speed:0.78, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false, attack:0.22 },
-  hard:     { label:'Hard',      speed:1.02, react:18,  jump:0.13,  predict:44, mistake:0.03, smart:true, defend:0.38, attack:0.58, catch:0.07 },
-  worldcup: { label:'World Cup', speed:1.22, react:5,   jump:0.22,  predict:66, mistake:0.0,  smart:true, defend:0.50, attack:0.92, catch:0.16 },
+  hard:     { label:'Hard',      speed:1.05, react:16,  jump:0.14,  predict:46, mistake:0.03, smart:true, defend:0.38, attack:0.70, catch:0.10 },
+  worldcup: { label:'World Cup', speed:1.24, react:5,   jump:0.24,  predict:68, mistake:0.0,  smart:true, defend:0.46, attack:0.98, catch:0.22 },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -789,13 +789,16 @@ function computeAI(s){
     else {
       tx = predictBallX(p.predict);
       const attack = p.attack || 0;
-      if (b.x < CENTER-60 && b.vx<=0){                            // loose ball idling on the opponent half
-        const hold  = tx*0.4 + myGoalX*0.6;                       // passive: sit back near our goal
-        const press = b.x + SLIME_R*0.45;                         // aggressive: step in from the goal-side to knock it upfield
-        tx = hold + (press - hold) * attack;                      // higher levels press the ball instead of letting it lie
-      } else if (p.defend && (b.x > CENTER-40 || b.vx > 0.5)){    // threat on our half / incoming -> hold a goal-side line
-        tx = tx + (myGoalX - tx) * p.defend;
-        if (b.x > W*0.66) tx = Math.max(tx, b.x + SLIME_R*0.3);    // never let the ball get goal-side of you near our goal
+      const threat = p.defend && b.vx > 0.6 && b.x > CENTER;      // ball driving toward OUR goal
+      if (threat){
+        tx = tx + (myGoalX - tx) * p.defend;                      // hold a goal-side line
+        if (b.x > W*0.66) tx = Math.max(tx, b.x + SLIME_R*0.3);   // never let the ball get goal-side of you near our goal
+      } else {
+        // loose / idle ball anywhere (incl. our own half) — go get it; aggressive levels
+        // press hard instead of letting it lie. Approach from the goal-side to knock it upfield.
+        const hold  = tx*0.4 + myGoalX*0.6;                       // passive levels still hang back
+        const press = b.x + SLIME_R*0.45;
+        tx = hold + (press - hold) * attack;
       }
     }
     tx += (Math.random()-0.5) * (p.mistake*300);
