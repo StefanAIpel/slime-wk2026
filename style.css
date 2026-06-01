@@ -115,12 +115,12 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 }
 .title.small-title { font-size: clamp(20px, 4.6vw, 36px); letter-spacing: 1px; line-height: 1.1; }
 .subtitle { color: var(--muted); font-size: clamp(12px, 1.8vw, 15px); margin: 2px 0 6px; line-height:1.6; font-weight: 500; }
-/* menu logo (the app icon, used as the wordmark in the menu) */
+/* menu logo: the app icon as a small badge above the wordmark */
 .menu-logo {
-  display: block; margin: 0 auto 2px; width: auto; max-width: 86vw;
-  height: clamp(88px, 21vh, 168px);
-  border-radius: 20px;
-  box-shadow: 0 12px 34px rgba(0,0,0,.55), 0 0 46px rgba(255,122,24,.18);
+  display: block; margin: 0 auto -2px; width: auto; max-width: 86vw;
+  height: clamp(52px, 11vh, 96px);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 34px rgba(255,122,24,.16);
 }
 .visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 
