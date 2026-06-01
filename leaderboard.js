@@ -42,6 +42,18 @@
     } catch (e) { return null; }
   }
 
+  // 1-based rank of a score = (# of strictly-higher scores) + 1. Uses an exact count
+  // header, so it's right even when the score is outside the visible top N.
+  async function rank(points) {
+    try {
+      const res = await fetch(`${URL}/rest/v1/${TABLE}?select=points&points=gt.${points | 0}`,
+        { headers: Object.assign({ 'Prefer': 'count=exact', 'Range': '0-0' }, headers) });
+      const cr = res.headers.get('content-range') || '';      // "0-0/<total>" or "*/<total>"
+      const total = parseInt(cr.split('/')[1], 10);
+      return Number.isFinite(total) ? total + 1 : null;
+    } catch (e) { return null; }
+  }
+
   // --- Quick-match lobby (atomic pairing via SECURITY DEFINER RPCs) ---
   async function rpc(fn, args) {
     try {
@@ -67,5 +79,5 @@
     },
   };
 
-  window.Leaderboard = { submit, top, enabled: true };
+  window.Leaderboard = { submit, top, rank, enabled: true };
 })();

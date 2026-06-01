@@ -212,6 +212,7 @@ const I18N = {
     yourName:'YOUR NAME', submit:'🏆 Submit', rematch:'🔁 Rematch', highScores:'🏆 High scores', mainMenu:'🏠 Main menu',
     hsTitle:'🏆 HIGH SCORES', hsSub:'World Cup runs · points by difficulty', loading:'loading…',
     lbNone:'No scores yet — be the first! ⚽', lbFail:'Could not load leaderboard (offline?).', lbNA:'Leaderboard not available.', pts:'pts',
+    yourPos:'🎯 Your position: #{n} · {p} pts',
     wcTitle:'WORLD CUP', r16:'Round of 16', qf:'Quarter-final', sf:'Semi-final', final:'Final',
     youAre:'You:', playVs:'▶ Play vs {opp}', newTournament:'New tournament', champions:'🏆 WORLD CHAMPIONS 2026!',
     championsSub:'<b>{team}</b> are world champions — lifted in New York/New Jersey! ⚽🎉',
@@ -265,6 +266,7 @@ const I18N = {
     yourName:'JOUW NAAM', submit:'🏆 Verstuur', rematch:'🔁 Opnieuw', highScores:'🏆 Toplijst', mainMenu:'🏠 Hoofdmenu',
     hsTitle:'🏆 TOPSCORES', hsSub:'World Cup-runs · punten per niveau', loading:'laden…',
     lbNone:'Nog geen scores — wees de eerste! ⚽', lbFail:'Kan ranglijst niet laden (offline?).', lbNA:'Ranglijst niet beschikbaar.', pts:'ptn',
+    yourPos:'🎯 Jouw positie: #{n} · {p} ptn',
     wcTitle:'WORLD CUP', r16:'Achtste finale', qf:'Kwartfinale', sf:'Halve finale', final:'Finale',
     youAre:'Jij:', playVs:'▶ Speel tegen {opp}', newTournament:'Nieuw toernooi', champions:'🏆 WERELDKAMPIOEN 2026!',
     championsSub:'<b>{team}</b> is wereldkampioen — gehuldigd in New York/New Jersey! ⚽🎉',
@@ -1834,6 +1836,7 @@ async function submitWKRun(){
   const ok = pts!=null;
   $('wkStatus').textContent = ok?t('submittedOk'):t('submitFail'); $('wkStatus').className='status '+(ok?'ok':'err');
   $('wkSubmit').textContent = ok?t('submitted'):t('submit'); if(!ok) $('wkSubmit').disabled=false;
+  if (ok){ const you={ name, points: pts|0 }; setTimeout(()=>showLeaderboard('wk', you), 850); }   // link to the high scores + show your position
 }
 // ---- menu knoppen ----
 let setupKind='1p';   // which flavour of the shared setup screen: '1p' | '2p' | 'wk'
@@ -2076,7 +2079,7 @@ async function submitScore(){
   else { $('lbStatus').textContent='Failed (offline?)'; $('lbStatus').className='status err'; $('lbSend').disabled=false; }
 }
 let lbFrom='menu';
-async function showLeaderboard(from){
+async function showLeaderboard(from, you){
   lbFrom = from || 'menu';
   showOverlay('lbScreen');
   const list=$('lbList'); list.innerHTML=t('loading');
@@ -2084,20 +2087,28 @@ async function showLeaderboard(from){
   if (!window.Leaderboard){ list.textContent=t('lbNA'); return; }
   const rows = await window.Leaderboard.top(12);
   if (!rows){ list.innerHTML='<div class="status err">'+t('lbFail')+'</div>'; return; }
-  if (!rows.length){ list.innerHTML='<div class="status">'+t('lbNone')+'</div>'; return; }
-  list.innerHTML = rows.map((r,i)=>{
+  // after a submit: find the player's row, show their position, highlight + scroll to it
+  let youIdx=-1, banner='';
+  if (you){
+    for (let i=0;i<rows.length;i++){ if (rows[i].name===you.name && (rows[i].points|0)===(you.points|0)){ youIdx=i; break; } }
+    const n = youIdx>=0 ? youIdx+1 : (window.Leaderboard.rank ? await window.Leaderboard.rank(you.points) : null);
+    banner = `<div class="lb-you">${t('yourPos', { n:(n||'?'), p:(you.points|0) })}</div>`;
+  }
+  if (!rows.length){ list.innerHTML = banner + '<div class="status">'+t('lbNone')+'</div>'; return; }
+  list.innerHTML = banner + rows.map((r,i)=>{
     const tm=teamByCode(r.team);
-    return `<div class="lb-row${i<3?' top':''}">
+    return `<div class="lb-row${i<3?' top':''}${i===youIdx?' you':''}">
       <span class="rank">${i+1}</span>
       <span class="who">${escapeHtml(r.name)} <span class="tcode">${tm.code}</span><span class="when">${escapeHtml(r.difficulty||r.mode||'')} · ${fmtDate(r.created_at)}</span></span>
       <span class="sc">${(r.points|0)} ${t('pts')}</span>
     </div>`;
   }).join('');
+  const el = list.querySelector('.lb-row.you'); if (el && el.scrollIntoView) el.scrollIntoView({ block:'center' });
 }
 function fmtDate(s){ if(!s) return ''; const d=new Date(s); if(isNaN(d.getTime())) return '';
   return d.toLocaleDateString([], {day:'2-digit',month:'short'}) + ' · ' + d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}); }
 function escapeHtml(s){ return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else { showOverlay('menuScreen'); } }
+function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else if (lbFrom==='wk'){ showOverlay('wkScreen'); } else { showOverlay('menuScreen'); } }
 // How-to-play: from the menu, or from a live match (auto-pause, then resume on back)
 let rulesFrom='menu';
 function openRules(from){
