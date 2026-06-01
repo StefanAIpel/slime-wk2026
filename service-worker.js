@@ -2,11 +2,11 @@
    Network-first zodat nieuwe deploys ALTIJD direct zichtbaar zijn online;
    cache dient alleen als offline-fallback. Cross-origin (PeerJS/fonts/Supabase)
    wordt niet onderschept. */
-const CACHE = 'wcslime-v5';
+const CACHE = 'wcslime-v6-app-icon';
 const ASSETS = [
   './', './index.html', './style.css', './game.js', './leaderboard.js', './manifest.webmanifest',
   './favicon.png', './assets/audio/bg-music.mp3', './assets/audio/whistle.mp3',
-  './assets/icons/app-icon-192.png', './assets/icons/app-icon-512.png', './assets/icons/app-icon-maskable-512.png'
+  './assets/icons/app-icon-wk2026-192.png', './assets/icons/app-icon-wk2026-512.png', './assets/icons/app-icon-wk2026-maskable-512.png'
 ];
 
 self.addEventListener('install', e => {
