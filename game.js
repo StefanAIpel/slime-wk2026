@@ -494,6 +494,12 @@ function clearPointer(pid){ const prev = activePointers.get(pid); if (prev) setB
   addEventListener('pointercancel', end);
 })();
 
+// Block phone gestures that interrupt play: the long-press context menu / loupe, and
+// Safari's pinch-zoom. (The home-indicator swipe to the app switcher is an OS gesture
+// the web can't override — standalone-PWA mode keeps it to a deliberate two-step swipe.)
+addEventListener('contextmenu', e=>{ if (!/^(INPUT|TEXTAREA)$/.test((e.target&&e.target.tagName)||'')) e.preventDefault(); }, { passive:false });
+['gesturestart','gesturechange','gestureend'].forEach(ev=>addEventListener(ev, e=>e.preventDefault(), { passive:false }));
+
 const IS_TOUCH = matchMedia('(pointer:coarse)').matches || 'ontouchstart' in window;
 
 // read keyset -> {left,right,jump,down}.  Hold ball: P1 = Left Shift / S, P2 = Space / Right Shift / ↓
