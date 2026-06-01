@@ -11,6 +11,7 @@ await page.waitForTimeout(600);
 
 // ===== World Cup knockout: real 16-team bracket, win 4 rounds = champion =====
 await page.click('#btnWK'); await page.waitForTimeout(300);
+await page.click('#setupPlay'); await page.waitForTimeout(250);   // WC setup (length + level) -> pick country
 await page.click('#teamGrid .team:first-child');   // Netherlands
 await poll(()=>document.getElementById('wkScreen').classList.contains('show'), 6000, 'wk-stage0');
 const draw = await page.evaluate(()=>({

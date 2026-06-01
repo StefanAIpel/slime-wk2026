@@ -48,6 +48,11 @@ html, body {
 #game {
   width:  min(100vw, calc((100vh - var(--padb)) * 1056 / 600));
   height: min(calc(100vh - var(--padb)), calc(100vw * 600 / 1056));
+  /* dvh excludes the mobile-browser toolbar, so the pitch fits the *visible* area
+     and the touch buttons sit at its edge (as in the installed app) instead of
+     riding up over the field. Falls back to the vh pair above where dvh is unsupported. */
+  width:  min(100vw, calc((100dvh - var(--padb)) * 1056 / 600));
+  height: min(calc(100dvh - var(--padb)), calc(100vw * 600 / 1056));
   background: #0b1b2b;
   box-shadow: 0 0 0 3px #000, 0 0 40px rgba(255,122,24,.25), 0 18px 60px rgba(0,0,0,.6);
   border-radius: 4px;
@@ -162,6 +167,16 @@ html, body {
 .grp-label span { color: var(--muted); font-weight: 600; letter-spacing: .5px; text-transform: none; }
 .len-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
 .len-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
+/* shared match-setup card (Friendly / 2P / World Cup): tight label↔pills inside each
+   section, and an equal, roomier gap *under* every section — so the space under
+   "Computer level" matches the space under "Match format" before the button. */
+.setup-card { gap: 17px; }
+.setup-grp { display: flex; flex-direction: column; gap: 6px; width: 100%; }
+.setup-grp .grp-label { margin: 0; }
+.setup-go { margin-top: 0; width: 100%; }
+/* online: short explainer of the format + the two modes */
+.online-help { font-size: clamp(10px, 1.5vw, 12px); color: var(--muted); line-height: 1.75; text-align: left; padding: 2px 2px 0; }
+.online-help b { color: var(--ink); font-weight: 700; }
 .pill {
   font-family: var(--ui); font-weight: 700; font-size: clamp(11px,1.5vw,13px); color: var(--ink);
   background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 999px;
@@ -329,6 +344,8 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
   .title.small-title { font-size: clamp(18px, 5vh, 28px); }
   .subtitle { display: none; }
   .menu-card { padding: 12px; gap: 7px; border-width: 2px; }
+  .setup-card { gap: 11px; }
+  .setup-grp { gap: 4px; }
   .btn { padding: 9px 16px; font-size: 11px; border-bottom-width: 3px; }
   .tag { display: none; }
   .team-grid { max-height: 62vh; }
