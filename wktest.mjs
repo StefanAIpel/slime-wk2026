@@ -61,7 +61,7 @@ await page.click('#btn1p'); await page.waitForTimeout(150);
 await page.click('#setupPlay'); await page.waitForTimeout(150);
 await page.click('#teamGrid .team:first-child');
 await poll(()=>window.__G.screen==='play', 9000, 'pause-play');
-await page.click('#quitBtn'); await page.waitForTimeout(150);
+await page.click('#stagePause'); await page.waitForTimeout(150);   // desktop pause button (replaces the floating ☰)
 console.log('PAUSE paused=' + await page.evaluate(()=>window.__G.paused) + ' overlay=' + await page.evaluate(()=>document.getElementById('pauseScreen').classList.contains('show')));
 await page.click('#pauseQuit'); await page.waitForTimeout(150);
 console.log('QUIT screen=' + await page.evaluate(()=>window.__G.screen) + ' wkMode=' + await page.evaluate(()=>window.__G.wkMode));

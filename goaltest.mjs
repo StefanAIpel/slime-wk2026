@@ -33,6 +33,7 @@ await page.screenshot({ path:'shot-over.png' });
 await page.evaluate(()=>{ try{ backToMenu(); }catch(e){} });
 await page.waitForTimeout(200);
 await page.click('#btnOnline'); await page.waitForTimeout(200);
+await page.click('#btnModeFriend'); await page.waitForTimeout(200);   // step 1: pick "Play a friend" -> host panel
 await page.click('#btnHost'); await page.waitForTimeout(2500);
 const host = await page.evaluate(()=>({ code:document.getElementById('hostCode').textContent, status:document.getElementById('onlineStatus').textContent }));
 console.log('HOST=' + JSON.stringify(host));

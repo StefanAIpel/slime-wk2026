@@ -46,17 +46,31 @@ html, body {
     radial-gradient(90% 70% at 50% 42%, #16203f 0%, #0b1024 52%, #06060f 100%);
 }
 #game {
-  width:  min(100vw, calc((100vh - var(--padb)) * 1056 / 600));
-  height: min(calc(100vh - var(--padb)), calc(100vw * 600 / 1056));
+  width:  min(100vw, calc((100vh - var(--padb)) * 1160 / 600));
+  height: min(calc(100vh - var(--padb)), calc(100vw * 600 / 1160));
   /* dvh excludes the mobile-browser toolbar, so the pitch fits the *visible* area
      and the touch buttons sit at its edge (as in the installed app) instead of
      riding up over the field. Falls back to the vh pair above where dvh is unsupported. */
-  width:  min(100vw, calc((100dvh - var(--padb)) * 1056 / 600));
-  height: min(calc(100dvh - var(--padb)), calc(100vw * 600 / 1056));
+  width:  min(100vw, calc((100dvh - var(--padb)) * 1160 / 600));
+  height: min(calc(100dvh - var(--padb)), calc(100vw * 600 / 1160));
   background: #0b1b2b;
   box-shadow: 0 0 0 3px #000, 0 0 40px rgba(255,122,24,.25), 0 18px 60px rgba(0,0,0,.6);
   border-radius: 4px;
 }
+/* Desktop play view: not fullscreen — a centred ~half-screen pitch with the
+   "Slime World Cup '26" title above it and Pause/Quit buttons below. (body.deskgame
+   is toggled on by JS only on desktop while a match is on screen.) */
+.stage-title { display: none; font-size: clamp(20px, 3.4vh, 34px); letter-spacing: 1px; line-height: 1; text-align: center; }
+.stage-title .accent { font-size: .56em; margin-top: 4px; letter-spacing: 2px; }
+#stageControls { display: none; gap: 14px; }
+body.deskgame #stage { flex-direction: column; gap: 14px; justify-content: center; }
+body.deskgame .stage-title { display: block; }
+body.deskgame #stageControls { display: flex; }
+body.deskgame #game {
+  width:  min(50vw, calc(58vh * 1160 / 600));
+  height: min(58vh, calc(50vw * 600 / 1160));
+}
+body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by the Pause button */
 
 /* ---- Generic overlay (menus) ---- */
 .overlay {
@@ -339,12 +353,12 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
 @media (pointer: coarse){
   /* tiny reserved strip so the pitch fills more of the screen; the flat buttons
      overlap its bottom edge and read as a low HUD bar */
-  :root { --padb: 72px; }
+  :root { --padb: 52px; }   /* smaller reserved strip -> the pitch fills more width (toward the buttons) */
   #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
 }
 /* a bit bigger on larger touch screens (tablets), still a tidy low overlay */
 @media (pointer: coarse) and (min-width: 760px){
-  :root { --padb: 84px; }
+  :root { --padb: 64px; }
   .tbtn { width: 140px; height: 58px; font-size: 28px; border-radius: 14px; }
   body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 88px); }
 }
