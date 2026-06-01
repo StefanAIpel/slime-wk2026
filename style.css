@@ -199,6 +199,7 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 .setup-go { margin-top: 0; width: 100%; }
 /* online: short explainer of the format + the two modes */
 .online-help { font-size: clamp(10px, 1.5vw, 12px); color: var(--muted); line-height: 1.75; text-align: left; padding: 2px 2px 0; }
+.online-count { font-size: clamp(11px, 1.6vw, 13px); color: var(--good); font-weight: 700; text-align: center; min-height: 16px; }
 .online-help b { color: var(--ink); font-weight: 700; }
 .pill {
   font-family: var(--ui); font-weight: 700; font-size: clamp(11px,1.5vw,13px); color: var(--ink);
