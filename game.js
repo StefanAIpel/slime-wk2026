@@ -1768,15 +1768,18 @@ function wkResolveAndAdvance(userWon){
 // Leaderboard points for a World Cup run (granular, so scores are near-unique):
 //   base per round survived  +  (goals_for − goals_against)         ... gameplay
 //   all × difficulty factor  ×  win/loss factor (champion vs knocked out)
+function wkGoals(){   // the user's aggregate goals for/against across every match they played
+  const wk=G.wk; let gf=0, ga=0;
+  wk.rounds.forEach(rd=>rd.forEach(m=>{ if(m.user && m.played){
+    const uf=m.a===wk.team?m.sa:m.sb, ua=m.a===wk.team?m.sb:m.sa; gf+=uf; ga+=ua;
+  }}));
+  return { gf, ga };
+}
 function wkPoints(){
   const wk=G.wk; const champ = wk.champion===wk.team;
   const mult = (WK_DIFF_MULT[wk.diffMode]||2);
   const roundsWon = champ ? 4 : wk.round;
-  // aggregate the user's goals across every match they actually played
-  let gf=0, ga=0;
-  wk.rounds.forEach(rd=>rd.forEach(m=>{ if(m.user && m.played){
-    const uf=m.a===wk.team?m.sa:m.sb, ua=m.a===wk.team?m.sb:m.sa; gf+=uf; ga+=ua;
-  }}));
+  const { gf, ga } = wkGoals();
   const winFactor = champ ? 1.5 : (roundsWon>0 ? 1.0 : 0.6);     // win/loss bonus
   const base = roundsWon*8 + (champ?40:0);                        // reward progress + the title
   const goalPts = (gf - ga)*4;                                    // goal difference matters
@@ -1821,10 +1824,11 @@ async function submitWKRun(){
   const name=($('wkName').value||'').trim()||'Anonymous';
   store.save('lbname', name);
   $('wkSubmit').disabled=true; $('wkStatus').textContent=t('submitting'); $('wkStatus').className='status';
-  const fm=(wk.rounds[WK_ROUNDS.length-1]||[]).find(x=>x.user) || {a:wk.team, sa:0, sb:0};
-  const uf=(fm.a===wk.team)?fm.sa:fm.sb, ua=(fm.a===wk.team)?fm.sb:fm.sa;
-  const level=('WC '+wkLevelLabel(wk.diffMode)).slice(0,12);
-  const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf|0, score_against:ua|0, points:(wk._pts||wkPoints()), mode:'worldcup', difficulty:level });
+  // send the match FACTS; the server recomputes the points (anti-cheat — client can't inflate)
+  const g=wkGoals();
+  const pts=await window.Leaderboard.submit({ name, team:wk.team.code, diff:wk.diffMode,
+    rounds:wk.round, champion:(wk.champion===wk.team), gf:g.gf, ga:g.ga });
+  const ok = pts!=null;
   $('wkStatus').textContent = ok?t('submittedOk'):t('submitFail'); $('wkStatus').className='status '+(ok?'ok':'err');
   $('wkSubmit').textContent = ok?t('submitted'):t('submit'); if(!ok) $('wkSubmit').disabled=false;
 }

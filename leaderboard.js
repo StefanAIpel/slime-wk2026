@@ -14,24 +14,22 @@
     'Content-Type': 'application/json',
   };
 
+  // Submit a World Cup run via the RPC, which recomputes the points server-side from the
+  // match facts (anti-cheat: the client can't post inflated points). Returns points|null.
   async function submit(entry) {
     try {
-      const body = {
-        name: String(entry.name || 'Anonymous').slice(0, 20),
-        team: String(entry.team || '').slice(0, 4),
-        score_for: Math.max(0, Math.min(99, entry.score_for | 0)),
-        score_against: Math.max(0, Math.min(99, entry.score_against | 0)),
-        points: Math.max(0, Math.min(99999, entry.points | 0)),
-        mode: entry.mode || '1p',
-        difficulty: (entry.difficulty || '').slice(0, 12),
-      };
-      const res = await fetch(`${URL}/rest/v1/${TABLE}`, {
-        method: 'POST',
-        headers: Object.assign({ 'Prefer': 'return=minimal' }, headers),
-        body: JSON.stringify(body),
+      const r = await rpc('slime_submit_score', {
+        p_name: String(entry.name || 'Anonymous').slice(0, 20),
+        p_team: String(entry.team || '').slice(0, 4),
+        p_diff: String(entry.diff || 'rising'),
+        p_rounds: entry.rounds | 0,
+        p_champion: !!entry.champion,
+        p_gf: entry.gf | 0,
+        p_ga: entry.ga | 0,
       });
-      return res.ok;
-    } catch (e) { return false; }
+      const v = Array.isArray(r) ? r[0] : r;
+      return (v === null || v === undefined) ? null : v;
+    } catch (e) { return null; }
   }
 
   async function top(limit = 10) {
