@@ -2077,10 +2077,10 @@ async function showLeaderboard(from){
   if (!rows){ list.innerHTML='<div class="status err">'+t('lbFail')+'</div>'; return; }
   if (!rows.length){ list.innerHTML='<div class="status">'+t('lbNone')+'</div>'; return; }
   list.innerHTML = rows.map((r,i)=>{
-    const t=teamByCode(r.team);
+    const tm=teamByCode(r.team);
     return `<div class="lb-row${i<3?' top':''}">
       <span class="rank">${i+1}</span>
-      <span class="who">${escapeHtml(r.name)} <span class="tcode">${t.code}</span><span class="when">${escapeHtml(r.difficulty||r.mode||'')} · ${fmtDate(r.created_at)}</span></span>
+      <span class="who">${escapeHtml(r.name)} <span class="tcode">${tm.code}</span><span class="when">${escapeHtml(r.difficulty||r.mode||'')} · ${fmtDate(r.created_at)}</span></span>
       <span class="sc">${(r.points|0)} ${t('pts')}</span>
     </div>`;
   }).join('');
