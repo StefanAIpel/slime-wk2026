@@ -53,6 +53,7 @@
         <button id="btnSound" class="btn secondary small" aria-label="sound on/off">🔊</button>
         <button id="btnShare" class="btn secondary small" aria-label="Share">📤</button>
         <button id="btnLeaders" class="btn secondary small" aria-label="High scores">🏆</button>
+        <button id="btnRules" class="btn secondary small" aria-label="How to play">❓</button>
         <button id="btnSettings" class="btn secondary small" aria-label="Settings">⚙</button>
       </div>
     </div>
@@ -205,6 +206,18 @@
     <div class="subtitle" data-i18n="hsSub">World Cup runs · points by difficulty</div>
     <div id="lbList" class="online-box" style="max-width:560px; min-height:120px;">loading…</div>
     <button id="lbBack" class="btn secondary small" data-i18n="back">‹ Back</button>
+  </div>
+
+  <!-- ======================= HOW TO PLAY / RULES ======================= -->
+  <div id="rulesScreen" class="overlay">
+    <h2 class="title small-title" data-i18n="rulesTitle">HOW TO PLAY</h2>
+    <div class="rules-box">
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesControls">Controls</div><div class="rules-t" data-i18n-html="rulesControlsTxt"></div></div>
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesMoves">Moves</div><div class="rules-t" data-i18n-html="rulesMovesTxt"></div></div>
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesRules">Rules</div><div class="rules-t" data-i18n-html="rulesRulesTxt"></div></div>
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesModes">Modes</div><div class="rules-t" data-i18n-html="rulesModesTxt"></div></div>
+    </div>
+    <button id="rulesBack" class="btn secondary small" data-i18n="back">‹ Back</button>
   </div>
 
   <!-- ======================= WORLD CUP TOURNAMENT ======================= -->
