@@ -98,15 +98,18 @@ No install needed to run (open `index.html`). Tooling is for tests only.
 
 ```bash
 npm test            # CI gate: node --check (syntax) + brackettest.mjs (headless logic)
-npm run test:browser  # Playwright smoke/goal/wk tests (need Chrome: npx playwright install chrome)
+npm run test:browser  # Playwright smoke/goal/wk tests (bundled Chromium: npx playwright install chromium)
 npm run test:lb       # writes a real leaderboard row — run manually, not in CI
 ```
 - **`brackettest.mjs`** loads `game.js` in a Node `vm` with a minimal DOM stub and drives
   the tournament/physics logic — no browser. This is what CI runs.
 - The Playwright tests navigate with `?debug=1`, which exposes `window.__G` / `window.__TEAMS`
-  (gated to localhost/`?debug=1` so production stays clean). They pin `channel:'chrome'`.
-- **CI** (`.github/workflows`): on every push/PR runs `npm run check` + `npm run test:logic`
-  on Node 20. Browser tests need a browser + network, so they're run manually.
+  (gated to localhost/`?debug=1` so production stays clean). They run on bundled Chromium;
+  set `BASE_URL` (e.g. `http://127.0.0.1:8080`) to test over http instead of `file://`.
+- **CI** (`.github/workflows/ci.yml`, Node 20): the `test` job runs `npm run check`
+  (syntax + **ESLint**) + `npm run test:logic`; a `browser` job runs the offline-safe
+  gameplay tests (`smoketest` + `wktest`) on bundled Chromium over a local http server.
+  The online tests (`goaltest` host step, `lbtest` write) still run manually.
 
 ## Deploy
 Static site on **Netlify** (publish dir = repo root, no build). Push to `main` → auto-deploy.

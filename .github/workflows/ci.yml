@@ -34,6 +34,10 @@ jobs:
           node-version: "20"
           cache: "npm"
       - run: npm ci
-      - run: npx playwright install --with-deps chrome
-      - name: Browser smoke tests
-        run: node smoketest.mjs && node wktest.mjs
+      - run: npx playwright install --with-deps chromium
+      - name: Browser smoke tests (served over http)
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/dev/null 2>&1 &
+          sleep 2
+          BASE_URL=http://127.0.0.1:8080 node smoketest.mjs
+          BASE_URL=http://127.0.0.1:8080 node wktest.mjs

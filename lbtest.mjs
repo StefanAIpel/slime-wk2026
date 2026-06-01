@@ -1,7 +1,7 @@
 import { chromium } from 'playwright';
 const PAGE_URL = new globalThis.URL('./index.html', import.meta.url).href + '?debug=1';
 const errors = [];
-const browser = await chromium.launch({ headless: true, channel: 'chrome' });
+const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1100, height: 720 } });
 page.on('pageerror', e => errors.push('pageerror: '+e.message));
 page.on('console', m => { if (m.type()==='error') errors.push('console: '+m.text()); });
