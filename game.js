@@ -88,6 +88,8 @@ const TEAMS = [
     flag:'linear-gradient(#de3831 0 33%,#007a4d 33% 66%,#002395 66%)' },
   { code:'SWE', name:'Sweden',      color:'#fecc00', trim:'#1f5fa6', strength:80, stripes:['#006aa7','#fecc00','#006aa7'],
     flag:'linear-gradient(#fecc00,#fecc00) center/100% 30% no-repeat, linear-gradient(#fecc00,#fecc00) 34% 50%/16% 100% no-repeat, #006aa7' },
+  { code:'CUW', name:'Curaçao',     color:'#2a6fd6', trim:'#f7d417', strength:68, stripes:['#0b3fb5','#f9d90f','#ffffff'] },
+  { code:'ALG', name:'Algeria',     color:'#0b5d34', trim:'#ffffff', strength:81, stripes:['#006233','#ffffff','#d21034'] },
 ];
 const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 
@@ -123,6 +125,8 @@ const FLAG_SVG = {
   COL:'<rect width="90" height="60" fill="#fcd116"/><rect y="30" width="90" height="15" fill="#003893"/><rect y="45" width="90" height="15" fill="#ce1126"/>',
   RSA:'<rect width="90" height="30" fill="#e03c31"/><rect y="30" width="90" height="30" fill="#002395"/><path d="M0,5 L33,30 L0,55 M33,30 L90,30" fill="none" stroke="#fff" stroke-width="18"/><path d="M0,5 L33,30 L0,55 M33,30 L90,30" fill="none" stroke="#007a4d" stroke-width="11"/><polygon points="0,3 30,30 0,57" fill="#ffb915"/><polygon points="0,9 23,30 0,51" fill="#000"/>',
   SWE:'<rect width="90" height="60" fill="#006aa7"/><rect x="27" width="11" height="60" fill="#fecc00"/><rect y="24.5" width="90" height="11" fill="#fecc00"/>',
+  CUW:'<rect width="90" height="60" fill="#0b3fb5"/><rect y="39" width="90" height="8" fill="#f9d90f"/><polygon points="19,15 20.41,19.06 24.71,19.15 21.28,21.74 22.53,25.85 19,23.4 15.47,25.85 16.72,21.74 13.29,19.15 17.59,19.06" fill="#fff"/><polygon points="28,8 28.94,10.71 31.8,10.76 29.52,12.49 30.35,15.24 28,13.6 25.65,15.24 26.48,12.49 24.2,10.76 27.06,10.71" fill="#fff"/>',
+  ALG:'<rect width="90" height="60" fill="#006233"/><rect x="45" width="45" height="60" fill="#fff"/><path d="M51 21.51 A11 11 0 1 1 51 38.49 A9 9 0 0 0 51 21.51 Z" fill="#d21034"/><polygon points="53,25.5 54.06,28.54 57.28,28.61 54.71,30.56 55.65,33.64 53,31.8 50.36,33.64 51.29,30.56 48.72,28.61 51.94,28.54" fill="#d21034"/>',
 };
 function flagSVG(code){ return '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="60" viewBox="0 0 90 60">'+(FLAG_SVG[code]||FLAG_SVG.NED)+'</svg>'; }
 function flagDataURI(code){ return 'data:image/svg+xml,'+encodeURIComponent(flagSVG(code)); }
@@ -195,7 +199,7 @@ const I18N = {
     computerLevel:'Computer level', matchFormat:'Match format', matchLength:'Match length',
     continueTeams:'▶ Continue to teams', continueCountry:'▶ Continue to country', goals:'Goals', timed:'Timed',
     diffEasy:'Easy', diffNormal:'Normal', diffHard:'Hard', diffWorldCup:'World Cup', diffWC:'WC', diffRising:'Rising ↑',
-    keys1p:'⌨ Move <b>A</b>/<b>D</b> or <b>←</b>/<b>→</b> · jump <b>W</b> / <b>↑</b> / <b>Space</b> · hold ball <b>S</b> / <b>↓</b>',
+    keys1p:'⌨ Move <b>A</b>/<b>D</b> or <b>←</b>/<b>→</b> · jump <b>W</b> / <b>↑</b> · hold ball <b>S</b> / <b>↓</b>',
     keys2p:'⌨ <b>Player 1</b> A / D · W jump · S hold ball &nbsp;·&nbsp; <b>Player 2</b> ← / → · ↑ jump · ↓ hold ball',
     sure:'ARE YOU SURE?', yes:'Yes', endWC:'END WORLD CUP?', endWCmsg:'You’ll lose your tournament progress.',
     endTournament:'End tournament', keepPlaying:'Keep playing',
@@ -215,10 +219,10 @@ const I18N = {
     paused:'PAUSED', pressEsc:'Press ESC to resume', quitLeaves:'Quitting leaves the tournament',
     resume:'Resume', quitMenu:'Quit to menu', pauseBtn:'⏸ Pause', quitBtn2:'✕ Quit',
     rotate:'Rotate your device to landscape<br>for the best experience ⚽',
-    playHint:'Move <b>←/→</b> or <b>A/D</b> · jump <b>Space</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause',
+    playHint:'Move <b>←/→</b> or <b>A/D</b> · jump <b>W</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause',
     playHint2p:'<b>P1</b> A/D move · W jump · S hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · ↓ hold ball &nbsp;·&nbsp; ESC = pause',
     rulesTitle:'HOW TO PLAY', rulesControls:'Controls', rulesMoves:'Moves', rulesRules:'Rules', rulesModes:'Modes', rulesBtn:'❓ How to play',
-    rulesControlsTxt:'<b>Move</b> A/D or ←/→ · <b>Jump</b> W / ↑ / Space · <b>Catch &amp; hold ball</b> S / ↓<br><b>2 players</b> — Player 1: A/D · W · S &nbsp;·&nbsp; Player 2: ←/→ · ↑ · ↓',
+    rulesControlsTxt:'<b>Move</b> A/D or ←/→ · <b>Jump</b> W / ↑ · <b>Catch &amp; hold ball</b> S / ↓<br><b>2 players</b> — Player 1: A/D · W · S &nbsp;·&nbsp; Player 2: ←/→ · ↑ · ↓',
     rulesMovesTxt:'<b>Double jump</b> — tap jump again in mid-air for an extra boost to reach high balls.<br><b>Catch &amp; throw</b> — hold the catch key by the ball to grab it (up to ~3s), then release to throw it upfield.',
     rulesRulesTxt:'<b>No goal-hanging</b> — lingering in your own goal area gets you sent out (mind the warning flash).<br><b>Golden goal</b> — a tied timed match goes to sudden death: the next goal wins.',
     rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.',
@@ -246,7 +250,7 @@ const I18N = {
     computerLevel:'Computerniveau', matchFormat:'Wedstrijdvorm', matchLength:'Wedstrijdduur',
     continueTeams:'▶ Verder naar teams', continueCountry:'▶ Verder naar land', goals:'Goals', timed:'Tijd',
     diffEasy:'Makkelijk', diffNormal:'Normaal', diffHard:'Moeilijk', diffWorldCup:'World Cup', diffWC:'WC', diffRising:'Oplopend ↑',
-    keys1p:'⌨ Beweeg <b>A</b>/<b>D</b> of <b>←</b>/<b>→</b> · springen <b>W</b> / <b>↑</b> / <b>Spatie</b> · bal vasthouden <b>S</b> / <b>↓</b>',
+    keys1p:'⌨ Beweeg <b>A</b>/<b>D</b> of <b>←</b>/<b>→</b> · springen <b>W</b> / <b>↑</b> · bal vasthouden <b>S</b> / <b>↓</b>',
     keys2p:'⌨ <b>Speler 1</b> A / D · W springen · S bal vast &nbsp;·&nbsp; <b>Speler 2</b> ← / → · ↑ springen · ↓ bal vast',
     sure:'WEET JE HET ZEKER?', yes:'Ja', endWC:'WORLD CUP STOPPEN?', endWCmsg:'Je verliest je toernooivoortgang.',
     endTournament:'Toernooi stoppen', keepPlaying:'Doorspelen',
@@ -266,10 +270,10 @@ const I18N = {
     paused:'GEPAUZEERD', pressEsc:'Druk ESC om door te gaan', quitLeaves:'Stoppen verlaat het toernooi',
     resume:'Doorgaan', quitMenu:'Terug naar menu', pauseBtn:'⏸ Pauze', quitBtn2:'✕ Stoppen',
     rotate:'Draai je toestel horizontaal<br>voor de beste ervaring ⚽',
-    playHint:'Beweeg <b>←/→</b> of <b>A/D</b> · springen <b>Spatie</b>/<b>↑</b> · bal vasthouden <b>↓</b>/<b>S</b> · dubbeltik = hoger · ESC = pauze',
+    playHint:'Beweeg <b>←/→</b> of <b>A/D</b> · springen <b>W</b>/<b>↑</b> · bal vasthouden <b>↓</b>/<b>S</b> · dubbeltik = hoger · ESC = pauze',
     playHint2p:'<b>S1</b> A/D bewegen · W springen · S bal vast &nbsp;·&nbsp; <b>S2</b> ←/→ bewegen · ↑ springen · ↓ bal vast &nbsp;·&nbsp; ESC = pauze',
     rulesTitle:'ZO SPEEL JE', rulesControls:'Besturing', rulesMoves:'Acties', rulesRules:'Regels', rulesModes:'Modi', rulesBtn:'❓ Zo speel je',
-    rulesControlsTxt:'<b>Bewegen</b> A/D of ←/→ · <b>Springen</b> W / ↑ / Spatie · <b>Bal vangen/vasthouden</b> S / ↓<br><b>2 spelers</b> — Speler 1: A/D · W · S &nbsp;·&nbsp; Speler 2: ←/→ · ↑ · ↓',
+    rulesControlsTxt:'<b>Bewegen</b> A/D of ←/→ · <b>Springen</b> W / ↑ · <b>Bal vangen/vasthouden</b> S / ↓<br><b>2 spelers</b> — Speler 1: A/D · W · S &nbsp;·&nbsp; Speler 2: ←/→ · ↑ · ↓',
     rulesMovesTxt:'<b>Dubbele sprong</b> — tik in de lucht nogmaals op springen voor een extra zet naar hoge ballen.<br><b>Vangen en gooien</b> — houd de vang-toets ingedrukt bij de bal om hem te pakken (max ~3s), laat los om hem naar voren te gooien.',
     rulesRulesTxt:'<b>Niet in je goal hangen</b> — te lang in je eigen doelgebied blijven stuurt je weg (let op de waarschuwing).<br><b>Golden goal</b> — een gelijke wedstrijd op tijd gaat naar sudden death: de volgende goal wint.',
     rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.',
@@ -277,7 +281,8 @@ const I18N = {
 };
 const NL_NAMES = { NED:'Nederland', ARG:'Argentinië', BRA:'Brazilië', FRA:'Frankrijk', ENG:'Engeland', ESP:'Spanje',
   GER:'Duitsland', POR:'Portugal', EGY:'Egypte', CRO:'Kroatië', MAR:'Marokko', JPN:'Japan', MEX:'Mexico', USA:'USA',
-  CAN:'Canada', BEL:'België', URU:'Uruguay', SEN:'Senegal', SUI:'Zwitserland', COL:'Colombia', RSA:'Zuid-Afrika', SWE:'Zweden' };
+  CAN:'Canada', BEL:'België', URU:'Uruguay', SEN:'Senegal', SUI:'Zwitserland', COL:'Colombia', RSA:'Zuid-Afrika', SWE:'Zweden',
+  CUW:'Curaçao', ALG:'Algerije' };
 function t(key, vars){
   let s = (I18N[settings.lang] && I18N[settings.lang][key]);
   if (s==null) s = I18N.en[key];

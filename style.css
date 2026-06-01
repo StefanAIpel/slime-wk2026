@@ -247,7 +247,7 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 /* Desktop (mouse): the menu icon buttons + country cards were tiny — scale them up */
 @media (pointer: fine){
   .icon-row .btn.small { padding: 11px 20px; font-size: 20px; }
-  .team-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; max-width: 880px; }
+  .team-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; max-width: 940px; }
   .team .flag { width: 68px; height: 45px; }
   .team .code { font-size: 15px; }
   .pick-label { font-size: 16px; }
