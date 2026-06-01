@@ -1,6 +1,6 @@
 {
   "name": "slime-wc",
-  "version": "1.3.0",
+  "version": "0.13.0-beta",
   "private": true,
   "description": "Slime WC — retro slime soccer in a modern kit, tied to the 2026 World Cup.",
   "type": "module",

@@ -2,7 +2,7 @@
    Network-first zodat nieuwe deploys ALTIJD direct zichtbaar zijn online;
    cache dient alleen als offline-fallback. Cross-origin (PeerJS/fonts/Supabase)
    wordt niet onderschept. */
-const CACHE = 'wcslime-v4';
+const CACHE = 'wcslime-v5';
 const ASSETS = [
   './', './index.html', './style.css', './game.js', './leaderboard.js', './manifest.webmanifest',
   './favicon.png', './assets/audio/bg-music.mp3', './assets/audio/whistle.mp3',

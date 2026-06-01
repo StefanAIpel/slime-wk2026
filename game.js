@@ -1594,7 +1594,6 @@ function wkPoints(){
 }
 function wkShowResult(champion){
   const wk=G.wk; const pts=wkPoints(); wk._pts=pts;
-  let extra='<div class="wk-score">⭐ '+pts+' points · '+escapeHtml(wkLevelLabel(wk.diffMode))+'</div>';
   if (champion){
     spawnConfetti(); Audio.win();
     $('wkTitle').textContent='🏆 WORLD CHAMPIONS 2026!';
@@ -1604,14 +1603,19 @@ function wkShowResult(champion){
     const champTxt = wk.champion ? ` Champions: <b>${escapeHtml(wk.champion.name)}</b>.` : '';
     $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>You went out in the <b>${WK_ROUNDS[wk.round]}</b>.${champTxt} Try again!`;
   }
-  // leaderboard loads on demand; always offer submit (handler degrades gracefully if offline)
-  {
-    extra += `<div style="margin:4px auto 0; display:flex; flex-direction:column; gap:8px; max-width:320px;">
-      <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
-      <button id="wkSubmit" class="btn small">🏆 Submit ${pts} pts</button>
-      <div class="status" id="wkStatus"></div></div>`;
-  }
-  $('wkBracket').innerHTML = wkBracketHTML() + extra;
+  // Score + save panel goes ABOVE the bracket (in wkOpts) so it's visible without
+  // scrolling on a short landscape phone — the bracket below is just a reference.
+  const panel = `<div class="wk-result">
+      <div class="wk-result-team"><span class="flag" style="background:${wk.team.flag}"></span><b>${escapeHtml(wk.team.name)}</b></div>
+      <div class="wk-score">⭐ ${pts} points · ${escapeHtml(wkLevelLabel(wk.diffMode))}</div>
+      <div class="wk-save">
+        <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
+        <button id="wkSubmit" class="btn small">🏆 Submit ${pts} pts</button>
+        <div class="status" id="wkStatus"></div>
+      </div>
+    </div>`;
+  $('wkOpts').innerHTML = panel;
+  $('wkBracket').innerHTML = wkBracketHTML();
   $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">New tournament</button>`+
                           `<button id="wkHome" class="btn secondary">Main menu</button>`;
   $('wkAgain').onclick=()=>{ Audio.click(); setupWK(wk.team); };

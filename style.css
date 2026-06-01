@@ -364,6 +364,12 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
 .lb-row .tcode{ color: var(--muted); font-size: 8px; }
 .lb-row .sc   { color: var(--good); font-weight: 800; font-variant-numeric: tabular-nums; }
 .wk-score { font-size: 16px; font-weight: 800; color: var(--oranje2); margin: 8px 0 2px; }
+/* World Cup result: score + save panel, shown above the bracket so it's reachable on mobile */
+.wk-result { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 100%; max-width: 340px; margin: 0 auto; }
+.wk-result .wk-score { margin: 0; }
+.wk-result-team { display: flex; align-items: center; gap: 9px; font-size: 17px; font-weight: 800; color: var(--ink); }
+.wk-result-team .flag { width: 30px; height: 20px; border-radius: 3px; border: 1px solid #000; display: inline-block; flex: 0 0 auto; }
+.wk-save { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 
 /* ---- In-game opgeven/pauze-knop ---- */
 #quitBtn {
