@@ -32,7 +32,11 @@ html, body {
   user-select: none;
   -webkit-user-select: none;
   touch-action: none;
+  overscroll-behavior: none;          /* no pull-to-refresh / rubber-band bounce */
+  -webkit-touch-callout: none;        /* no long-press loupe / "save image" callout on iOS */
 }
+/* but keep the code/name inputs fully usable (typing, paste, the caret) */
+input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-callout: default; }
 
 /* ---- Stage / canvas ---- */
 #stage {
@@ -87,6 +91,7 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
   backdrop-filter: blur(3px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;       /* scrolling a long list (teams/rules/scores) won't bounce the page */
 }
 .overlay.show { display: flex; }
 /* menu: lighter scrim toward the bottom so the slimes idling on the pitch show through */
