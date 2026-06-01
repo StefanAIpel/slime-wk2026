@@ -115,9 +115,10 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 }
 .title.small-title { font-size: clamp(20px, 4.6vw, 36px); letter-spacing: 1px; line-height: 1.1; }
 .subtitle { color: var(--muted); font-size: clamp(12px, 1.8vw, 15px); margin: 2px 0 6px; line-height:1.6; font-weight: 500; }
-/* menu logo: the app icon as a small badge above the wordmark */
+/* menu header: icon above the wordmark (portrait + large screens); beside it on landscape phones */
+.menu-head { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .menu-logo {
-  display: block; margin: 0 auto -2px; width: auto; max-width: 86vw;
+  display: block; margin: 0; width: auto; max-width: 86vw;
   height: clamp(52px, 11vh, 96px);
   border-radius: 16px;
   box-shadow: 0 8px 24px rgba(0,0,0,.5), 0 0 34px rgba(255,122,24,.16);
@@ -247,7 +248,7 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 /* Desktop (mouse): the menu icon buttons + country cards were tiny — scale them up */
 @media (pointer: fine){
   .icon-row .btn.small { padding: 11px 20px; font-size: 20px; }
-  .team-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; max-width: 880px; }
+  .team-grid { grid-template-columns: repeat(6, 1fr); gap: 12px; max-width: 760px; }   /* 24 teams -> a clean 6x4 */
   .team .flag { width: 68px; height: 45px; }
   .team .code { font-size: 15px; }
   .pick-label { font-size: 16px; }
@@ -396,6 +397,7 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
 /* ---- Compacte menu's op korte (landscape-mobiel) schermen ---- */
 @media (max-height: 620px) {
   .overlay { gap: 8px; }
+  .menu-head { flex-direction: row; gap: 14px; }   /* landscape phones: logo beside the title */
   .title { font-size: clamp(22px, 8vh, 40px); text-shadow: 0 2px 14px rgba(255,122,24,.3); }
   .title .accent { font-size: 1em; letter-spacing: 3px; }
   .title.small-title { font-size: clamp(18px, 5vh, 28px); }
@@ -451,6 +453,17 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
 }
 #muteBtn.show { display: flex; }
 #muteBtn:active { background: rgba(255,122,24,.4); }
+/* in-game rules button — sits left of the mute button; opens the rules and pauses */
+#rulesBtn {
+  position: fixed; z-index: 14; display: none;
+  top: max(10px, env(safe-area-inset-top)); right: max(62px, calc(env(safe-area-inset-right) + 52px));
+  width: 44px; height: 44px; border-radius: 10px;
+  background: rgba(6,6,16,.55); color: var(--ink);
+  border: 2px solid var(--line); font-size: 20px; cursor: pointer;
+  align-items: center; justify-content: center; line-height: 1;
+}
+#rulesBtn.show { display: flex; }
+#rulesBtn:active { background: rgba(255,122,24,.4); }
 
 /* ---- World Cup bracket ---- */
 .bracket-wrap {

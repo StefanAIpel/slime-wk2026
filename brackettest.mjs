@@ -69,7 +69,7 @@ for (let i=0;i<200;i++){
 }
 ok(drawBad===0, '8 matches, 16 unique teams, exactly one user match every time');
 ok(userMissing===0, 'your chosen team is always in the draw');
-ok(TEAMS.length===22, 'pool has 22 teams (got ' + TEAMS.length + ')');
+ok(TEAMS.length===24, 'pool has 24 teams (got ' + TEAMS.length + ')');
 
 // ---- 2. winning path: 4 wins => champion ----------------------------------
 console.log('Winning run (you win every match):');
@@ -177,7 +177,7 @@ ok(kit('JPN')==='#1f4fb0', 'Japan home kit is blue');
 // ---- 8. new gameplay rules: real WC teams, kickoff, full-field, steal -------
 console.log('Gameplay rules:');
 ok(!TEAMS.some(t=>t.code==='ITA') && TEAMS.some(t=>t.code==='EGY'), 'Italy replaced by a real WC2026 team (Egypt)');
-ok(TEAMS.length===22, 'pool still has 22 teams');
+ok(TEAMS.length===24, 'pool still has 24 teams');
 
 // kickoff: the team that conceded restarts (ball on their side)
 G.wkMode=false; G.wk=null; G.mode='1p'; G.screen=SCREEN.PLAY;
