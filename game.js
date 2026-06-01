@@ -39,7 +39,7 @@ const BALL_REST   = 0.86;            // wall/bar damping
 const BALL_MAX    = 22;              // speed limit
 
 /* ----------------------------------------------------------------------------
-   1. Teams  (22-country pool; Netherlands featured/default).
+   1. Teams  (24-country pool; Netherlands featured/default).
    stripes = mini-flag (horizontal bands top->bottom). strength = bracket-sim seed.
    A tournament randomly draws 16 of these (your pick + 15 others).
    ---------------------------------------------------------------------------- */
