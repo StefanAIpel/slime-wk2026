@@ -6,13 +6,16 @@
   "type": "module",
   "homepage": "https://slime-wk2026.netlify.app",
   "scripts": {
-    "check": "node --check game.js && node --check leaderboard.js && node --check service-worker.js",
+    "check": "node --check game.js && node --check leaderboard.js && node --check service-worker.js && npm run lint",
     "test:logic": "node brackettest.mjs",
     "test:browser": "node smoketest.mjs && node goaltest.mjs && node wktest.mjs",
     "test:lb": "node lbtest.mjs",
-    "test": "npm run check && npm run test:logic"
+    "test": "npm run check && npm run test:logic",
+    "lint": "eslint game.js leaderboard.js service-worker.js"
   },
   "devDependencies": {
+    "eslint": "^9.39.4",
+    "globals": "^17.6.0",
     "playwright": "^1.49.1"
   }
 }
