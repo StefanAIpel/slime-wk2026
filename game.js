@@ -159,11 +159,132 @@ const settings = {
   volume:    clamp01(store.load('volume', 0.7)),   // master volume 0..1
   wkMin:     store.load('wkMin', 2),               // World Cup: minutes per match
   wkDiff:    store.load('wkDiff', 'rising'),        // World Cup: 'rising' | easy|normal|hard|worldcup
+  lang:      store.load('lang', 'en'),             // UI language: 'en' | 'nl'
 };
 function clamp01(v){ v=+v; return isNaN(v)?0.7:(v<0?0:v>1?1:v); }
 // drop retired longest modes (8 min / 10 goals) from any older saved settings
 if ([3,5,7].indexOf(settings.toWin)<0) settings.toWin=5;
 if ([1,2,4].indexOf(settings.matchMin)<0) settings.matchMin=2;
+
+/* ----------------------------------------------------------------------------
+   i18n — English (default) + Dutch. The game name "Slime World Cup" and the
+   event name "World Cup" stay English; everything else translates. Missing keys
+   fall back to English so a coverage gap shows English text, never breaks.
+   ---------------------------------------------------------------------------- */
+const I18N = {
+  en: {
+    teamLeft:'LEFT TEAM', teamRight:'RIGHT TEAM', tagline:'slime soccer · a modern remake ⚽',
+    grp1p:'1 Player', grp1pSub:'· keyboard or touch', grpMulti:'Multiplayer', grp1pHtml:'1 Player <span>· keyboard or touch</span>',
+    mFriendly:'⚽ Friendly', mWorldCup:'🏆 World Cup 2026', m2p:'2 Players · same device', mOnline:'🌐 Online',
+    tagHost:'WORLD CUP 2026 · USA · MEXICO · CANADA',
+    pickYourCountry:'Pick <b>your</b> country', pickP1:'Player <b>1</b> (left): pick your country',
+    pickWC:'Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦', back:'‹ Back',
+    online:'ONLINE', onlineSub:'P2P connection · no account needed',
+    playFriend:'👥 Play a friend', quickMatch:'⚡ Quick match',
+    onlineIntro:'⏱ <b>2-minute</b> timed matches — most goals wins.<br><b>👥 Play a friend</b> — share a code with someone you know.<br><b>⚡ Quick match</b> — get paired with a random online player.',
+    hostGame:'🎮 Host a game', enterCode:'🔑 Enter a code', codeForOpp:'Code for your opponent:',
+    waShare:'📲 WhatsApp', copyLink:'🔗 Copy link', pickStart:'▶ Pick team & start',
+    enterHostCode:'Enter the host’s code:', connect:'Connect', findingOpp:'⚡ Finding you an opponent…', cancel:'Cancel',
+    peerWarn:'⚠ Online needs internet (PeerJS failed to load). Local modes still work.',
+    hostOrJoin:'Host a game, or enter a friend’s code.', connLost:'Connection lost.',
+    matchup:'MATCHUP', you:'YOU', opponent:'OPPONENT', startMatch:'▶ Start match',
+    sidesRandom:'Sides are randomised — watch the kickoff! ⚽', bothChosen:'Both countries chosen — start when ready!',
+    waitHostStart:'Waiting for the host to start…',
+    setFriendly:'⚽ FRIENDLY', set2p:'👥 2 PLAYERS', setWC:'🏆 WORLD CUP',
+    setSub:'Pick your level & match format', setSubWC:'Set up your tournament, then pick your country',
+    computerLevel:'Computer level', matchFormat:'Match format', matchLength:'Match length',
+    continueTeams:'▶ Continue to teams', continueCountry:'▶ Continue to country', goals:'Goals', timed:'Timed',
+    diffEasy:'Easy', diffNormal:'Normal', diffHard:'Hard', diffWorldCup:'World Cup', diffWC:'WC', diffRising:'Rising ↑',
+    keys1p:'⌨ Move <b>A</b>/<b>D</b> or <b>←</b>/<b>→</b> · jump <b>W</b> / <b>↑</b> / <b>Space</b> · hold ball <b>S</b> / <b>↓</b>',
+    keys2p:'⌨ <b>Player 1</b> A / D · W jump · S hold ball &nbsp;·&nbsp; <b>Player 2</b> ← / → · ↑ jump · ↓ hold ball',
+    sure:'ARE YOU SURE?', yes:'Yes', endWC:'END WORLD CUP?', endWCmsg:'You’ll lose your tournament progress.',
+    endTournament:'End tournament', keepPlaying:'Keep playing',
+    settings:'SETTINGS', sound:'Sound', volume:'Volume', crt:'CRT effect', matchType:'Match type',
+    firstTo:'First to', matchLenMin:'Match length (min)', language:'Language', on:'ON', off:'OFF', matchTime:'Match time',
+    youWin:'YOU WIN!', cpuWins:'COMPUTER WINS', oppWins:'OPPONENT WINS', playerWins:'PLAYER {n} WINS!',
+    waitHostRestart:'Waiting for the host to restart…', putName:'Put your name on the leaderboard:',
+    yourName:'YOUR NAME', submit:'🏆 Submit', rematch:'Rematch', highScores:'High scores', mainMenu:'Main menu',
+    hsTitle:'🏆 HIGH SCORES', hsSub:'World Cup runs · points by difficulty', loading:'loading…',
+    lbNone:'No scores yet — be the first! ⚽', lbFail:'Could not load leaderboard (offline?).', lbNA:'Leaderboard not available.', pts:'pts',
+    wcTitle:'WORLD CUP', r16:'Round of 16', qf:'Quarter-final', sf:'Semi-final', final:'Final',
+    youAre:'You:', playVs:'▶ Play vs {opp}', newTournament:'New tournament', champions:'🏆 WORLD CHAMPIONS 2026!',
+    championsSub:'<b>{team}</b> are world champions — lifted in New York/New Jersey! ⚽🎉',
+    knockedOut:'Knocked out', knockedOutSub:'You went out in the <b>{round}</b>.{champ} Try again!',
+    championsTag:' Champions: <b>{name}</b>.', points:'points', submitPts:'🏆 Submit {n} pts', submitted:'✓ Submitted',
+    submitting:'Submitting...', submittedOk:'Submitted! ⚽', submitFail:'Failed (offline?)',
+    paused:'PAUSED', pressEsc:'Press ESC to resume', quitLeaves:'Quitting leaves the tournament',
+    resume:'Resume', quitMenu:'Quit to menu',
+    rotate:'Rotate your device to landscape<br>for the best experience ⚽',
+    playHint:'Move <b>←/→</b> or <b>A/D</b> · jump <b>Space</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause',
+    playHint2p:'<b>P1</b> A/D move · W jump · S hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · ↓ hold ball &nbsp;·&nbsp; ESC = pause',
+  },
+  nl: {
+    teamLeft:'TEAM LINKS', teamRight:'TEAM RECHTS', tagline:'slime voetbal · een moderne remake ⚽',
+    grp1p:'1 Speler', grp1pSub:'· toetsenbord of touch', grpMulti:'Multiplayer', grp1pHtml:'1 Speler <span>· toetsenbord of touch</span>',
+    mFriendly:'⚽ Oefenpotje', mWorldCup:'🏆 World Cup 2026', m2p:'2 Spelers · zelfde toestel', mOnline:'🌐 Online',
+    tagHost:'WORLD CUP 2026 · USA · MEXICO · CANADA',
+    pickYourCountry:'Kies <b>jouw</b> land', pickP1:'Speler <b>1</b> (links): kies je land',
+    pickWC:'Kies <b>jouw</b> land · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦', back:'‹ Terug',
+    online:'ONLINE', onlineSub:'P2P-verbinding · geen account nodig',
+    playFriend:'👥 Tegen een vriend', quickMatch:'⚡ Snelle match',
+    onlineIntro:'⏱ <b>2-minuten</b> wedstrijden — meeste goals wint.<br><b>👥 Tegen een vriend</b> — deel een code met iemand die je kent.<br><b>⚡ Snelle match</b> — speel tegen een willekeurige speler.',
+    hostGame:'🎮 Maak een spel', enterCode:'🔑 Voer code in', codeForOpp:'Code voor je tegenstander:',
+    waShare:'📲 WhatsApp', copyLink:'🔗 Kopieer link', pickStart:'▶ Kies team & start',
+    enterHostCode:'Voer de code van de host in:', connect:'Verbinden', findingOpp:'⚡ Tegenstander zoeken…', cancel:'Annuleren',
+    peerWarn:'⚠ Online vereist internet (PeerJS niet geladen). Lokale modi werken wel.',
+    hostOrJoin:'Maak een spel, of voer de code van een vriend in.', connLost:'Verbinding verbroken.',
+    matchup:'WEDSTRIJD', you:'JIJ', opponent:'TEGENSTANDER', startMatch:'▶ Start wedstrijd',
+    sidesRandom:'Kanten zijn willekeurig — let op de aftrap! ⚽', bothChosen:'Beide landen gekozen — start wanneer je klaar bent!',
+    waitHostStart:'Wachten tot de host start…',
+    setFriendly:'⚽ OEFENPOTJE', set2p:'👥 2 SPELERS', setWC:'🏆 WORLD CUP',
+    setSub:'Kies je niveau & wedstrijdvorm', setSubWC:'Stel je toernooi in, kies daarna je land',
+    computerLevel:'Computerniveau', matchFormat:'Wedstrijdvorm', matchLength:'Wedstrijdduur',
+    continueTeams:'▶ Verder naar teams', continueCountry:'▶ Verder naar land', goals:'Goals', timed:'Tijd',
+    diffEasy:'Makkelijk', diffNormal:'Normaal', diffHard:'Moeilijk', diffWorldCup:'World Cup', diffWC:'WC', diffRising:'Oplopend ↑',
+    keys1p:'⌨ Beweeg <b>A</b>/<b>D</b> of <b>←</b>/<b>→</b> · springen <b>W</b> / <b>↑</b> / <b>Spatie</b> · bal vasthouden <b>S</b> / <b>↓</b>',
+    keys2p:'⌨ <b>Speler 1</b> A / D · W springen · S bal vast &nbsp;·&nbsp; <b>Speler 2</b> ← / → · ↑ springen · ↓ bal vast',
+    sure:'WEET JE HET ZEKER?', yes:'Ja', endWC:'WORLD CUP STOPPEN?', endWCmsg:'Je verliest je toernooivoortgang.',
+    endTournament:'Toernooi stoppen', keepPlaying:'Doorspelen',
+    settings:'INSTELLINGEN', sound:'Geluid', volume:'Volume', crt:'CRT-effect', matchType:'Wedstrijdtype',
+    firstTo:'Eerste tot', matchLenMin:'Wedstrijdduur (min)', language:'Taal', on:'AAN', off:'UIT', matchTime:'Op tijd',
+    youWin:'JIJ WINT!', cpuWins:'COMPUTER WINT', oppWins:'TEGENSTANDER WINT', playerWins:'SPELER {n} WINT!',
+    waitHostRestart:'Wachten tot de host herstart…', putName:'Zet je naam op de ranglijst:',
+    yourName:'JOUW NAAM', submit:'🏆 Verstuur', rematch:'Opnieuw', highScores:'Toplijst', mainMenu:'Hoofdmenu',
+    hsTitle:'🏆 TOPSCORES', hsSub:'World Cup-runs · punten per niveau', loading:'laden…',
+    lbNone:'Nog geen scores — wees de eerste! ⚽', lbFail:'Kan ranglijst niet laden (offline?).', lbNA:'Ranglijst niet beschikbaar.', pts:'ptn',
+    wcTitle:'WORLD CUP', r16:'Achtste finale', qf:'Kwartfinale', sf:'Halve finale', final:'Finale',
+    youAre:'Jij:', playVs:'▶ Speel tegen {opp}', newTournament:'Nieuw toernooi', champions:'🏆 WERELDKAMPIOEN 2026!',
+    championsSub:'<b>{team}</b> is wereldkampioen — gehuldigd in New York/New Jersey! ⚽🎉',
+    knockedOut:'Uitgeschakeld', knockedOutSub:'Je ging eruit in de <b>{round}</b>.{champ} Probeer opnieuw!',
+    championsTag:' Kampioen: <b>{name}</b>.', points:'punten', submitPts:'🏆 Verstuur {n} ptn', submitted:'✓ Verstuurd',
+    submitting:'Versturen...', submittedOk:'Verstuurd! ⚽', submitFail:'Mislukt (offline?)',
+    paused:'GEPAUZEERD', pressEsc:'Druk ESC om door te gaan', quitLeaves:'Stoppen verlaat het toernooi',
+    resume:'Doorgaan', quitMenu:'Terug naar menu',
+    rotate:'Draai je toestel horizontaal<br>voor de beste ervaring ⚽',
+    playHint:'Beweeg <b>←/→</b> of <b>A/D</b> · springen <b>Spatie</b>/<b>↑</b> · bal vasthouden <b>↓</b>/<b>S</b> · dubbeltik = hoger · ESC = pauze',
+    playHint2p:'<b>S1</b> A/D bewegen · W springen · S bal vast &nbsp;·&nbsp; <b>S2</b> ←/→ bewegen · ↑ springen · ↓ bal vast &nbsp;·&nbsp; ESC = pauze',
+  },
+};
+const NL_NAMES = { NED:'Nederland', ARG:'Argentinië', BRA:'Brazilië', FRA:'Frankrijk', ENG:'Engeland', ESP:'Spanje',
+  GER:'Duitsland', POR:'Portugal', EGY:'Egypte', CRO:'Kroatië', MAR:'Marokko', JPN:'Japan', MEX:'Mexico', USA:'USA',
+  CAN:'Canada', BEL:'België', URU:'Uruguay', SEN:'Senegal', SUI:'Zwitserland', COL:'Colombia', RSA:'Zuid-Afrika', SWE:'Zweden' };
+function t(key, vars){
+  let s = (I18N[settings.lang] && I18N[settings.lang][key]);
+  if (s==null) s = I18N.en[key];
+  if (s==null) s = key;
+  if (vars) for (const k in vars) s = s.split('{'+k+'}').join(vars[k]);
+  return s;
+}
+function teamName(tm){ return settings.lang==='nl' ? (NL_NAMES[tm.code]||tm.name) : tm.name; }
+const _AI_KEY = { easy:'diffEasy', normal:'diffNormal', hard:'diffHard', worldcup:'diffWorldCup', rising:'diffRising' };
+function aiLabel(d){ return t(_AI_KEY[d]||'diffNormal'); }   // translated difficulty label (for display)
+function applyStaticI18n(){
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.getAttribute('data-i18n')); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.getAttribute('data-i18n-html')); });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el=>{ el.setAttribute('aria-label', t(el.getAttribute('data-i18n-aria'))); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.setAttribute('placeholder', t(el.getAttribute('data-i18n-ph'))); });
+  try{ document.documentElement.lang = settings.lang; }catch(_){}
+}
 
 /* ----------------------------------------------------------------------------
    3. Audio
@@ -1414,9 +1535,7 @@ function updateTouchVisibility(){
   document.body.classList.toggle('m2p', G.mode==='2p');
   refreshBtnZones();                                   // recompute enlarged tap zones for this layout
   const hint = $('playHint');
-  hint.innerHTML = (G.mode==='2p')
-    ? `<b>P1</b> A/D move · W jump · S hold ball &nbsp;·&nbsp; <b>P2</b> ←/→ move · ↑ jump · ↓ hold ball &nbsp;·&nbsp; ESC = pause`
-    : `Move <b>←/→</b> or <b>A/D</b> · jump <b>Space</b>/<b>↑</b> · hold ball <b>↓</b>/<b>S</b> · double-tap jump = higher · ESC = pause`;
+  hint.innerHTML = (G.mode==='2p') ? t('playHint2p') : t('playHint');
   hint.style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
   $('quitBtn').classList.toggle('show', inGame);
   $('muteBtn').classList.toggle('show', inGame);
@@ -1481,7 +1600,9 @@ function launchLocal(){
    strength, so right after your match you see who advanced and who you face next.
    Win 4 rounds (R16 -> QF -> SF -> Final) to be crowned champion. 2-min matches.
    ------------------------------------------------------------------------------ */
-const WK_ROUNDS = ['Round of 16','Quarter-final','Semi-final','Final'];
+const WK_ROUNDS = ['Round of 16','Quarter-final','Semi-final','Final'];   // English keys for logic/DB
+const _WK_RKEY = ['r16','qf','sf','final'];
+function wkRoundName(i){ return t(_WK_RKEY[i] || 'final'); }              // translated round name (display)
 const WK_HEAD   = ['R16','QF','SF','FINAL'];          // compact bracket column heads
 const WK_DIFFS  = ['normal','hard','hard','worldcup'];// AI level per round
 const WK_DIFF_MULT = { easy:1, normal:2, hard:3, worldcup:4, rising:3 };  // leaderboard points multiplier
@@ -1568,18 +1689,18 @@ function wkBracketHTML(){
 
 function showWKStage(){
   const wk=G.wk; const m=wkUserMatch(); const opp=m?wkOppOf(m):null;
-  $('wkTitle').textContent = WK_ROUNDS[wk.round];
-  const lvl = wkLevelLabel(wk.diffMode);
+  $('wkTitle').textContent = wkRoundName(wk.round);
+  const lvl = aiLabel(wk.diffMode);
   const venue = (wk.venues && wk.venues[wk.round]) || '';
   $('wkSub').innerHTML =
     `<div class="wk-bar"></div>`+
     `<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>`+
-    `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · ${wk.min}-min · ${escapeHtml(lvl)}`+
-    (venue ? `<br><span class="wk-venue">📍 ${escapeHtml(venue)} — ${WK_ROUNDS[wk.round]}</span>` : '');
+    `${t('youAre')} <b>${escapeHtml(teamName(wk.team))}</b> ⚽ · ${wk.min}-min · ${escapeHtml(lvl)}`+
+    (venue ? `<br><span class="wk-venue">📍 ${escapeHtml(venue)} — ${wkRoundName(wk.round)}</span>` : '');
   $('wkOpts').innerHTML = '';   // length + level are now chosen on the setup screen before the draw
   $('wkBracket').innerHTML = wkBracketHTML();
-  $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">▶ Play vs ${opp?escapeHtml(opp.name):'?'}</button>`+
-                          `<button id="wkQuit" class="btn secondary">Main menu</button>`;
+  $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">${t('playVs',{opp: opp?escapeHtml(teamName(opp)):'?'})}</button>`+
+                          `<button id="wkQuit" class="btn secondary">${t('mainMenu')}</button>`;
   $('wkPlay').onclick = ()=>{ Audio.click(); wkStartMatch(); };
   $('wkQuit').onclick = ()=>{ Audio.click(); askEndWK(backToMenu, showWKStage); };
   showOverlay('wkScreen');
@@ -1639,28 +1760,28 @@ function wkShowResult(champion){
   const wk=G.wk; const pts=wkPoints(); wk._pts=pts;
   if (champion){
     spawnConfetti(); Audio.win();
-    $('wkTitle').textContent='🏆 WORLD CHAMPIONS 2026!';
-    $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br><b>${escapeHtml(wk.team.name)}</b> are world champions — lifted in New York/New Jersey! ⚽🎉`;
+    $('wkTitle').textContent=t('champions');
+    $('wkSub').innerHTML='<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>'+t('championsSub',{team:escapeHtml(teamName(wk.team))});
   } else {
-    $('wkTitle').textContent='Knocked out';
-    const champTxt = wk.champion ? ` Champions: <b>${escapeHtml(wk.champion.name)}</b>.` : '';
-    $('wkSub').innerHTML=`<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>You went out in the <b>${WK_ROUNDS[wk.round]}</b>.${champTxt} Try again!`;
+    $('wkTitle').textContent=t('knockedOut');
+    const champTxt = wk.champion ? t('championsTag',{name:escapeHtml(teamName(wk.champion))}) : '';
+    $('wkSub').innerHTML='<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>'+t('knockedOutSub',{round:wkRoundName(wk.round),champ:champTxt});
   }
   // Score + save panel goes ABOVE the bracket (in wkOpts) so it's visible without
   // scrolling on a short landscape phone — the bracket below is just a reference.
   const panel = `<div class="wk-result">
-      <div class="wk-result-team"><span class="flag" style="background:${wk.team.flag}"></span><b>${escapeHtml(wk.team.name)}</b></div>
-      <div class="wk-score">⭐ ${pts} points · ${escapeHtml(wkLevelLabel(wk.diffMode))}</div>
+      <div class="wk-result-team"><span class="flag" style="background:${wk.team.flag}"></span><b>${escapeHtml(teamName(wk.team))}</b></div>
+      <div class="wk-score">⭐ ${pts} ${t('points')} · ${escapeHtml(aiLabel(wk.diffMode))}</div>
       <div class="wk-save">
-        <input id="wkName" class="code-input" maxlength="20" placeholder="YOUR NAME" value="${escapeHtml(store.load('lbname',''))}">
-        <button id="wkSubmit" class="btn small">🏆 Submit ${pts} pts</button>
+        <input id="wkName" class="code-input" maxlength="20" placeholder="${t('yourName')}" value="${escapeHtml(store.load('lbname',''))}">
+        <button id="wkSubmit" class="btn small">${t('submitPts',{n:pts})}</button>
         <div class="status" id="wkStatus"></div>
       </div>
     </div>`;
   $('wkOpts').innerHTML = panel;
   $('wkBracket').innerHTML = wkBracketHTML();
-  $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">New tournament</button>`+
-                          `<button id="wkHome" class="btn secondary">Main menu</button>`;
+  $('wkBtns').innerHTML = `<button id="wkAgain" class="btn">${t('newTournament')}</button>`+
+                          `<button id="wkHome" class="btn secondary">${t('mainMenu')}</button>`;
   $('wkAgain').onclick=()=>{ Audio.click(); setupWK(wk.team); };
   $('wkHome').onclick=()=>{ Audio.click(); backToMenu(); };
   const sb=$('wkSubmit'); if (sb) sb.onclick=submitWKRun;
@@ -1672,13 +1793,13 @@ async function submitWKRun(){
   const wk=G.wk;
   const name=($('wkName').value||'').trim()||'Anonymous';
   store.save('lbname', name);
-  $('wkSubmit').disabled=true; $('wkStatus').textContent='Submitting...'; $('wkStatus').className='status';
+  $('wkSubmit').disabled=true; $('wkStatus').textContent=t('submitting'); $('wkStatus').className='status';
   const fm=(wk.rounds[WK_ROUNDS.length-1]||[]).find(x=>x.user) || {a:wk.team, sa:0, sb:0};
   const uf=(fm.a===wk.team)?fm.sa:fm.sb, ua=(fm.a===wk.team)?fm.sb:fm.sa;
   const level=('WC '+wkLevelLabel(wk.diffMode)).slice(0,12);
   const ok=await window.Leaderboard.submit({ name, team:wk.team.code, score_for:uf|0, score_against:ua|0, points:(wk._pts||wkPoints()), mode:'worldcup', difficulty:level });
-  $('wkStatus').textContent = ok?'Submitted! ⚽':'Failed (offline?)'; $('wkStatus').className='status '+(ok?'ok':'err');
-  $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit'; if(!ok) $('wkSubmit').disabled=false;
+  $('wkStatus').textContent = ok?t('submittedOk'):t('submitFail'); $('wkStatus').className='status '+(ok?'ok':'err');
+  $('wkSubmit').textContent = ok?t('submitted'):t('submit'); if(!ok) $('wkSubmit').disabled=false;
 }
 // ---- menu knoppen ----
 let setupKind='1p';   // which flavour of the shared setup screen: '1p' | '2p' | 'wk'
@@ -1687,35 +1808,32 @@ function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openMatchSetup('2p');
 // shared setup screen (difficulty + format) used by Friendly, 2 Players AND World Cup
 function openMatchSetup(kind){
   setupKind = kind;
-  const titles = { '1p':'⚽ FRIENDLY', '2p':'👥 2 PLAYERS', 'wk':'🏆 WORLD CUP' };
+  const titles = { '1p':t('setFriendly'), '2p':t('set2p'), 'wk':t('setWC') };
   $('setupTitle').textContent = titles[kind] || titles['1p'];
-  $('setupSub').textContent = kind==='wk' ? 'Set up your tournament, then pick your country'
-                                          : 'Pick your level & match format';
+  $('setupSub').textContent = kind==='wk' ? t('setSubWC') : t('setSub');
   $('setupDiffWrap').style.display = kind==='2p' ? 'none' : '';          // no AI difficulty in 2P
-  $('setupFmtLabel').textContent = kind==='wk' ? 'Match length' : 'Match format';
-  $('setupPlay').innerHTML = kind==='wk' ? '▶ Continue to country' : '▶ Continue to teams';
+  $('setupFmtLabel').textContent = kind==='wk' ? t('matchLength') : t('matchFormat');
+  $('setupPlay').innerHTML = kind==='wk' ? t('continueCountry') : t('continueTeams');
   // desktop: show which keys to use before the match (esp. for 2 players)
   const sk=$('setupKeys');
   if (sk){
     sk.style.display = IS_TOUCH ? 'none' : 'block';
-    sk.innerHTML = kind==='2p'
-      ? '⌨ <b>Player 1</b> A / D · W jump · S hold ball &nbsp;·&nbsp; <b>Player 2</b> ← / → · ↑ jump · ↓ hold ball'
-      : '⌨ Move <b>A</b>/<b>D</b> or <b>←</b>/<b>→</b> · jump <b>W</b> / <b>↑</b> / <b>Space</b> · hold ball <b>S</b> / <b>↓</b>';
+    sk.innerHTML = kind==='2p' ? t('keys2p') : t('keys1p');
   }
   renderSetupPills();
   G.screen=SCREEN.TEAM;
   showOverlay('setupScreen');
 }
 function startTeamSelect(){
-  if (setupKind==='wk'){ wkPending=true; openTeamSelect('Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦'); return; }
-  if (G.mode==='2p'){ pickStage=0; openTeamSelect('Player <b>1</b> (left): pick your country'); }
-  else openTeamSelect('Pick <b>your</b> country');
+  if (setupKind==='wk'){ wkPending=true; openTeamSelect(t('pickWC')); return; }
+  if (G.mode==='2p'){ pickStage=0; openTeamSelect(t('pickP1')); }
+  else openTeamSelect(t('pickYourCountry'));
 }
 function renderSetupPills(){
   if (setupKind==='wk'){
     // World Cup: AI level (Rising ramps up each round, default) + match length — always timed
     const dr=$('setupDiffRow');
-    dr.innerHTML=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','WC'],['rising','Rising ↑']]
+    dr.innerHTML=[['easy',t('diffEasy')],['normal',t('diffNormal')],['hard',t('diffHard')],['worldcup',t('diffWC')],['rising',t('diffRising')]]
       .map(([k,l])=>`<button class="pill${(settings.wkDiff||'rising')===k?' active':''}" data-d="${k}">${l}</button>`).join('');
     dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); settings.wkDiff=p.dataset.d; store.save('wkDiff',settings.wkDiff); renderSetupPills(); });
     const fr=$('setupFmtRow');
@@ -1725,14 +1843,14 @@ function renderSetupPills(){
   }
   if (G.mode==='1p'){
     const dr=$('setupDiffRow');
-    dr.innerHTML=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','World Cup']]
+    dr.innerHTML=[['easy',t('diffEasy')],['normal',t('diffNormal')],['hard',t('diffHard')],['worldcup',t('diffWorldCup')]]
       .map(([k,l])=>`<button class="pill${settings.diff===k?' active':''}" data-d="${k}">${l}</button>`).join('');
     dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); settings.diff=p.dataset.d; store.save('diff',settings.diff); renderSetupPills(); });
   }
   const isGoals=settings.matchMode!=='time';
   const fr=$('setupFmtRow');
-  fr.innerHTML=`<button class="pill mode${isGoals?' active':''}" data-set="goals">Goals</button>`+
-               `<button class="pill mode${!isGoals?' active':''}" data-set="time">Timed</button>`+
+  fr.innerHTML=`<button class="pill mode${isGoals?' active':''}" data-set="goals">${t('goals')}</button>`+
+               `<button class="pill mode${!isGoals?' active':''}" data-set="time">${t('timed')}</button>`+
                `<span class="pill-sep"></span>`+
                (isGoals?[3,5,7].map(n=>`<button class="pill${settings.toWin===n?' active':''}" data-win="${n}">${n}</button>`).join('')
                        :[1,2,4].map(n=>`<button class="pill${settings.matchMin===n?' active':''}" data-min="${n}">${n}m</button>`).join(''));
@@ -1793,7 +1911,7 @@ function showFriendPanel(){
   $('friendPanel').style.display='block';
   $('hostArea').style.display='none'; $('joinArea').style.display='none';
   $('onlineSubBack').style.display='inline-block'; $('onlineBack').style.display='none';
-  olStatus('Host a game, or enter a friend’s code.');
+  olStatus(t('hostOrJoin'));
 }
 function startQuickMode(){
   $('onlineModes').style.display='none'; $('onlineIntro').style.display='none'; $('friendPanel').style.display='none';
@@ -1872,13 +1990,13 @@ function showGameOver(){
   overShown=true;
   const winTeam = G.winner===1?G.p1.team:G.p2.team;
   let who;
-  if (G.mode==='1p') who = G.winner===1?'YOU WIN!':'COMPUTER WINS';
-  else if (G.mode==='2p') who = 'PLAYER '+G.winner+' WINS!';
-  else { const meWon = G.winner===(G.mySlot||(G.mode==='host'?1:2)); who = meWon?'YOU WIN!':'OPPONENT WINS'; }
+  if (G.mode==='1p') who = G.winner===1?t('youWin'):t('cpuWins');
+  else if (G.mode==='2p') who = t('playerWins',{n:G.winner});
+  else { const meWon = G.winner===(G.mySlot||(G.mode==='host'?1:2)); who = meWon?t('youWin'):t('oppWins'); }
   $('overTitle').textContent=who;
-  let sub=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${escapeHtml(winTeam.name)} — ${G.score[0]} : ${G.score[1]}`;
+  let sub=`<div class="flag" style="width:90px;height:60px;margin:10px auto;border-radius:6px;border:2px solid #000;background:${winTeam.flag}"></div>${escapeHtml(teamName(winTeam))} — ${G.score[0]} : ${G.score[1]}`;
   // online: only the host can start a rematch
-  if (G.mode==='guest'){ $('overRematch').style.display='none'; sub+='<div class="status">Waiting for the host to restart…</div>'; }
+  if (G.mode==='guest'){ $('overRematch').style.display='none'; sub+='<div class="status">'+t('waitHostRestart')+'</div>'; }
   else { $('overRematch').style.display=''; }
   $('overSub').innerHTML=sub;
   setupLbSubmit();
@@ -1906,18 +2024,18 @@ let lbFrom='menu';
 async function showLeaderboard(from){
   lbFrom = from || 'menu';
   showOverlay('lbScreen');
-  const list=$('lbList'); list.innerHTML='loading…';
+  const list=$('lbList'); list.innerHTML=t('loading');
   await ensureLeaderboard();
-  if (!window.Leaderboard){ list.textContent='Leaderboard not available.'; return; }
+  if (!window.Leaderboard){ list.textContent=t('lbNA'); return; }
   const rows = await window.Leaderboard.top(12);
-  if (!rows){ list.innerHTML='<div class="status err">Could not load leaderboard (offline?).</div>'; return; }
-  if (!rows.length){ list.innerHTML='<div class="status">No scores yet — be the first! ⚽</div>'; return; }
+  if (!rows){ list.innerHTML='<div class="status err">'+t('lbFail')+'</div>'; return; }
+  if (!rows.length){ list.innerHTML='<div class="status">'+t('lbNone')+'</div>'; return; }
   list.innerHTML = rows.map((r,i)=>{
     const t=teamByCode(r.team);
     return `<div class="lb-row${i<3?' top':''}">
       <span class="rank">${i+1}</span>
       <span class="who">${escapeHtml(r.name)} <span class="tcode">${t.code}</span><span class="when">${escapeHtml(r.difficulty||r.mode||'')} · ${fmtDate(r.created_at)}</span></span>
-      <span class="sc">${(r.points|0)} pts</span>
+      <span class="sc">${(r.points|0)} ${t('pts')}</span>
     </div>`;
   }).join('');
 }
@@ -1929,18 +2047,18 @@ function lbBack(){ if (lbFrom==='over'){ showOverlay('overScreen'); } else { sho
 // lightweight confirm dialog (used to guard quitting an in-progress World Cup)
 let _cfYes=null, _cfNo=null;
 function askConfirm(o){
-  $('confirmTitle').textContent = o.title||'Are you sure?';
+  $('confirmTitle').textContent = o.title||t('sure');
   $('confirmMsg').textContent   = o.msg||'';
-  $('confirmYes').textContent   = o.yes||'Yes';
-  $('confirmNo').textContent    = o.no||'Cancel';
+  $('confirmYes').textContent   = o.yes||t('yes');
+  $('confirmNo').textContent    = o.no||t('cancel');
   _cfYes=o.onYes||null; _cfNo=o.onNo||null;
   showOverlay('confirmScreen');
 }
 function wkInProgress(){ return G.wkMode && G.wk && !G.wk.champion; }
 function askEndWK(onYes, onNo){
   if (!wkInProgress()){ onYes(); return; }                      // nothing to lose -> no nag
-  askConfirm({ title:'END WORLD CUP?', msg:'You’ll lose your tournament progress.',
-    yes:'End tournament', no:'Keep playing', onYes, onNo });
+  askConfirm({ title:t('endWC'), msg:t('endWCmsg'),
+    yes:t('endTournament'), no:t('keepPlaying'), onYes, onNo });
 }
 function backToMenu(){
   if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} }   // release any waiting lobby slot
@@ -1961,7 +2079,7 @@ function onConnectionLost(){
   $('hostArea').style.display='none'; $('joinArea').style.display='none';
   const hs=$('hostStart'); if(hs) hs.style.display='none';
   showOverlay('onlineScreen');
-  $('onlineStatus').textContent='Connection lost.'; $('onlineStatus').className='status err';
+  $('onlineStatus').textContent=t('connLost'); $('onlineStatus').className='status err';
   updateTouchVisibility();
 }
 function rematch(){
@@ -2012,7 +2130,7 @@ function onEscape(){
 function openPause(){
   if (G.mode==='host'||G.mode==='guest') return;
   G.paused=true;
-  $('pauseSub').textContent = G.wkMode ? 'Quitting leaves the tournament' : 'Press ESC to resume';
+  $('pauseSub').textContent = G.wkMode ? t('quitLeaves') : t('pressEsc');
   showOverlay('pauseScreen'); updateTouchVisibility();
 }
 function resumeGame(){ G.paused=false; hideAllOverlays(); updateTouchVisibility(); }
@@ -2090,19 +2208,19 @@ function patchNetForTeams(){
   };
 }
 // color-coded confirm: you vs opponent, then the host starts the match
-function teamCardHTML(t){ return `<div class="mc-flag" style="background:${t.flag}"></div><div class="mc-name">${escapeHtml(t.name)}</div>`; }
+function teamCardHTML(tm){ return `<div class="mc-flag" style="background:${tm.flag}"></div><div class="mc-name">${escapeHtml(teamName(tm))}</div>`; }
 function showMatchup(isHost){
   const you = isHost ? pickP1 : pickP2;
   const opp = isHost ? pickP2 : pickP1;
   G.mode = isHost ? 'host' : 'guest'; G.screen = SCREEN.ONLINE;
   $('matchYou').innerHTML = teamCardHTML(you);
   $('matchOpp').innerHTML = teamCardHTML(opp);
-  $('matchSide').textContent = 'Sides are randomised — watch the kickoff! ⚽';
+  $('matchSide').textContent = t('sidesRandom');
   if (isHost){
-    $('matchStart').style.display=''; $('matchStatus').textContent='Both countries chosen — start when ready!';
+    $('matchStart').style.display=''; $('matchStatus').textContent=t('bothChosen');
     $('matchStart').onclick = ()=>{ Audio.click(); beginOnlineMatch(); };
   } else {
-    $('matchStart').style.display='none'; $('matchStatus').textContent='Waiting for the host to start…'; $('matchStatus').className='status waiting';
+    $('matchStart').style.display='none'; $('matchStatus').textContent=t('waitHostStart'); $('matchStatus').className='status waiting';
   }
   showOverlay('matchupScreen');
 }
@@ -2160,14 +2278,16 @@ function onGuestStart(d){
 /* ---- Settings ---- */
 function openSettings(){ refreshToggles(); showOverlay('setScreen'); }
 function refreshToggles(){
-  $('tSound').querySelector('.val').textContent = settings.sound?'ON':'OFF';
-  $('tCrt').querySelector('.val').textContent   = settings.crt?'ON':'OFF';
-  $('tMode').querySelector('.val').textContent  = settings.matchMode==='time'?'Match time':'Goals';
-  $('tWin').querySelector('.lbl').textContent   = settings.matchMode==='time'?'Match length (min)':'First to';
-  $('tWin').querySelector('.val').textContent   = settings.matchMode==='time'?settings.matchMin:settings.toWin;
-  $('tDiff').querySelector('.val').textContent  = AI_LEVELS[settings.diff].label;
+  const setT=(id,lbl,val)=>{ const el=$(id); if(!el) return; const l=el.querySelector('.lbl'), v=el.querySelector('.val'); if(l) l.textContent=lbl; if(v) v.textContent=val; };
+  setT('tSound', t('sound'), settings.sound?t('on'):t('off'));
+  setT('tCrt',   t('crt'),   settings.crt?t('on'):t('off'));
+  setT('tMode',  t('matchType'), settings.matchMode==='time'?t('matchTime'):t('goals'));
+  setT('tWin',   settings.matchMode==='time'?t('matchLenMin'):t('firstTo'), settings.matchMode==='time'?settings.matchMin:settings.toWin);
+  setT('tDiff',  t('computerLevel'), aiLabel(settings.diff));
+  setT('tLang',  t('language'), settings.lang==='nl'?'NL':'EN');
   const vr=$('volRange'); if(vr) vr.value=Math.round(settings.volume*100);
 }
+function cycleLang(){ settings.lang = settings.lang==='nl'?'en':'nl'; store.save('lang',settings.lang); applyStaticI18n(); refreshToggles(); renderMenuPills(); }
 function updateSoundBtn(){ const i = settings.sound?'🔊':'🔇'; const b=$('btnSound'); if(b) b.textContent=i; const m=$('muteBtn'); if(m) m.textContent=i; }
 function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setSound(settings.sound); updateSoundBtn(); refreshToggles(); }
 function setupVolume(){
@@ -2196,8 +2316,8 @@ function cycleDiff(){ const opts=Object.keys(AI_LEVELS); settings.diff=opts[(opt
 function renderMenuPills(){
   const row=$('lenRow'); if(!row) return;
   const isGoals = settings.matchMode!=='time';
-  let html = `<button class="pill mode${isGoals?' active':''}" data-set="goals">Goals</button>`+
-             `<button class="pill mode${!isGoals?' active':''}" data-set="time">Timed</button>`+
+  let html = `<button class="pill mode${isGoals?' active':''}" data-set="goals">${t('goals')}</button>`+
+             `<button class="pill mode${!isGoals?' active':''}" data-set="time">${t('timed')}</button>`+
              `<span class="pill-sep"></span>`;
   if (isGoals) html += [3,5,7].map(n=>`<button class="pill${settings.toWin===n?' active':''}" data-win="${n}">${n}</button>`).join('');
   else         html += [1,2,4].map(n=>`<button class="pill${settings.matchMin===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
@@ -2231,6 +2351,7 @@ wire('setupBack', backToMenu);
 wire('confirmYes', ()=>{ const f=_cfYes; _cfYes=_cfNo=null; if(f) f(); });
 wire('confirmNo',  ()=>{ const f=_cfNo;  _cfYes=_cfNo=null; if(f) f(); else backToMenu(); });
 wire('tMode', toggleMode);
+wire('tLang', cycleLang);
 { const qb=$('quitBtn'); if (qb) qb.onclick = quitButton; }
 { const mb=$('muteBtn'); if (mb) mb.onclick = ()=>{ toggleSound(); }; }
 wire('teamBack', backToMenu);
@@ -2266,6 +2387,7 @@ function firstGesture(){ Audio.unlock(); removeEventListener('pointerdown', firs
 addEventListener('pointerdown', firstGesture); addEventListener('keydown', firstGesture);
 
 // init
+applyStaticI18n();                 // translate static UI to the saved language
 buildTeamGrid();
 setupMenuPills();
 setupVolume();
