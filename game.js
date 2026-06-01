@@ -434,7 +434,7 @@ function refreshBtnZones(){
   btnZones = [];
   const layer = document.getElementById('touch');
   if (!layer || !layer.classList.contains('show')) return;
-  const padX = 30, padY = 44;       // grow the tappable area well beyond the visual button
+  const padX = 34, padY = 54;       // generous tap zone — buttons are small/faint, so presses well above/below still register
   const EG = 22, vw = window.innerWidth, vh = window.innerHeight, EGB = 26;   // keep hit zones off the iOS edge-gesture strips (sides + bottom home-indicator)
   layer.querySelectorAll('.pad').forEach(pad=>{
     if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)

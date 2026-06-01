@@ -357,17 +357,18 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
 body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 78px; height: 44px; border-radius: 12px;       /* compact corner pads (2 thumbs), low profile */
+  width: 62px; height: 35px; border-radius: 10px;       /* ~20% smaller corner pads */
   background: linear-gradient(180deg, rgba(255,172,72,.30), rgba(255,122,24,.13));
   border: 1.5px solid rgba(255,190,95,.62);
-  box-shadow: 0 5px 15px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 6px rgba(0,0,0,.22);
-  color: #fff; font-size: 23px; text-shadow: 0 1px 2px rgba(0,0,0,.45);
+  box-shadow: 0 4px 12px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.22);
+  color: #fff; font-size: 18px; text-shadow: 0 1px 2px rgba(0,0,0,.45);
   display: flex; align-items: center; justify-content: center;
   touch-action: none; pointer-events: none;
-  -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px);
-  transition: filter .06s ease, transform .06s ease;
+  opacity: .15;                                          /* ~90% transparent so it barely covers the pitch */
+  -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  transition: filter .06s ease, transform .06s ease, opacity .08s ease;
 }
-.tbtn.pressed { filter: brightness(1.32); transform: translateY(1px); }
+.tbtn.pressed { filter: brightness(1.35); transform: translateY(1px); opacity: .95; }   /* light up clearly on touch */
 .tbtn.jump  { background: linear-gradient(180deg, rgba(74,226,142,.32), rgba(52,209,122,.13)); border-color: rgba(96,236,162,.62); }
 .tbtn.catch { background: linear-gradient(180deg, rgba(150,206,246,.32), rgba(124,192,238,.13)); border-color: rgba(155,208,248,.66); }
 /* reserve a strip below the pitch on touch so the buttons sit under it (follow the ball clearly) */
@@ -380,7 +381,7 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
 /* a bit bigger on larger touch screens (tablets), still a tidy low overlay */
 @media (pointer: coarse) and (min-width: 760px){
   :root { --padb: 64px; }
-  .tbtn { width: 140px; height: 58px; font-size: 28px; border-radius: 14px; }
+  .tbtn { width: 112px; height: 46px; font-size: 22px; border-radius: 12px; }
   body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 88px); }
 }
 
