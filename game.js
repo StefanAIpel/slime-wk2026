@@ -91,6 +91,47 @@ const TEAMS = [
 ];
 const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 
+/* ----------------------------------------------------------------------------
+   Accurate flags. Compact inline SVGs (viewBox 90x60, double-quoted attrs only
+   so they encode cleanly into a data URI). One source of truth, used everywhere:
+   • DOM  -> each team's `flag` becomes a `url(data:…)` CSS background (so every
+            existing `style="background:${t.flag}"` site keeps working as-is)
+   • canvas HUD -> rasterised via flagImage(), with the stripe bands as fallback
+   ---------------------------------------------------------------------------- */
+const _usaStripes = (()=>{ let s=''; for(let i=1;i<13;i+=2) s+='<rect y="'+(i*60/13).toFixed(2)+'" width="90" height="'+(60/13).toFixed(2)+'" fill="#fff"/>'; return s; })();
+const _usaStars = (()=>{ let s=''; for(let r=0;r<4;r++) for(let c=0;c<5;c++) s+='<circle cx="'+(6+c*7)+'" cy="'+(6+r*7.2).toFixed(1)+'" r="1.3" fill="#fff"/>'; return s; })();
+const FLAG_SVG = {
+  NED:'<rect width="90" height="60" fill="#fff"/><rect width="90" height="20" fill="#ae1c28"/><rect y="40" width="90" height="20" fill="#21468b"/>',
+  ARG:'<rect width="90" height="60" fill="#fff"/><rect width="90" height="20" fill="#74acdf"/><rect y="40" width="90" height="20" fill="#74acdf"/><circle cx="45" cy="30" r="6" fill="#f6b40e"/>',
+  BRA:'<rect width="90" height="60" fill="#009c3b"/><polygon points="45,7 83,30 45,53 7,30" fill="#ffdf00"/><circle cx="45" cy="30" r="12" fill="#002776"/>',
+  FRA:'<rect width="90" height="60" fill="#fff"/><rect width="30" height="60" fill="#0055a4"/><rect x="60" width="30" height="60" fill="#ef4135"/>',
+  ENG:'<rect width="90" height="60" fill="#fff"/><rect x="39" width="12" height="60" fill="#ce1124"/><rect y="24" width="90" height="12" fill="#ce1124"/>',
+  ESP:'<rect width="90" height="60" fill="#aa151b"/><rect y="15" width="90" height="30" fill="#f1bf00"/>',
+  GER:'<rect width="90" height="60" fill="#000"/><rect y="20" width="90" height="20" fill="#dd0000"/><rect y="40" width="90" height="20" fill="#ffce00"/>',
+  POR:'<rect width="90" height="60" fill="#f00"/><rect width="36" height="60" fill="#006600"/><circle cx="36" cy="30" r="7" fill="#ffd700" stroke="#fff" stroke-width="1.2"/>',
+  EGY:'<rect width="90" height="60" fill="#fff"/><rect width="90" height="20" fill="#ce1126"/><rect y="40" width="90" height="20" fill="#000"/><circle cx="45" cy="30" r="5" fill="#c09b3a"/>',
+  CRO:'<rect width="90" height="60" fill="#fff"/><rect width="90" height="20" fill="#ff0000"/><rect y="40" width="90" height="20" fill="#171796"/><rect x="38" y="21" width="14" height="16" fill="#fff"/><rect x="38" y="21" width="3.5" height="4" fill="#d10000"/><rect x="45" y="21" width="3.5" height="4" fill="#d10000"/><rect x="41.5" y="25" width="3.5" height="4" fill="#d10000"/><rect x="48.5" y="25" width="3.5" height="4" fill="#d10000"/><rect x="38" y="29" width="3.5" height="4" fill="#d10000"/><rect x="45" y="29" width="3.5" height="4" fill="#d10000"/><rect x="41.5" y="33" width="3.5" height="4" fill="#d10000"/><rect x="48.5" y="33" width="3.5" height="4" fill="#d10000"/>',
+  MAR:'<rect width="90" height="60" fill="#c1272d"/><polygon points="45,17 47.94,25.95 57.36,25.98 49.76,31.55 52.64,40.52 45,35 37.36,40.52 40.24,31.55 32.64,25.98 42.06,25.95" fill="none" stroke="#006233" stroke-width="2"/>',
+  JPN:'<rect width="90" height="60" fill="#fff"/><circle cx="45" cy="30" r="15" fill="#bc002d"/>',
+  MEX:'<rect width="90" height="60" fill="#fff"/><rect width="30" height="60" fill="#006847"/><rect x="60" width="30" height="60" fill="#ce1126"/><circle cx="45" cy="30" r="5" fill="#7a5b34"/>',
+  USA:'<rect width="90" height="60" fill="#b22234"/>'+_usaStripes+'<rect width="36" height="32.31" fill="#3c3b6e"/>'+_usaStars,
+  CAN:'<rect width="90" height="60" fill="#fff"/><rect width="22" height="60" fill="#d80621"/><rect x="68" width="22" height="60" fill="#d80621"/><polygon points="45,13 47,22 53,20 51,28 58,28 53,33 55,35 48,36 49,43 45,39 41,43 42,36 35,35 37,33 32,28 39,28 37,20 43,22" fill="#d80621"/>',
+  BEL:'<rect width="90" height="60" fill="#000"/><rect x="30" width="30" height="60" fill="#fdda24"/><rect x="60" width="30" height="60" fill="#ef3340"/>',
+  URU:'<rect width="90" height="60" fill="#fff"/><rect y="6.67" width="90" height="6.67" fill="#0038a8"/><rect y="20" width="90" height="6.67" fill="#0038a8"/><rect y="33.33" width="90" height="6.67" fill="#0038a8"/><rect y="46.67" width="90" height="6.67" fill="#0038a8"/><rect width="33" height="33" fill="#fff"/><line x1="22.5" y1="16.5" x2="25.5" y2="16.5" stroke="#f6b40e" stroke-width="1.3"/><line x1="20.74" y1="20.74" x2="22.86" y2="22.86" stroke="#f6b40e" stroke-width="1.3"/><line x1="16.5" y1="22.5" x2="16.5" y2="25.5" stroke="#f6b40e" stroke-width="1.3"/><line x1="12.26" y1="20.74" x2="10.14" y2="22.86" stroke="#f6b40e" stroke-width="1.3"/><line x1="10.5" y1="16.5" x2="7.5" y2="16.5" stroke="#f6b40e" stroke-width="1.3"/><line x1="12.26" y1="12.26" x2="10.14" y2="10.14" stroke="#f6b40e" stroke-width="1.3"/><line x1="16.5" y1="10.5" x2="16.5" y2="7.5" stroke="#f6b40e" stroke-width="1.3"/><line x1="20.74" y1="12.26" x2="22.86" y2="10.14" stroke="#f6b40e" stroke-width="1.3"/><circle cx="16.5" cy="16.5" r="5.5" fill="#f6b40e"/>',
+  SEN:'<rect width="90" height="60" fill="#fdef42"/><rect width="30" height="60" fill="#00853f"/><rect x="60" width="30" height="60" fill="#e31b23"/><polygon points="45,20 47.35,26.76 54.51,26.91 48.8,31.24 50.88,38.09 45,34 39.12,38.09 41.2,31.24 35.49,26.91 42.65,26.76" fill="#00853f"/>',
+  SUI:'<rect width="90" height="60" fill="#d52b1e"/><rect x="39.5" y="14" width="11" height="32" fill="#fff"/><rect x="29" y="24.5" width="32" height="11" fill="#fff"/>',
+  COL:'<rect width="90" height="60" fill="#fcd116"/><rect y="30" width="90" height="15" fill="#003893"/><rect y="45" width="90" height="15" fill="#ce1126"/>',
+  RSA:'<rect width="90" height="30" fill="#e03c31"/><rect y="30" width="90" height="30" fill="#002395"/><path d="M0,5 L33,30 L0,55 M33,30 L90,30" fill="none" stroke="#fff" stroke-width="18"/><path d="M0,5 L33,30 L0,55 M33,30 L90,30" fill="none" stroke="#007a4d" stroke-width="11"/><polygon points="0,3 30,30 0,57" fill="#ffb915"/><polygon points="0,9 23,30 0,51" fill="#000"/>',
+  SWE:'<rect width="90" height="60" fill="#006aa7"/><rect x="27" width="11" height="60" fill="#fecc00"/><rect y="24.5" width="90" height="11" fill="#fecc00"/>',
+};
+function flagSVG(code){ return '<svg xmlns="http://www.w3.org/2000/svg" width="90" height="60" viewBox="0 0 90 60">'+(FLAG_SVG[code]||FLAG_SVG.NED)+'</svg>'; }
+function flagDataURI(code){ return 'data:image/svg+xml,'+encodeURIComponent(flagSVG(code)); }
+function flagBg(code){ return "url('"+flagDataURI(code)+"') center/100% 100% no-repeat"; }
+const _flagImgCache={};
+function flagImage(code){ if (typeof Image==='undefined') return null;   // non-DOM (headless logic test)
+  let i=_flagImgCache[code]; if(!i){ i=new Image(); i.src=flagDataURI(code); _flagImgCache[code]=i; } return i; }
+TEAMS.forEach(t=>{ t.flag = flagBg(t.code); });   // supersede the old gradient approximations
+
 const AI_LEVELS = {
   easy:     { label:'Easy',      speed:0.50, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false },
   normal:   { label:'Normal',    speed:0.78, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false },
@@ -1284,8 +1325,10 @@ function drawScoreboard(){
 }
 
 function drawMiniFlag(team, x,y,w,h){
-  const st=team.stripes;
-  for (let i=0;i<st.length;i++){ ctx.fillStyle=st[i]; ctx.fillRect(x, y+i*(h/st.length), w, h/st.length+0.5); }
+  const img=flagImage(team.code);
+  if (img && img.complete && img.naturalWidth){ ctx.drawImage(img, x, y, w, h); }
+  else { const st=team.stripes;                         // stripe bands until the SVG decodes
+    for (let i=0;i<st.length;i++){ ctx.fillStyle=st[i]; ctx.fillRect(x, y+i*(h/st.length), w, h/st.length+0.5); } }
   ctx.strokeStyle='#000'; ctx.lineWidth=1; ctx.strokeRect(x,y,w,h);
 }
 
