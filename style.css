@@ -160,6 +160,13 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 .btn.small { min-width: 0; padding: 9px 14px; font-size: clamp(11px,1.5vw,13px); }
 .btn:disabled { opacity:.45; filter:grayscale(.4); cursor:not-allowed; }
 .btn-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+/* distinct button colours (dialogs/menus) — colour + emoji help non-readers */
+.btn.green  { background: linear-gradient(180deg,#3fc06a,#1f8f3a); color:#fff; border-bottom-color:#0c5a22; }
+.btn.blue   { background: linear-gradient(180deg,#4f97ff,#1f5fe0); color:#fff; border-bottom-color:#0a3aa0; }
+.btn.danger { background: linear-gradient(180deg,#ff7a6b,#d83a2c); color:#fff; border-bottom-color:#9e241a; }
+/* pause/end/rematch dialogs: stacked buttons + clear gap under the title */
+.dlg-btns { flex-direction: column; gap: 12px; width: 100%; max-width: 360px; margin: 18px auto 0; }
+.dlg-btns .btn { width: 100%; }
 
 /* ---- Menu layout ---- */
 .menu-card {
@@ -406,6 +413,10 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
   .menu-card { padding: 12px; gap: 7px; border-width: 2px; }
   .setup-card { gap: 11px; }
   .setup-grp { gap: 4px; }
+  .rules-box { padding: 9px 14px; gap: 5px; max-height: 82vh; }
+  .rules-h { font-size: 9px; }
+  .rules-t { font-size: 11px; line-height: 1.45; }
+  .dlg-btns { margin-top: 10px; gap: 8px; }
   .btn { padding: 9px 16px; font-size: 11px; border-bottom-width: 3px; }
   .tag { display: none; }
   .team-grid { max-height: 62vh; }
