@@ -106,10 +106,11 @@ npm run test:lb       # writes a real leaderboard row — run manually, not in C
 - The Playwright tests navigate with `?debug=1`, which exposes `window.__G` / `window.__TEAMS`
   (gated to localhost/`?debug=1` so production stays clean). They run on bundled Chromium;
   set `BASE_URL` (e.g. `http://127.0.0.1:8080`) to test over http instead of `file://`.
-- **CI** (`.github/workflows/ci.yml`, Node 20): the `test` job runs `npm run check`
-  (syntax + **ESLint**) + `npm run test:logic`; a `browser` job runs the offline-safe
-  gameplay tests (`smoketest` + `wktest`) on bundled Chromium over a local http server.
-  The online tests (`goaltest` host step, `lbtest` write) still run manually.
+- **CI** (`.github/workflows/ci.yml`, Node 20): runs `npm run check` (syntax + **ESLint**)
+  + `npm run test:logic`. The Playwright browser tests are environment-sensitive (they
+  exit on any console error; the online ones need a live peer/Supabase), so they run
+  manually — use bundled Chromium, and `BASE_URL=http://127.0.0.1:8080 node smoketest.mjs`
+  (with `python3 -m http.server 8080` running) to exercise them over http.
 
 ## Deploy
 Static site on **Netlify** (publish dir = repo root, no build). Push to `main` → auto-deploy.

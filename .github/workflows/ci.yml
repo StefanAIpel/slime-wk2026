@@ -8,6 +8,9 @@ on:
 
 jobs:
   # Always-on gate: syntax + ESLint + the headless logic suite (deterministic, no browser).
+  # The Playwright browser tests (smoke/goal/wk/lb) are environment-sensitive (they exit on
+  # any console error, and the online ones need a live peer/Supabase), so they're run
+  # manually — see README. They now use bundled Chromium and honour BASE_URL for http runs.
   test:
     runs-on: ubuntu-latest
     steps:
@@ -21,23 +24,3 @@ jobs:
         run: npm run check
       - name: Logic tests (headless, no browser)
         run: npm run test:logic
-
-  # Offline-safe gameplay smoke tests in a real browser (1P/2P + World Cup vs CPU).
-  # The online tests (goaltest host step, lbtest write) need a peer/Supabase, so they
-  # stay manual and are excluded here.
-  browser:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - name: Browser smoke tests (served over http)
-        run: |
-          python3 -m http.server 8080 --bind 127.0.0.1 >/dev/null 2>&1 &
-          sleep 2
-          BASE_URL=http://127.0.0.1:8080 node smoketest.mjs
-          BASE_URL=http://127.0.0.1:8080 node wktest.mjs
