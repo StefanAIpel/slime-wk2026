@@ -1448,7 +1448,7 @@ const WK_VENUES = ['Los Angeles','Dallas','Atlanta','Houston','Kansas City','Sea
 const WK_FINAL_VENUE = 'New York/New Jersey';
 
 function shuffleArr(a){ for(let i=a.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
-function goWK(){ Audio.unlock(); ensureLeaderboard(); wkPending=true; openTeamSelect('Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦'); }
+function goWK(){ Audio.unlock(); ensureLeaderboard(); openMatchSetup('wk'); }   // setup (length + level) → pick country → bracket
 
 // a match = { a, b, sa, sb, winner:0|1|null, played, user }
 function newMatch(a,b){ return { a, b, sa:0, sb:0, winner:null, played:false, user:(a===G.wk.team||b===G.wk.team) }; }
@@ -1523,27 +1523,6 @@ function wkBracketHTML(){
   return `<div class="bracket">${cols}</div>`;
 }
 
-function wkAtStart(){ return G.wk && G.wk.round===0 && !G.wk.champion && G.wk.rounds[0] && !G.wk.rounds[0].some(m=>m.played); }
-function wkOptsHTML(){
-  const wk=G.wk;
-  const open = !!wk._optsOpen;                          // collapsed by default so the bracket is visible
-  const lens=[1,2,3,4].map(n=>`<button class="pill${wk.min===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
-  // ascending difficulty, with Rising (a R16->final ramp) last so it's clearly not "easiest"
-  const diffs=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','WC'],['rising','Rising ↑']]
-    .map(([k,l])=>`<button class="pill${wk.diffMode===k?' active':''}" data-d="${k}">${l}</button>`).join('');
-  return `<button class="wk-opts-toggle" id="wkOptsToggle">⚙ Options · ${wk.min}m · ${escapeHtml(wkLevelLabel(wk.diffMode))} ${open?'▴':'▾'}</button>`+
-         `<div class="wk-opts-body${open?' open':''}" id="wkOptsBody">`+
-           `<div class="len-label">Length · Difficulty (Rising ramps up each round)</div>`+
-           `<div class="len-row" id="wkLenRow">${lens}</div>`+
-           `<div class="len-row" id="wkDiffRow">${diffs}</div>`+
-         `</div>`;
-}
-function wireWkOpts(){
-  const tg=$('wkOptsToggle'); if(tg) tg.onclick=()=>{ Audio.click(); G.wk._optsOpen=!G.wk._optsOpen; showWKStage(); };
-  const lr=$('wkLenRow'), dr=$('wkDiffRow'); if(!lr||!dr) return;
-  lr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.min=+p.dataset.min; settings.wkMin=G.wk.min; store.save('wkMin',G.wk.min); G.wk._optsOpen=true; showWKStage(); });
-  dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); G.wk.diffMode=p.dataset.d; G.wk.diffs=wkDiffsFor(p.dataset.d); settings.wkDiff=p.dataset.d; store.save('wkDiff',p.dataset.d); G.wk._optsOpen=true; showWKStage(); });
-}
 function showWKStage(){
   const wk=G.wk; const m=wkUserMatch(); const opp=m?wkOppOf(m):null;
   $('wkTitle').textContent = WK_ROUNDS[wk.round];
@@ -1554,8 +1533,7 @@ function showWKStage(){
     `<span class="wk-host">🇺🇸🇲🇽🇨🇦 WORLD CUP 2026</span><br>`+
     `You: <b>${escapeHtml(wk.team.name)}</b> ⚽ · ${wk.min}-min · ${escapeHtml(lvl)}`+
     (venue ? `<br><span class="wk-venue">📍 ${escapeHtml(venue)} — ${WK_ROUNDS[wk.round]}</span>` : '');
-  $('wkOpts').innerHTML = wkAtStart() ? wkOptsHTML() : '';
-  if (wkAtStart()) wireWkOpts();
+  $('wkOpts').innerHTML = '';   // length + level are now chosen on the setup screen before the draw
   $('wkBracket').innerHTML = wkBracketHTML();
   $('wkBtns').innerHTML = `<button id="wkPlay" class="btn">▶ Play vs ${opp?escapeHtml(opp.name):'?'}</button>`+
                           `<button id="wkQuit" class="btn secondary">Main menu</button>`;
@@ -1656,22 +1634,40 @@ async function submitWKRun(){
   $('wkSubmit').textContent = ok?'✓ Submitted':'🏆 Submit'; if(!ok) $('wkSubmit').disabled=false;
 }
 // ---- menu knoppen ----
-function go1p(){ Audio.unlock(); G.mode='1p'; openMatchSetup(); }
-function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openMatchSetup(); }
-// match setup AFTER choosing Friendly / 2 Players (difficulty + format), mirroring World Cup mode
-function openMatchSetup(){
-  const is1p = G.mode==='1p';
-  $('setupTitle').textContent = is1p ? '⚽ FRIENDLY' : '👥 2 PLAYERS';
-  $('setupDiffWrap').style.display = is1p ? '' : 'none';   // no AI difficulty in 2P
+let setupKind='1p';   // which flavour of the shared setup screen: '1p' | '2p' | 'wk'
+function go1p(){ Audio.unlock(); G.mode='1p'; openMatchSetup('1p'); }
+function go2p(){ Audio.unlock(); G.mode='2p'; pickStage=0; openMatchSetup('2p'); }
+// shared setup screen (difficulty + format) used by Friendly, 2 Players AND World Cup
+function openMatchSetup(kind){
+  setupKind = kind;
+  const titles = { '1p':'⚽ FRIENDLY', '2p':'👥 2 PLAYERS', 'wk':'🏆 WORLD CUP' };
+  $('setupTitle').textContent = titles[kind] || titles['1p'];
+  $('setupSub').textContent = kind==='wk' ? 'Set up your tournament, then pick your country'
+                                          : 'Pick your level & match format';
+  $('setupDiffWrap').style.display = kind==='2p' ? 'none' : '';          // no AI difficulty in 2P
+  $('setupFmtLabel').textContent = kind==='wk' ? 'Match length' : 'Match format';
+  $('setupPlay').innerHTML = kind==='wk' ? '▶ Continue to country' : '▶ Continue to teams';
   renderSetupPills();
   G.screen=SCREEN.TEAM;
   showOverlay('setupScreen');
 }
 function startTeamSelect(){
+  if (setupKind==='wk'){ wkPending=true; openTeamSelect('Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦'); return; }
   if (G.mode==='2p'){ pickStage=0; openTeamSelect('Player <b>1</b> (left): pick your country'); }
   else openTeamSelect('Pick <b>your</b> country');
 }
 function renderSetupPills(){
+  if (setupKind==='wk'){
+    // World Cup: AI level (Rising ramps up each round, default) + match length — always timed
+    const dr=$('setupDiffRow');
+    dr.innerHTML=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','WC'],['rising','Rising ↑']]
+      .map(([k,l])=>`<button class="pill${(settings.wkDiff||'rising')===k?' active':''}" data-d="${k}">${l}</button>`).join('');
+    dr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); settings.wkDiff=p.dataset.d; store.save('wkDiff',settings.wkDiff); renderSetupPills(); });
+    const fr=$('setupFmtRow');
+    fr.innerHTML=[1,2,3,4].map(n=>`<button class="pill${(settings.wkMin||2)===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
+    fr.querySelectorAll('.pill').forEach(p=>p.onclick=()=>{ Audio.click(); settings.wkMin=+p.dataset.min; store.save('wkMin',settings.wkMin); renderSetupPills(); });
+    return;
+  }
   if (G.mode==='1p'){
     const dr=$('setupDiffRow');
     dr.innerHTML=[['easy','Easy'],['normal','Normal'],['hard','Hard'],['worldcup','World Cup']]
@@ -1729,6 +1725,7 @@ async function goOnline(){
 }
 function showOnlineModes(){
   $('onlineModes').style.display='flex';
+  $('onlineIntro').style.display='block';
   $('friendPanel').style.display='none'; $('quickArea').style.display='none';
   $('hostArea').style.display='none'; $('joinArea').style.display='none';
   $('onlinePeerWarn').style.display='none'; $('onlineSubBack').style.display='none';
@@ -1737,14 +1734,14 @@ function showOnlineModes(){
 }
 function showFriendPanel(){
   Audio.click();
-  $('onlineModes').style.display='none'; $('quickArea').style.display='none';
+  $('onlineModes').style.display='none'; $('onlineIntro').style.display='none'; $('quickArea').style.display='none';
   $('friendPanel').style.display='block';
   $('hostArea').style.display='none'; $('joinArea').style.display='none';
   $('onlineSubBack').style.display='inline-block'; $('onlineBack').style.display='none';
   olStatus('Host a game, or enter a friend’s code.');
 }
 function startQuickMode(){
-  $('onlineModes').style.display='none'; $('friendPanel').style.display='none';
+  $('onlineModes').style.display='none'; $('onlineIntro').style.display='none'; $('friendPanel').style.display='none';
   $('onlineSubBack').style.display='inline-block'; $('onlineBack').style.display='none';
   quickMatch();
 }

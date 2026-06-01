@@ -72,6 +72,11 @@
         <button id="btnModeFriend" class="btn small">👥 Play a friend</button>
         <button id="btnModeQuick" class="btn small">⚡ Quick match</button>
       </div>
+      <div class="online-help" id="onlineIntro">
+        ⏱ <b>2-minute</b> timed matches — most goals wins.<br>
+        <b>👥 Play a friend</b> — share a code with someone you know.<br>
+        <b>⚡ Quick match</b> — get paired with a random online player.
+      </div>
 
       <!-- step 2a: play a friend (host or join) -->
       <div id="friendPanel" style="display:none">
@@ -126,19 +131,21 @@
     </div>
   </div>
 
-  <!-- ======================= MATCH SETUP (Friendly / 2 Players) ======================= -->
+  <!-- ======================= MATCH SETUP (Friendly / 2 Players / World Cup) ======================= -->
   <div id="setupScreen" class="overlay">
     <h2 class="title small-title" id="setupTitle">FRIENDLY</h2>
-    <div class="subtitle">Pick your level &amp; match format</div>
-    <div class="menu-card" style="gap:14px; max-width:460px;">
-      <div id="setupDiffWrap" style="width:100%;">
+    <div class="subtitle" id="setupSub">Pick your level &amp; match format</div>
+    <div class="menu-card setup-card" style="max-width:460px;">
+      <div id="setupDiffWrap" class="setup-grp">
         <div class="grp-label">Computer level</div>
         <div class="len-row" id="setupDiffRow"></div>
       </div>
-      <div class="grp-label">Match format</div>
-      <div class="len-row" id="setupFmtRow"></div>
-      <div class="btn-row">
-        <button id="setupPlay" class="btn">▶ Choose teams</button>
+      <div id="setupFmtWrap" class="setup-grp">
+        <div class="grp-label" id="setupFmtLabel">Match format</div>
+        <div class="len-row" id="setupFmtRow"></div>
+      </div>
+      <div class="btn-row setup-go">
+        <button id="setupPlay" class="btn">▶ Continue to teams</button>
         <button id="setupBack" class="btn secondary">‹ Back</button>
       </div>
     </div>
