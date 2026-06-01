@@ -203,12 +203,13 @@ const I18N = {
     keys1p:'⌨ <b>Player 1</b> — WASD: <b>A</b>/<b>D</b> move · <b>W</b> jump · <b>S</b> hold ball',
     keys2p:'⌨ <b>Player 1</b> WASD: A/D · W · S &nbsp;·&nbsp; <b>Player 2</b> arrows: ←/→ · ↑ · ↓',
     sure:'ARE YOU SURE?', yes:'Yes', endWC:'END WORLD CUP?', endWCmsg:'You’ll lose your tournament progress.',
-    endTournament:'End tournament', keepPlaying:'Keep playing',
+    endTournament:'🏳️ End tournament', keepPlaying:'▶️ Keep playing',
+    rematchTitle:'REMATCH', rematchMsg:'Keep the same teams or pick new ones?', newTeams:'🎲 New teams', sameTeams:'🔁 Same teams',
     settings:'SETTINGS', sound:'Sound', volume:'Volume', crt:'CRT effect', matchType:'Match type',
     firstTo:'First to', matchLenMin:'Match length (min)', language:'Language', on:'ON', off:'OFF', matchTime:'Match time',
     youWin:'YOU WIN!', cpuWins:'COMPUTER WINS', oppWins:'OPPONENT WINS', playerWins:'PLAYER {n} WINS!',
     waitHostRestart:'Waiting for the host to restart…', putName:'Put your name on the leaderboard:',
-    yourName:'YOUR NAME', submit:'🏆 Submit', rematch:'Rematch', highScores:'High scores', mainMenu:'Main menu',
+    yourName:'YOUR NAME', submit:'🏆 Submit', rematch:'🔁 Rematch', highScores:'🏆 High scores', mainMenu:'🏠 Main menu',
     hsTitle:'🏆 HIGH SCORES', hsSub:'World Cup runs · points by difficulty', loading:'loading…',
     lbNone:'No scores yet — be the first! ⚽', lbFail:'Could not load leaderboard (offline?).', lbNA:'Leaderboard not available.', pts:'pts',
     wcTitle:'WORLD CUP', r16:'Round of 16', qf:'Quarter-final', sf:'Semi-final', final:'Final',
@@ -218,7 +219,7 @@ const I18N = {
     championsTag:' Champions: <b>{name}</b>.', points:'points', submitPts:'🏆 Submit {n} pts', submitted:'✓ Submitted',
     submitting:'Submitting...', submittedOk:'Submitted! ⚽', submitFail:'Failed (offline?)',
     paused:'PAUSED', pressEsc:'Press ESC to resume', quitLeaves:'Quitting leaves the tournament',
-    resume:'Resume', quitMenu:'Quit to menu', pauseBtn:'⏸ Pause', quitBtn2:'✕ Quit',
+    resume:'▶️ Resume', quitMenu:'🏠 Quit to menu', pauseBtn:'⏸ Pause', quitBtn2:'✕ Quit',
     rotate:'Rotate your device to landscape<br>for the best experience ⚽',
     playHint:'<b>Player 1</b> WASD · <b>W</b> jump · <b>S</b> hold ball · double-tap jump = higher · ESC = pause',
     playHint2p:'<b>Player 1</b> WASD (A/D · W · S) &nbsp;·&nbsp; <b>Player 2</b> arrows (←/→ · ↑ · ↓) &nbsp;·&nbsp; ESC = pause',
@@ -255,12 +256,13 @@ const I18N = {
     keys1p:'⌨ <b>Speler 1</b> — WASD: <b>A</b>/<b>D</b> bewegen · <b>W</b> springen · <b>S</b> bal vasthouden',
     keys2p:'⌨ <b>Speler 1</b> WASD: A/D · W · S &nbsp;·&nbsp; <b>Speler 2</b> pijlen: ←/→ · ↑ · ↓',
     sure:'WEET JE HET ZEKER?', yes:'Ja', endWC:'WORLD CUP STOPPEN?', endWCmsg:'Je verliest je toernooivoortgang.',
-    endTournament:'Toernooi stoppen', keepPlaying:'Doorspelen',
+    endTournament:'🏳️ Toernooi stoppen', keepPlaying:'▶️ Doorspelen',
+    rematchTitle:'REVANCHE', rematchMsg:'Zelfde teams of nieuwe kiezen?', newTeams:'🎲 Nieuwe teams', sameTeams:'🔁 Zelfde teams',
     settings:'INSTELLINGEN', sound:'Geluid', volume:'Volume', crt:'CRT-effect', matchType:'Wedstrijdtype',
     firstTo:'Eerste tot', matchLenMin:'Wedstrijdduur (min)', language:'Taal', on:'AAN', off:'UIT', matchTime:'Op tijd',
     youWin:'JIJ WINT!', cpuWins:'COMPUTER WINT', oppWins:'TEGENSTANDER WINT', playerWins:'SPELER {n} WINT!',
     waitHostRestart:'Wachten tot de host herstart…', putName:'Zet je naam op de ranglijst:',
-    yourName:'JOUW NAAM', submit:'🏆 Verstuur', rematch:'Opnieuw', highScores:'Toplijst', mainMenu:'Hoofdmenu',
+    yourName:'JOUW NAAM', submit:'🏆 Verstuur', rematch:'🔁 Opnieuw', highScores:'🏆 Toplijst', mainMenu:'🏠 Hoofdmenu',
     hsTitle:'🏆 TOPSCORES', hsSub:'World Cup-runs · punten per niveau', loading:'laden…',
     lbNone:'Nog geen scores — wees de eerste! ⚽', lbFail:'Kan ranglijst niet laden (offline?).', lbNA:'Ranglijst niet beschikbaar.', pts:'ptn',
     wcTitle:'WORLD CUP', r16:'Achtste finale', qf:'Kwartfinale', sf:'Halve finale', final:'Finale',
@@ -270,7 +272,7 @@ const I18N = {
     championsTag:' Kampioen: <b>{name}</b>.', points:'punten', submitPts:'🏆 Verstuur {n} ptn', submitted:'✓ Verstuurd',
     submitting:'Versturen...', submittedOk:'Verstuurd! ⚽', submitFail:'Mislukt (offline?)',
     paused:'GEPAUZEERD', pressEsc:'Druk ESC om door te gaan', quitLeaves:'Stoppen verlaat het toernooi',
-    resume:'Doorgaan', quitMenu:'Terug naar menu', pauseBtn:'⏸ Pauze', quitBtn2:'✕ Stoppen',
+    resume:'▶️ Doorgaan', quitMenu:'🏠 Terug naar menu', pauseBtn:'⏸ Pauze', quitBtn2:'✕ Stoppen',
     rotate:'Draai je toestel horizontaal<br>voor de beste ervaring ⚽',
     playHint:'<b>Speler 1</b> WASD · <b>W</b> springen · <b>S</b> bal vast · dubbeltik = hoger · ESC = pauze',
     playHint2p:'<b>Speler 1</b> WASD (A/D · W · S) &nbsp;·&nbsp; <b>Speler 2</b> pijlen (←/→ · ↑ · ↓) &nbsp;·&nbsp; ESC = pauze',
@@ -2103,8 +2105,9 @@ let _cfYes=null, _cfNo=null;
 function askConfirm(o){
   $('confirmTitle').textContent = o.title||t('sure');
   $('confirmMsg').textContent   = o.msg||'';
-  $('confirmYes').textContent   = o.yes||t('yes');
-  $('confirmNo').textContent    = o.no||t('cancel');
+  const y=$('confirmYes'), n=$('confirmNo');
+  y.textContent = o.yes||t('yes'); y.className = 'btn ' + (o.yesClass||'secondary');
+  n.textContent = o.no ||t('cancel'); n.className = 'btn ' + (o.noClass||'');
   _cfYes=o.onYes||null; _cfNo=o.onNo||null;
   showOverlay('confirmScreen');
 }
@@ -2112,7 +2115,7 @@ function wkInProgress(){ return G.wkMode && G.wk && !G.wk.champion; }
 function askEndWK(onYes, onNo){
   if (!wkInProgress()){ onYes(); return; }                      // nothing to lose -> no nag
   askConfirm({ title:t('endWC'), msg:t('endWCmsg'),
-    yes:t('endTournament'), no:t('keepPlaying'), onYes, onNo });
+    yes:t('endTournament'), no:t('keepPlaying'), yesClass:'danger', noClass:'green', onYes, onNo });
 }
 function backToMenu(){
   if (quickCode && window.Lobby){ try{ window.Lobby.cancel(quickCode); }catch(_){} }   // release any waiting lobby slot
@@ -2158,8 +2161,8 @@ function askRematch(){
     rematch();                                 // online: straight same-teams rematch (no dialog yet)
     return;
   }
-  askConfirm({ title:'REMATCH', msg:'Keep the same teams or pick new ones?',
-    yes:'New teams', no:'Same teams',          // confirmNo is the primary-styled button → "Same teams"
+  askConfirm({ title:t('rematchTitle'), msg:t('rematchMsg'),
+    yes:t('newTeams'), no:t('sameTeams'), yesClass:'blue', noClass:'',   // Same teams = primary orange, New teams = blue
     onYes:rematchNewTeams, onNo:rematch });
 }
 function rematchNewTeams(){
