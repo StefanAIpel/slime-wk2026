@@ -4,3 +4,5 @@ node_modules/
 *.log
 # dev-screenshots (smoketest)
 shot-*.png
+# generated deploy bundles
+*.tgz
