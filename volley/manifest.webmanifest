@@ -1,0 +1,19 @@
+{
+  "name": "Slime Volleyball",
+  "short_name": "Slime Volley",
+  "description": "Retro slime volleyball in a bright indoor arena. Part of SlimeScore.",
+  "id": "/",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0c2340",
+  "theme_color": "#0c2340",
+  "categories": ["games", "sports"],
+  "icons": [
+    { "src": "assets/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

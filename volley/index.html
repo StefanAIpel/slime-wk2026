@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#0c2340">
+  <meta name="description" content="Slime Volleyball — retro slime volleyball in a bright indoor arena. Smash, serve and rally to first-to 3/5/7. Part of SlimeScore.">
+  <title>Slime Volleyball 🏐</title>
+  <!-- social / share cards (volley.slimescore.com) -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SlimeScore">
+  <meta property="og:title" content="Slime Volleyball 🏐">
+  <meta property="og:description" content="Retro slime volleyball in a bright indoor arena. Smash, serve and rally. Part of SlimeScore.">
+  <meta property="og:url" content="https://volley.slimescore.com">
+  <meta property="og:image" content="https://volley.slimescore.com/assets/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Slime Volleyball 🏐">
+  <meta name="twitter:description" content="Retro slime volleyball in a bright indoor arena. Part of SlimeScore.">
+  <meta name="twitter:image" content="https://volley.slimescore.com/assets/og.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" type="image/svg+xml" href="assets/app-icon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Slime Volley">
+</head>
+<body>
+
+  <!-- court -->
+  <div id="stage">
+    <div id="stageTitle" class="title stage-title">SLIME<span class="accent">VOLLEYBALL</span></div>
+    <canvas id="game"></canvas>
+    <div id="stageControls">
+      <button id="stagePause" class="btn secondary small" data-i18n="pauseBtn">⏸ Pause</button>
+      <button id="stageQuit" class="btn secondary small" data-i18n="quitBtn2">✕ Quit</button>
+    </div>
+  </div>
+
+  <!-- ======================= MENU ======================= -->
+  <div id="menuScreen" class="overlay">
+    <div class="team-tag left" data-i18n="teamLeft">LEFT</div>
+    <div class="team-tag right" data-i18n="teamRight">RIGHT</div>
+    <div class="menu-head">
+      <img id="menuLogo" class="menu-logo" src="assets/app-icon.svg" width="160" height="160" alt="">
+      <h1 class="title">SLIME<span class="accent">VOLLEYBALL</span></h1>
+    </div>
+    <div class="subtitle" data-i18n="tagline">slime volleyball · indoor smash rally 🏐</div>
+    <div class="menu-card">
+      <div class="grp-label" data-i18n-html="grpPlayHtml">Play <span>· keyboard or touch</span></div>
+      <div class="mode-row">
+        <button id="btn1p" class="btn mode" data-i18n="m1p">🏐 1 Player · vs computer</button>
+        <button id="btn2p" class="btn mode vb-blue" data-i18n="m2p">👥 2 Players · same device</button>
+      </div>
+      <div class="btn-row icon-row">
+        <button id="btnSound" class="btn secondary small" aria-label="sound on/off">🔊</button>
+        <button id="btnShare" class="btn secondary small" aria-label="Share">📤</button>
+        <button id="btnLeaders" class="btn secondary small" aria-label="Slimescore">🏆</button>
+        <button id="btnRules" class="btn secondary small" aria-label="How to play">❓</button>
+        <button id="btnSettings" class="btn secondary small" aria-label="Settings">⚙</button>
+      </div>
+    </div>
+    <div class="tag" data-i18n="hallTag">INDOOR ARENA · SLIMESCORE</div>
+    <div class="foot">© 2026 · Slime Volleyball v0.1 beta · <a href="https://feliro.nl" target="_blank" rel="noopener">Feliro.nl</a></div>
+  </div>
+
+  <!-- ======================= TEAM SELECT ======================= -->
+  <div id="teamScreen" class="overlay">
+    <div class="pick-label" id="pickLabel" data-i18n-html="pickYourCountry">Pick your country</div>
+    <div class="team-grid" id="teamGrid"></div>
+    <button id="teamBack" class="btn secondary small" data-i18n="back">‹ Back</button>
+  </div>
+
+  <!-- ======================= MATCH SETUP ======================= -->
+  <div id="setupScreen" class="overlay">
+    <h2 class="title small-title" id="setupTitle">1 PLAYER</h2>
+    <div class="subtitle" id="setupSub">Pick your level &amp; points to win</div>
+    <div class="menu-card setup-card" style="max-width:460px;">
+      <div id="setupDiffWrap" class="setup-grp">
+        <div class="grp-label" data-i18n="computerLevel">Computer level</div>
+        <div class="len-row" id="setupDiffRow"></div>
+      </div>
+      <div class="setup-grp">
+        <div class="grp-label" data-i18n="pointsToWin">Points to win</div>
+        <div class="len-row" id="setupWinRow"></div>
+      </div>
+      <div class="btn-row setup-go">
+        <button id="setupPlay" class="btn">▶ Continue to teams</button>
+        <button id="setupBack" class="btn secondary" data-i18n="back">‹ Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================= SETTINGS ======================= -->
+  <div id="setScreen" class="overlay">
+    <h2 class="title small-title" data-i18n="settings">SETTINGS</h2>
+    <div class="toggles">
+      <div class="toggle" id="tSound"><span class="lbl">Sound</span> <span class="val">ON</span></div>
+      <div class="toggle vol"><span class="lbl" data-i18n="volume">Volume</span><input type="range" id="volRange" min="0" max="100" step="5" aria-label="volume"></div>
+      <div class="toggle" id="tCrt"><span class="lbl">CRT effect</span> <span class="val">OFF</span></div>
+      <div class="toggle" id="tWin"><span class="lbl">First to</span> <span class="val">5</span></div>
+      <div class="toggle" id="tDiff"><span class="lbl">Computer level</span> <span class="val">Normal</span></div>
+      <div class="toggle" id="tLang"><span class="lbl">Language</span> <span class="val">EN</span></div>
+    </div>
+    <button id="setBack" class="btn secondary small" data-i18n="back">‹ Back</button>
+  </div>
+
+  <!-- ======================= GAME OVER ======================= -->
+  <div id="overScreen" class="overlay">
+    <h2 class="title" id="overTitle" style="font-size:clamp(20px,4.5vw,38px)">WINNER</h2>
+    <div class="subtitle" id="overSub"></div>
+    <div id="lbSubmit" class="panel-box" style="display:none; max-width:380px;">
+      <div class="subtitle" style="margin:0" data-i18n="putName">Put your name on the Slimescore:</div>
+      <input id="lbName" class="code-input" maxlength="20" placeholder="YOUR NAME" data-i18n-ph="yourName" autocomplete="off">
+      <button id="lbSend" class="btn small" data-i18n="submit">🏆 Submit</button>
+      <div class="status" id="lbStatus"></div>
+    </div>
+    <div class="btn-row dlg-btns">
+      <button id="overRematch" class="btn" data-i18n="rematch">Rematch</button>
+      <button id="overLeaders" class="btn blue" data-i18n="slimescore">Slimescore</button>
+      <button id="overMenu" class="btn secondary" data-i18n="mainMenu">Main menu</button>
+    </div>
+  </div>
+
+  <!-- ======================= SLIMESCORE (+ cross-promo to Slime Soccer) ======================= -->
+  <div id="lbScreen" class="overlay">
+    <h2 class="title small-title" data-i18n="ssTitle">🏆 SLIMESCORE</h2>
+    <div class="subtitle" data-i18n="ssSub">Best 1-player wins · points by level</div>
+    <a id="crossSoccer" class="cross-card" href="https://slime-wk2026.netlify.app" target="_blank" rel="noopener">
+      <div class="cross-icon">🥅</div>
+      <div class="cross-text">
+        <div class="cross-title" data-i18n="crossTitle">Part of SlimeScore</div>
+        <div class="cross-cta" data-i18n="playSoccer">🥅 Play Slime Soccer →</div>
+        <div class="cross-blurb" data-i18n="soccerBlurb">Like the rally? Try the football one — knockout World Cup, online &amp; more.</div>
+      </div>
+    </a>
+    <div id="lbList" class="panel-box" style="max-width:560px; min-height:120px;">loading…</div>
+    <button id="lbBack" class="btn secondary small" data-i18n="back">‹ Back</button>
+  </div>
+
+  <!-- ======================= HOW TO PLAY ======================= -->
+  <div id="rulesScreen" class="overlay">
+    <h2 class="title small-title" data-i18n="rulesTitle">HOW TO PLAY</h2>
+    <div class="rules-box">
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesControls">Controls</div><div class="rules-t" data-i18n-html="rulesControlsTxt"></div></div>
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesMoves">Moves</div><div class="rules-t" data-i18n-html="rulesMovesTxt"></div></div>
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesRules">Rules</div><div class="rules-t" data-i18n-html="rulesRulesTxt"></div></div>
+      <div class="rules-sec"><div class="rules-h" data-i18n="rulesModes">Modes</div><div class="rules-t" data-i18n-html="rulesModesTxt"></div></div>
+    </div>
+    <button id="rulesBack" class="btn secondary small" data-i18n="back">‹ Back</button>
+  </div>
+
+  <!-- ======================= PAUSE ======================= -->
+  <div id="pauseScreen" class="overlay">
+    <h2 class="title" style="font-size:clamp(20px,4.5vw,36px)" data-i18n="paused">PAUSED</h2>
+    <div class="subtitle" data-i18n="pressEsc">Press ESC to resume</div>
+    <div class="btn-row dlg-btns">
+      <button id="pauseResume" class="btn green" data-i18n="resume">Resume</button>
+      <button id="pauseQuit" class="btn secondary" data-i18n="quitMenu">Quit to menu</button>
+    </div>
+  </div>
+
+  <!-- in-game floating buttons -->
+  <button id="quitBtn" aria-label="pause / menu">☰</button>
+  <button id="rulesBtn" aria-label="How to play">❓</button>
+  <button id="muteBtn" aria-label="sound on/off">🔊</button>
+
+  <!-- ======================= TOUCH CONTROLS ======================= -->
+  <div id="touch">
+    <div class="pad" id="padMove1">
+      <div class="tbtn" id="btnL" role="button" aria-label="move left">◀</div>
+      <div class="tbtn" id="btnR" role="button" aria-label="move right">▶</div>
+    </div>
+    <div class="pad" id="padAct1">
+      <div class="tbtn smash" id="btnP" role="button" aria-label="smash">💥</div>
+      <div class="tbtn jump" id="btnJ" role="button" aria-label="jump">▲</div>
+    </div>
+    <div class="pad" id="pad2" style="display:none;">
+      <div class="tbtn" id="btn2L" role="button" aria-label="player 2 move left">◀</div>
+      <div class="tbtn" id="btn2R" role="button" aria-label="player 2 move right">▶</div>
+      <div class="tbtn smash" id="btn2P" role="button" aria-label="player 2 smash">💥</div>
+      <div class="tbtn jump" id="btn2J" role="button" aria-label="player 2 jump">▲</div>
+    </div>
+  </div>
+
+  <div id="playHint">Player 1: A/D + W · S = smash · ESC = pause</div>
+
+  <!-- ======================= ROTATE HINT ======================= -->
+  <div id="rotate">
+    <div class="ph">📱</div>
+    <div class="subtitle" data-i18n-html="rotate">Rotate your device to landscape<br>for the best rally 🏐</div>
+  </div>
+
+  <script src="game.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').then(reg => {
+        reg.update().catch(()=>{});
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) reg.update().catch(()=>{}); });
+      }).catch(()=>{});
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        const g = window.__G;
+        if (g && (g.screen === 'play' || g.screen === 'serve' || g.screen === 'point')) return;
+        reloaded = true; location.reload();
+      });
+    });
+  }
+  </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+# Slime Volleyball — static site (no build step).
+# This folder is auto-synced (via slime-wk2026's .github/workflows/sync-volley.yml)
+# to the ROOT of the StefanAIpel/slime-volley repo, which Netlify deploys.
+#   • Netlify site connected to: slime-volley
+#   • Base directory:     (repo root)
+#   • Publish directory:  .
+#   • Build command:      (leave empty)
+#   • Custom domains:     volley.slimescore.com  and  volley.slimescore.app
+[build]
+  publish = "."
+  command = ""
+
+# HTML + the service worker must never be cached by the CDN, so new deploys show instantly.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Static assets can be cached hard.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
