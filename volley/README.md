@@ -47,18 +47,21 @@ are part of *Slime Sports*. Points are recomputed server-side from the match fac
 12. Render (indoor arena, court, net, slimes, ball, HUD) · 13. Main loop
 14. UI / DOM screens · 15. Wiring · 16. Test hooks (`?debug=1`)
 
-## Deploy as its own site
-This lives in the `volley/` folder of the Slime Soccer repo so it can be developed
-alongside it. To publish it at its own URL (e.g. `slime-volley.netlify.app`):
+## Deploy (dedicated `Slime-volley` repo → volley.slimescore.com)
+These files are the **root** of the `Slime-volley` repo. To publish:
 
-1. New Netlify site from this repo.
-2. **Base directory:** `volley` · **Publish directory:** `volley` (or `.`) · no build command.
-3. Deploy. (Or copy the `volley/` folder into a fresh `slime-volley` repo and connect that.)
+1. New Netlify site from the **Slime-volley** repo.
+2. **Base directory:** _(empty / repo root)_ · **Publish directory:** `.` · **Build command:** _(empty)_.
+3. Deploy, then add the custom domains **`volley.slimescore.com`** and **`volley.slimescore.app`**
+   (Netlify → Domain management → add domain → point the DNS records Netlify shows).
+
+> The source also lives in the Slime Soccer repo under `volley/` (where it's developed).
+> To deploy from there instead, set Netlify **Base directory = `volley`**.
 
 ## Develop / test
 ```bash
 node --check game.js leaderboard.js service-worker.js   # syntax
 # serve the folder and open it:
-npx http-server volley -p 8080        # then http://localhost:8080
+npx http-server . -p 8080             # then http://localhost:8080
 ```
 `?debug=1` (or localhost) exposes `window.__G` / `window.__TEST` for headless tests.
