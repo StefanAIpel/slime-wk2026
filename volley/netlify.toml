@@ -1,0 +1,32 @@
+# Slime Volleyball — static site (no build step).
+# To deploy as its own site (e.g. slime-volley.netlify.app):
+#   • New Netlify site from this repo
+#   • Base directory:    volley
+#   • Publish directory:  volley   (or "." when base is volley)
+#   • Build command:      (leave empty)
+[build]
+  publish = "."
+  command = ""
+
+# HTML + the service worker must never be cached by the CDN, so new deploys show instantly.
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# Static assets can be cached hard.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"

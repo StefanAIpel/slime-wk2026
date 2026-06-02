@@ -1,0 +1,14 @@
+{
+  "name": "Slime Volleyball",
+  "short_name": "Slime Volley",
+  "description": "Retro slime volleyball in a bright indoor arena. Part of Slime Sports.",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0c2340",
+  "theme_color": "#0c2340",
+  "icons": [
+    { "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
