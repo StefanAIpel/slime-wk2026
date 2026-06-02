@@ -1,6 +1,6 @@
 # Slime Volleyball 🏐
 
-Retro slime volleyball in a bright indoor arena — part of **Slime Sports**, the
+Retro slime volleyball in a bright indoor arena — part of **SlimeScore**, the
 sibling of [Slime Soccer / Slime World Cup](https://slime-wk2026.netlify.app).
 
 Built the same way as the soccer game: **vanilla JS + HTML5 Canvas, no build step**.
@@ -33,7 +33,7 @@ Touch buttons appear on phones/tablets. `ESC` (or ☰) pauses.
 ## Slimescore
 The Slimescore (high scores) records your best **1-player wins**; points scale with
 difficulty and winning margin. It also cross-links to **Slime Soccer** — both games
-are part of *Slime Sports*. Points are recomputed server-side from the match facts
+are part of *SlimeScore*. Points are recomputed server-side from the match facts
 (anti-cheat), reusing the same Supabase project as the soccer game (a separate
 `slime_volley_leaderboard` table + `slime_volley_submit` RPC).
 

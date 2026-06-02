@@ -1,7 +1,7 @@
 {
   "name": "Slime Volleyball",
   "short_name": "Slime Volley",
-  "description": "Retro slime volleyball in a bright indoor arena. Part of Slime Sports.",
+  "description": "Retro slime volleyball in a bright indoor arena. Part of SlimeScore.",
   "id": "/",
   "start_url": ".",
   "scope": ".",

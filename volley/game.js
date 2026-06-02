@@ -1,5 +1,5 @@
 /* ============================================================================
-   SLIME VOLLEYBALL  —  part of Slime Sports
+   SLIME VOLLEYBALL  —  part of SlimeScore
    Vanilla JS + Canvas 2D. Modes: 1P vs computer, 2P local.
    Volleyball physics: a net in the middle, the ball touching your floor scores
    for the other side. No catch/hold — a mid-air SMASH spikes the ball instead.
@@ -130,7 +130,7 @@ const I18N = {
     teamLeft:'LEFT', teamRight:'RIGHT', tagline:'slime volleyball · indoor smash rally 🏐',
     grpPlay:'Play', grpPlayHtml:'Play <span>· keyboard or touch</span>',
     m1p:'🏐 1 Player · vs computer', m2p:'👥 2 Players · same device',
-    hallTag:'INDOOR ARENA · SLIME SPORTS',
+    hallTag:'INDOOR ARENA · SLIMESCORE',
     pickYourCountry:'Pick <b>your</b> country', pickP1:'Player <b>1</b> (left): pick your country',
     pickP2:'Player <b>2</b> (right): pick your country', back:'‹ Back',
     setupTitle1p:'🏐 1 PLAYER', setupTitle2p:'👥 2 PLAYERS',
@@ -147,7 +147,7 @@ const I18N = {
     ssTitle:'🏆 SLIMESCORE', ssSub:'Best 1-player wins · points by level',
     loading:'loading…', lbNone:'No scores yet — be the first! 🏐', lbFail:'Could not load Slimescore (offline?).',
     lbNA:'Slimescore not available.', pts:'pts', yourPos:'🎯 Your position: #{n} · {p} pts',
-    crossTitle:'Part of Slime Sports', playSoccer:'🥅 Play Slime Soccer →',
+    crossTitle:'Part of SlimeScore', playSoccer:'🥅 Play Slime Soccer →',
     soccerBlurb:'Like the rally? Try the football one — knockout World Cup, online & more.',
     paused:'PAUSED', pressEsc:'Press ESC to resume', resume:'▶️ Resume', quitMenu:'🏠 Quit to menu',
     pauseBtn:'⏸ Pause', quitBtn2:'✕ Quit',
@@ -166,7 +166,7 @@ const I18N = {
     teamLeft:'LINKS', teamRight:'RECHTS', tagline:'slime volleybal · zaalrally met smash 🏐',
     grpPlay:'Spelen', grpPlayHtml:'Spelen <span>· toetsenbord of touch</span>',
     m1p:'🏐 1 Speler · tegen computer', m2p:'👥 2 Spelers · zelfde toestel',
-    hallTag:'SPORTHAL · SLIME SPORTS',
+    hallTag:'SPORTHAL · SLIMESCORE',
     pickYourCountry:'Kies <b>jouw</b> land', pickP1:'Speler <b>1</b> (links): kies je land',
     pickP2:'Speler <b>2</b> (rechts): kies je land', back:'‹ Terug',
     setupTitle1p:'🏐 1 SPELER', setupTitle2p:'👥 2 SPELERS',
@@ -183,7 +183,7 @@ const I18N = {
     ssTitle:'🏆 SLIMESCORE', ssSub:'Beste 1-speler-overwinningen · punten per niveau',
     loading:'laden…', lbNone:'Nog geen scores — wees de eerste! 🏐', lbFail:'Kan Slimescore niet laden (offline?).',
     lbNA:'Slimescore niet beschikbaar.', pts:'ptn', yourPos:'🎯 Jouw positie: #{n} · {p} ptn',
-    crossTitle:'Onderdeel van Slime Sports', playSoccer:'🥅 Speel Slime Soccer →',
+    crossTitle:'Onderdeel van SlimeScore', playSoccer:'🥅 Speel Slime Soccer →',
     soccerBlurb:'Leuk gerally’d? Probeer de voetbalversie — knock-out WK, online en meer.',
     paused:'GEPAUZEERD', pressEsc:'Druk ESC om door te gaan', resume:'▶️ Doorgaan', quitMenu:'🏠 Terug naar menu',
     pauseBtn:'⏸ Pauze', quitBtn2:'✕ Stoppen',
@@ -617,15 +617,15 @@ function drawArena(){
     ctx.fillStyle='rgba(255,255,242,0.95)'; roundRect(x,10,92,15,6); ctx.fill();
     const gl=ctx.createRadialGradient(x+46,28,4,x+46,28,120); gl.addColorStop(0,'rgba(255,255,220,0.28)'); gl.addColorStop(1,'rgba(255,255,220,0)');
     ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(x+46,28,120,0,7); ctx.fill(); }
-  // stands
+  // stands — SlimeScore royal blue
   const standTop=GROUND*0.30, standH=GROUND*0.40;
-  ctx.fillStyle='#a7bad2'; ctx.fillRect(0,standTop,W,standH);
-  ctx.fillStyle='#93a9c6'; ctx.fillRect(0,standTop,W,5);
+  ctx.fillStyle='#2c4196'; ctx.fillRect(0,standTop,W,standH);
+  ctx.fillStyle='#21347e'; ctx.fillRect(0,standTop,W,5);
   // tier step lines
-  ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(255,255,255,0.14)'; ctx.lineWidth=1;
   for(let k=1;k<5;k++){ const y=standTop+standH*k/5; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
-  // audience (bright twinkle)
-  const tw=G.frame*0.05, cols=['#ff7a18','#2b6fff','#e4002b','#34d17a','#ffffff','#ffd23b'];
+  // audience (brand twinkle: orange/gold lead, blue/white/red/green pops)
+  const tw=G.frame*0.05, cols=['#ff8a1e','#ffd23b','#ffffff','#2b6fff','#e63b2e','#34d17a'];
   for(const s of crowdSeed){ const cx=s.x*W, cy=standTop+8+s.y*(standH-16), a=0.65+0.35*Math.sin(tw+s.f);
     ctx.globalAlpha=a; ctx.fillStyle=cols[s.c]; ctx.fillRect(cx,cy,5,5); }
   ctx.globalAlpha=1;
@@ -635,9 +635,9 @@ function drawArena(){
   ctx.fillStyle='#dfe7f1'; ctx.fillRect(0,boardY+boardH-3,W,3);
   ctx.save(); ctx.beginPath(); ctx.rect(0,boardY,W,boardH); ctx.clip();
   ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='middle';
-  const msg='SLIME SPORTS   •   VOLLEYBALL   •   INDOOR RALLY   •   ';
+  const msg='SLIMESCORE   •   VOLLEYBALL   •   INDOOR RALLY   •   ';
   const mw=ctx.measureText(msg).width||1, scroll=(G.frame*1.0)%mw;
-  const bcols=['#ff7a18','#2b6fff','#e4002b','#0e9c5a']; let bi=0;
+  const bcols=['#ff8a1e','#2b6fff','#ffc400','#e63b2e']; let bi=0;
   for(let x=-scroll;x<W;x+=mw){ ctx.fillStyle=bcols[bi++%bcols.length]; ctx.fillText(msg,x,boardY+boardH/2); }
   ctx.restore();
   // lower wall
@@ -645,10 +645,10 @@ function drawArena(){
 }
 
 function drawCourt(){
-  // taraflex floor: warm playing area + cooler free-zone edges
-  ctx.fillStyle='#1f6fa8'; ctx.fillRect(0,GROUND,W,H-GROUND);
+  // taraflex floor: warm orange playing area + royal-blue free-zone edges (SlimeScore)
+  ctx.fillStyle='#234aa0'; ctx.fillRect(0,GROUND,W,H-GROUND);
   const edge=W*0.05;
-  ctx.fillStyle='#d8643a'; ctx.fillRect(edge,GROUND,W-edge*2,H-GROUND);
+  ctx.fillStyle='#e06a32'; ctx.fillRect(edge,GROUND,W-edge*2,H-GROUND);
   ctx.fillStyle='rgba(0,0,0,0.14)'; ctx.fillRect(0,GROUND,W,4);
   // lines
   ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=3;
@@ -730,8 +730,8 @@ function drawMiniFlag(team,x,y,w,h){
 }
 function drawScoreboard(){
   const SC=2, w=232*SC, h=54*SC, x=CENTER-w/2, y=12;
-  ctx.fillStyle='rgba(8,12,24,0.86)'; roundRect(x,y,w,h,10*SC); ctx.fill();
-  ctx.strokeStyle='#2c3e63'; ctx.lineWidth=2; roundRect(x,y,w,h,10*SC); ctx.stroke();
+  ctx.fillStyle='rgba(9,16,48,0.88)'; roundRect(x,y,w,h,10*SC); ctx.fill();
+  ctx.strokeStyle='#3a52aa'; ctx.lineWidth=2; roundRect(x,y,w,h,10*SC); ctx.stroke();
   drawMiniFlag(G.p1.team, x+10*SC, y+11*SC, 40*SC, 27*SC);
   drawMiniFlag(G.p2.team, x+w-50*SC, y+11*SC, 40*SC, 27*SC);
   ctx.textBaseline='alphabetic'; ctx.font=FONT(12*SC,800); ctx.textAlign='center';
@@ -742,7 +742,7 @@ function drawScoreboard(){
     ctx.beginPath(); ctx.arc(G.server===0?x+54*SC:x+w-54*SC, y+20*SC, 3.5*SC, 0,7); ctx.fill(); }
   ctx.fillStyle='#fff'; ctx.font=FONT(28*SC,900);
   ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+38*SC);
-  ctx.font=FONT(11*SC,700); ctx.fillStyle='#9fb6dd';
+  ctx.font=FONT(11*SC,700); ctx.fillStyle='#ffd23b';
   ctx.fillText(t('firstTo').toUpperCase()+' '+G.toWin, CENTER, y+h+13*SC);
 }
 function drawServePrompt(){
