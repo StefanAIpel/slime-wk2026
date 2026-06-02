@@ -1,7 +1,7 @@
 # Slime Volleyball 🏐
 
 Retro slime volleyball in a bright indoor arena — part of **SlimeScore**, the
-sibling of [Slime Soccer / Slime World Cup](https://slime-wk2026.netlify.app).
+sibling of [Slime Soccer / Slime World Cup](https://soccer.slimescore.nl).
 
 > **This folder is the source of truth for the standalone Slime Volleyball bundle.**
 > It is automatically synced to [`StefanAIpel/slime-volley`](https://github.com/StefanAIpel/slime-volley)
