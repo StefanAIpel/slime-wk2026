@@ -3,6 +3,12 @@
 Retro slime volleyball in a bright indoor arena — part of **SlimeScore**, the
 sibling of [Slime Soccer / Slime World Cup](https://slime-wk2026.netlify.app).
 
+> **This folder is the source of truth for the standalone Slime Volleyball bundle.**
+> It is automatically synced to [`StefanAIpel/slime-volley`](https://github.com/StefanAIpel/slime-volley)
+> by `.github/workflows/sync-volley.yml` (SSH deploy key `SLIME_VOLLEY_DEPLOY_KEY`)
+> on every change under `volley/` on `main`. Netlify deploys `slime-volley` →
+> **volley.slimescore.com / .app**. So: just edit files here; the rest is automatic.
+
 Built the same way as the soccer game: **vanilla JS + HTML5 Canvas, no build step**.
 Three files do everything — `index.html` (DOM screens), `game.js` (the whole game),
 `style.css`. Plus a lazy-loaded `leaderboard.js`, a `service-worker.js` (network-first)
@@ -47,16 +53,10 @@ are part of *SlimeScore*. Points are recomputed server-side from the match facts
 12. Render (indoor arena, court, net, slimes, ball, HUD) · 13. Main loop
 14. UI / DOM screens · 15. Wiring · 16. Test hooks (`?debug=1`)
 
-## Deploy (dedicated `Slime-volley` repo → volley.slimescore.com)
-These files are the **root** of the `Slime-volley` repo. To publish:
-
-1. New Netlify site from the **Slime-volley** repo.
-2. **Base directory:** _(empty / repo root)_ · **Publish directory:** `.` · **Build command:** _(empty)_.
-3. Deploy, then add the custom domains **`volley.slimescore.com`** and **`volley.slimescore.app`**
-   (Netlify → Domain management → add domain → point the DNS records Netlify shows).
-
-> The source also lives in the Slime Soccer repo under `volley/` (where it's developed).
-> To deploy from there instead, set Netlify **Base directory = `volley`**.
+## Deploy
+Handled automatically (see the note at the top): edit under `volley/` → push to
+`main` → the GitHub Action mirrors this folder to the **root** of `slime-volley` →
+Netlify (connected to `slime-volley`, no build) serves **volley.slimescore.com / .app**.
 
 ## Develop / test
 ```bash

@@ -1,11 +1,11 @@
 # Slime Volleyball — static site (no build step).
-# Lives at the ROOT of the dedicated "Slime-volley" repo.
-#   • New Netlify site from the Slime-volley repo
-#   • Base directory:     (leave empty / repo root)
+# This folder is auto-synced (via slime-wk2026's .github/workflows/sync-volley.yml)
+# to the ROOT of the StefanAIpel/slime-volley repo, which Netlify deploys.
+#   • Netlify site connected to: slime-volley
+#   • Base directory:     (repo root)
 #   • Publish directory:  .
 #   • Build command:      (leave empty)
 #   • Custom domains:     volley.slimescore.com  and  volley.slimescore.app
-# (If instead deploying from the soccer repo's /volley folder, set Base = volley.)
 [build]
   publish = "."
   command = ""

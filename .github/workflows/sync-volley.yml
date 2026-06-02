@@ -1,72 +1,83 @@
-# Auto-sync the volley/ app into the dedicated Slime-volley repo.
-#
-# This runs in GitHub Actions (NOT in the Claude session), using a token YOU add,
-# so it can write to Slime-volley even though the assistant's own access can't.
-#
-# ── One-time setup ────────────────────────────────────────────────────────────
-# 1. Create a token that can write to StefanAIpel/Slime-volley:
-#      GitHub → Settings → Developer settings → Fine-grained tokens →
-#      Repository access: only "Slime-volley" · Permissions: Contents = Read and write.
-# 2. Add it to THIS repo as a secret:
-#      slime-wk2026 → Settings → Secrets and variables → Actions → New repository secret
-#      Name: SLIME_VOLLEY_TOKEN   Value: <the token>
-# 3. Done. On every push to main that touches volley/** (or via "Run workflow"),
-#    the contents of volley/ are mirrored to the ROOT of Slime-volley's main branch.
-#    Point Netlify at Slime-volley (Base = root) → volley.slimescore.com / .app.
-#
-# Until the secret exists the job skips cleanly (no red ✗).
-name: Sync volley → Slime-volley
+name: Sync volley to slime-volley
 
 on:
   push:
     branches: [main]
-    paths: ['volley/**', '.github/workflows/sync-volley.yml']
-  workflow_dispatch: {}
+    paths:
+      - 'volley/**'
+      - '.github/workflows/sync-volley.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
   group: sync-volley
-  cancel-in-progress: true
-
-env:
-  TARGET_REPO: StefanAIpel/Slime-volley
-  TARGET_BRANCH: main
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout slime-wk2026
+      - name: Check out source repo
         uses: actions/checkout@v4
 
-      - name: Mirror volley/ into Slime-volley
-        env:
-          TOKEN: ${{ secrets.SLIME_VOLLEY_TOKEN }}
+      - name: Stop if volley folder does not exist yet
+        id: source
+        shell: bash
         run: |
-          set -euo pipefail
-          if [ -z "${TOKEN:-}" ]; then
-            echo "::notice::SLIME_VOLLEY_TOKEN is not set — skipping sync (add the secret to enable)."
+          if [ ! -d volley ]; then
+            echo "No volley/ directory in slime-wk2026 yet; nothing to sync."
+            echo "exists=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          git config --global user.name  "slime-sync[bot]"
-          git config --global user.email "slime-sync[bot]@users.noreply.github.com"
+          echo "exists=true" >> "$GITHUB_OUTPUT"
 
-          # Clone the target (works even if it's an empty repo) and rsync volley/ onto its root.
-          rm -rf _target
-          git clone "https://x-access-token:${TOKEN}@github.com/${TARGET_REPO}.git" _target 2>/dev/null \
-            || git init _target
-          ( cd _target && git remote add origin "https://x-access-token:${TOKEN}@github.com/${TARGET_REPO}.git" 2>/dev/null || true )
+      - name: Configure SSH deploy key
+        if: steps.source.outputs.exists == 'true'
+        shell: bash
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.SLIME_VOLLEY_DEPLOY_KEY }}" > ~/.ssh/slime_volley_deploy_key
+          chmod 600 ~/.ssh/slime_volley_deploy_key
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<'EOF'
+          Host github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/slime_volley_deploy_key
+            IdentitiesOnly yes
+          EOF
 
-          rsync -a --delete --exclude='.git' volley/ _target/
+      - name: Clone target repo
+        if: steps.source.outputs.exists == 'true'
+        shell: bash
+        run: |
+          git clone git@github.com:StefanAIpel/slime-volley.git /tmp/slime-volley
 
-          cd _target
-          git add -A
-          if git diff --cached --quiet; then
+      - name: Copy volley bundle into target repo
+        if: steps.source.outputs.exists == 'true'
+        shell: bash
+        run: |
+          rsync -a --delete \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='.next' \
+            --exclude='.netlify' \
+            volley/ /tmp/slime-volley/
+
+      - name: Commit and push changes
+        if: steps.source.outputs.exists == 'true'
+        shell: bash
+        working-directory: /tmp/slime-volley
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet --exit-code && git diff --cached --quiet --exit-code; then
             echo "No changes to sync."
             exit 0
           fi
-          git commit -m "Sync from slime-wk2026/volley @ ${GITHUB_SHA::7}"
-          git push origin "HEAD:${TARGET_BRANCH}"
-          echo "::notice::Synced volley/ → ${TARGET_REPO}@${TARGET_BRANCH}."
+          git add -A
+          git commit -m "chore: sync volley from slime-wk2026"
+          git push origin main
