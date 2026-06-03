@@ -440,7 +440,6 @@ function refreshBtnZones(){
   btnZones = [];
   const layer = document.getElementById('touch');
   if (!layer || !layer.classList.contains('show')) return;
-  const padX = 34, padY = 54;       // generous tap zone — buttons are small/faint, so presses well above/below still register
   const EG = 22, vw = window.innerWidth, vh = window.innerHeight, EGB = 26;   // keep hit zones off the iOS edge-gesture strips (sides + bottom home-indicator)
   layer.querySelectorAll('.pad').forEach(pad=>{
     if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
@@ -448,6 +447,9 @@ function refreshBtnZones(){
       if (!BTN_PROP[b.id]) return;
       const r = b.getBoundingClientRect();
       if (!r.width) return;
+      // VERY forgiving tap zone — scales with the button, extra-tall so a press
+      // just above/below the (larger, on tablets) button still registers.
+      const padX = Math.max(40, r.width*0.7), padY = Math.max(80, r.height*1.7);
       btnZones.push({ id:b.id, l:Math.max(EG, r.left-padX), r:Math.min(vw-EG, r.right+padX),
                       t:r.top-padY, b:Math.min(vh-EGB, r.bottom+padY),
                       cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
@@ -455,14 +457,14 @@ function refreshBtnZones(){
   });
 }
 function btnIdAt(x,y){
-  let best=null, bestD=Infinity;
+  let best=null, bestD=Infinity, near=null, nearD=Infinity;
   for (const z of btnZones){
-    if (x>=z.l && x<=z.r && y>=z.t && y<=z.b){
-      const dx=x-z.cx, dy=y-z.cy, d=dx*dx+dy*dy;       // nearest centre wins where zones overlap
-      if (d<bestD){ bestD=d; best=z.id; }
-    }
+    const dx=x-z.cx, dy=y-z.cy, d=dx*dx+dy*dy;
+    if (x>=z.l && x<=z.r && y>=z.t && y<=z.b){ if (d<bestD){ bestD=d; best=z.id; } }   // nearest centre wins where zones overlap
+    if (d<nearD){ nearD=d; near=z.id; }
   }
-  return best;
+  if (best) return best;
+  return nearD < 120*120 ? near : null;        // just-outside taps still grab the closest pad
 }
 function setBtn(id, on){
   const p = BTN_PROP[id]; if (p) touch[p] = on;
@@ -1301,7 +1303,7 @@ function drawStadium(){
   // scrolling banner (tiled by measured width so the loop is seamless in any font)
   ctx.fillStyle='#06060f'; ctx.fillRect(0,GROUND-22,W,22);
   ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-  const msg='WORLD CUP SLIME   •   KNOCKOUT 2026   •   USA · MEXICO · CANADA   •   ';
+  const msg='SLIMESCORE.COM  ↗   •   SLIME SOCCER   •   SLIME VOLLEYBALL   •   WORLD CUP 2026   •   ';
   const mw=ctx.measureText(msg).width || 1;
   const scroll=(G.frame*1.1)%mw;
   // tint each repeat with rotating WC + orange accents
@@ -1555,6 +1557,19 @@ function frame(t){
   requestAnimationFrame(frame);
 }
 requestAnimationFrame(frame);
+
+/* Interactive pitchside ad boards: clicking/tapping the scrolling banner during a
+   match opens slimescore.com (the SlimeScore hub). */
+(function adBoards(){
+  const inMatch = () => [SCREEN.PLAY, SCREEN.GOAL, SCREEN.COUNT].indexOf(G.screen) >= 0 && !G.paused;
+  const onBoard = (clientX, clientY) => {
+    const rc = canvas.getBoundingClientRect(); if (!rc.width || !rc.height) return false;
+    const ly = (clientY - rc.top) / rc.height * H;
+    return ly >= GROUND - 26 && ly <= GROUND + 2;            // the banner band along the stand front
+  };
+  canvas.addEventListener('click', e => { if (inMatch() && onBoard(e.clientX, e.clientY)) window.open('https://slimescore.com', '_blank', 'noopener'); });
+  canvas.addEventListener('mousemove', e => { canvas.style.cursor = (inMatch() && onBoard(e.clientX, e.clientY)) ? 'pointer' : ''; });
+})();
 
 /* ----------------------------------------------------------------------------
    15. UI / schermbeheer  (DOM overlays)
