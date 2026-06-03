@@ -5,7 +5,7 @@ vibe, tied to the **2026 World Cup**. Play the computer, two players on the same
 screen, or **online against a friend**. Mobile-first (touch), great on desktop with
 WASD / arrow keys. Pure **HTML5 canvas + vanilla JS, no build step**.
 
-- **Live:** https://soccer.slimescore.nl
+- **Live:** https://soccer.slimescore.com
 - **Local:** open `index.html` in a browser. Online mode + leaderboard need internet.
 - **Version:** see the footer (`v0.x beta`). The name **"Slime World Cup"** stays in English everywhere.
 - **Docs:** [`AGENTS.md`](AGENTS.md) — architecture & setup for developers/agents (both SlimeScore games) · [`volley/PORTING.md`](volley/PORTING.md) — what the volley app still needs from soccer (1P tournament, online).

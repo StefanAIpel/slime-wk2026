@@ -4,7 +4,7 @@
   "private": true,
   "description": "Slime WC — retro slime soccer in a modern kit, tied to the 2026 World Cup.",
   "type": "module",
-  "homepage": "https://soccer.slimescore.nl",
+  "homepage": "https://soccer.slimescore.com",
   "scripts": {
     "check": "node --check game.js && node --check leaderboard.js && node --check service-worker.js && node --check volley/game.js && node --check volley/leaderboard.js && node --check volley/service-worker.js && npm run lint",
     "test:logic": "node brackettest.mjs",

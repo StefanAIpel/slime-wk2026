@@ -6,7 +6,7 @@ new developer or an AI agent working in this repo.
 ## The SlimeScore family
 | Game | Source | Lives at | Deploys to | Domain |
 |---|---|---|---|---|
-| **Slime Soccer** (Slime World Cup '26) | this repo root (`slime-wk2026`) | — | Netlify (git, from `main`) | **soccer.slimescore.nl** (+ `slime-wk2026.netlify.app` fallback) |
+| **Slime Soccer** (Slime World Cup '26) | this repo root (`slime-wk2026`) | — | Netlify (git, from `main`) | **soccer.slimescore.com** (+ `slime-wk2026.netlify.app` fallback) |
 | **Slime Volleyball** | `volley/` in this repo | auto-synced → `StefanAIpel/slime-volley` (root) | Netlify (from `slime-volley`) | **volley.slimescore.com / .app** |
 
 **Auto-sync:** `.github/workflows/sync-volley.yml` mirrors `volley/` → the root of the

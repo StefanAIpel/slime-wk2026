@@ -1,7 +1,7 @@
 {
-  "name": "Slime WC",
-  "short_name": "Slime WC",
-  "description": "Retro slime soccer in a modern kit — World Cup knockout, vs computer, 2 players or online.",
+  "name": "Slime Soccer WC '26",
+  "short_name": "Slime Soccer",
+  "description": "Slime Soccer WC '26 — retro slime soccer in a modern kit. World Cup knockout, vs computer, 2 players or online.",
   "id": "/",
   "start_url": "./?source=pwa",
   "scope": "./",
@@ -12,8 +12,8 @@
   "categories": ["games", "sports", "entertainment"],
   "lang": "en",
   "icons": [
-    { "src": "assets/icons/app-icon-wk2026-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/app-icon-wk2026-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "assets/icons/app-icon-wk2026-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "assets/icons/app-icon-soccer-wc26-v2-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/app-icon-soccer-wc26-v2-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/app-icon-soccer-wc26-v2-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ]
 }
