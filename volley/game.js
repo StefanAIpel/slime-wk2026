@@ -25,7 +25,7 @@ const SLIME_R = 58;                      // slime radius (half circle)
 const BALL_R  = 15;
 
 const NET_W   = 14;                      // net thickness
-const NET_H   = 172;                     // net height above the floor
+const NET_H   = 128;                     // net height above the floor (lower = classic slime-volley feel)
 const NET_TOP = GROUND - NET_H;          // y of the net tape
 const halfNet = NET_W / 2;
 
@@ -35,9 +35,9 @@ const SLIME_JUMP  = 15.8;                // high enough to clear & attack over t
 const SLIME_GRAV  = 0.72;
 const COYOTE_FRAMES = 6;
 const JUMP_BUFFER_FRAMES = 4;
-const BALL_GRAV = 0.30;
+const BALL_GRAV = 0.21;                  // floatier, ~30% slower volleyball ball
 const BALL_REST = 0.86;                  // wall/net damping
-const BALL_MAX  = 23;                    // speed limit
+const BALL_MAX  = 16;                    // speed limit (~30% slower than before)
 
 const SERVE_FRAMES = 12 * 60;            // 12s idle -> auto-serve
 const POINT_FRAMES = 80;                 // pause after a point before the next serve
@@ -130,6 +130,13 @@ const I18N = {
     teamLeft:'LEFT', teamRight:'RIGHT', tagline:'slime volleyball · indoor smash rally 🏐',
     grpPlay:'Play', grpPlayHtml:'Play <span>· keyboard or touch</span>',
     m1p:'🏐 1 Player · vs computer', m2p:'👥 2 Players · same device',
+    mCup:'🏆 Tournament · knockout vs computer',
+    setupTitleCup:'🏆 TOURNAMENT', setupSubCup:'Pick your level & match length — then win 3 rounds',
+    cupQF:'Quarter-final', cupSF:'Semi-final', cupFinal:'Final',
+    cupWon:'{round} WON! 🎉', cupNextSub:'Next up: <b>{round}</b> vs <b>{team}</b>',
+    cupChampion:'🏆 CHAMPION!', cupChampSub:'You won the tournament with <b>{team}</b>!',
+    cupEliminated:'ELIMINATED', cupOutSub:'Knocked out in the <b>{round}</b>.',
+    cupNext:'▶ Next match', cupNew:'🔁 New tournament', cupBadge:'{round} · vs {team}',
     hallTag:'INDOOR ARENA · SLIMESCORE',
     pickYourCountry:'Pick <b>your</b> country', pickP1:'Player <b>1</b> (left): pick your country',
     pickP2:'Player <b>2</b> (right): pick your country', back:'‹ Back',
@@ -160,12 +167,19 @@ const I18N = {
     rulesControlsTxt:'<b>Player 1</b> — A/D move, W jump, S smash (or the touch buttons).<br><b>Player 2</b> — ←/→ move, ↑ jump, ↓ smash.',
     rulesMovesTxt:'<b>Double jump</b> — tap jump again in mid-air for an extra boost to reach high balls.<br><b>Smash</b> — hold smash while you hit the ball in the air, above net height, to spike it down hard. There is no catching the ball.',
     rulesRulesTxt:'<b>Floor = point</b> — if the ball touches the floor on your side, the other side scores.<br><b>Over the net</b> — you can\'t cross the net; play the ball back over it.<br><b>Serve</b> — the side that won the point serves next; if nobody serves within 12s it drops automatically.',
-    rulesModesTxt:'<b>1 Player</b> — rally against the computer (Easy → Pro).<br><b>2 Players</b> — share one keyboard or phone.<br><b>First to 3 / 5 / 7</b> — pick the match length; first to that many points wins.',
+    rulesModesTxt:'<b>1 Player</b> — rally against the computer (Easy → Pro).<br><b>2 Players</b> — share one keyboard or phone.<br><b>Tournament</b> — a 3-round knockout vs the computer (quarter-final → semi-final → final); each round gets tougher.<br><b>First to 3 / 5 / 7</b> — pick the match length; first to that many points wins.',
   },
   nl: {
     teamLeft:'LINKS', teamRight:'RECHTS', tagline:'slime volleybal · zaalrally met smash 🏐',
     grpPlay:'Spelen', grpPlayHtml:'Spelen <span>· toetsenbord of touch</span>',
     m1p:'🏐 1 Speler · tegen computer', m2p:'👥 2 Spelers · zelfde toestel',
+    mCup:'🏆 Toernooi · knock-out tegen computer',
+    setupTitleCup:'🏆 TOERNOOI', setupSubCup:'Kies je niveau & lengte — win daarna 3 rondes',
+    cupQF:'Kwartfinale', cupSF:'Halve finale', cupFinal:'Finale',
+    cupWon:'{round} GEWONNEN! 🎉', cupNextSub:'Hierna: <b>{round}</b> tegen <b>{team}</b>',
+    cupChampion:'🏆 KAMPIOEN!', cupChampSub:'Je won het toernooi met <b>{team}</b>!',
+    cupEliminated:'UITGESCHAKELD', cupOutSub:'Uitgeschakeld in de <b>{round}</b>.',
+    cupNext:'▶ Volgende wedstrijd', cupNew:'🔁 Nieuw toernooi', cupBadge:'{round} · tegen {team}',
     hallTag:'SPORTHAL · SLIMESCORE',
     pickYourCountry:'Kies <b>jouw</b> land', pickP1:'Speler <b>1</b> (links): kies je land',
     pickP2:'Speler <b>2</b> (rechts): kies je land', back:'‹ Terug',
@@ -196,7 +210,7 @@ const I18N = {
     rulesControlsTxt:'<b>Speler 1</b> — A/D bewegen, W springen, S smashen (of de touch-knoppen).<br><b>Speler 2</b> — ←/→ bewegen, ↑ springen, ↓ smashen.',
     rulesMovesTxt:'<b>Dubbele sprong</b> — tik in de lucht nogmaals op springen voor een extra zet naar hoge ballen.<br><b>Smash</b> — houd smash ingedrukt terwijl je de bal in de lucht boven nethoogte raakt om hem hard naar beneden te slaan. Vasthouden van de bal kan niet.',
     rulesRulesTxt:'<b>Vloer = punt</b> — raakt de bal de vloer aan jouw kant, dan scoort de tegenstander.<br><b>Over het net</b> — je mag het net niet over; speel de bal terug over het net.<br><b>Serveren</b> — wie het punt won mag serveren; serveert niemand binnen 12s, dan valt de bal vanzelf.',
-    rulesModesTxt:'<b>1 Speler</b> — rally tegen de computer (Makkelijk → Pro).<br><b>2 Spelers</b> — deel één toetsenbord of telefoon.<br><b>Eerste tot 3 / 5 / 7</b> — kies de lengte; wie als eerste zoveel punten heeft, wint.',
+    rulesModesTxt:'<b>1 Speler</b> — rally tegen de computer (Makkelijk → Pro).<br><b>2 Spelers</b> — deel één toetsenbord of telefoon.<br><b>Toernooi</b> — een knock-out van 3 rondes tegen de computer (kwartfinale → halve finale → finale); elke ronde wordt zwaarder.<br><b>Eerste tot 3 / 5 / 7</b> — kies de lengte; wie als eerste zoveel punten heeft, wint.',
   },
 };
 const NL_NAMES = { NED:'Nederland', POL:'Polen', ITA:'Italië', BRA:'Brazilië', FRA:'Frankrijk', USA:'USA',
@@ -340,6 +354,7 @@ const G = {
   server:0, serveTimer:SERVE_FRAMES, serveX:W*0.27, serveBaseY:220, _srvPrev:true,
   pointTimer:0, lastWinner:0, winner:0, _matchWon:false,
   attract:false, particles:[], shake:0, flash:0, frame:0, paused:false,
+  cup:null,   // tournament progress when in knockout mode (see section 11b)
 };
 
 /* ----------------------------------------------------------------------------
@@ -400,14 +415,15 @@ function reflectOffSlime(b,s){
   if (dist<minD && b.y<=s.y+2 && dist>0){
     const nx=dx/dist, ny=dy/dist;
     b.x=s.x+nx*minD; b.y=s.y+ny*minD;
-    const speed=Math.hypot(b.vx,b.vy), out=Math.max(speed*0.94, 9);
+    const speed=Math.hypot(b.vx,b.vy), out=Math.max(speed*0.85, 7);
     b.vx=nx*out + s.vx*0.9;
     b.vy=ny*out + s.vy*0.5;
     const smashing=s.input.down && !s.onGround, high=b.y < NET_TOP+34;
     if (smashing && high){
       const dir=s.side==='left'?1:-1;
-      b.vx=dir*Math.max(13, out*0.95) + s.vx*0.5;
-      b.vy=Math.max(7, out*0.6);
+      // drive it straight across, not steeply down — just a touch of dip
+      b.vx=dir*Math.max(12, out*0.95) + s.vx*0.5;
+      b.vy=Math.max(1.5, out*0.18) + s.vy*0.3;
       Sound.spike(); spawnDust(b.x,b.y,11,'#ffffff'); if (G.screen===SCREEN.PLAY) G.shake=Math.max(G.shake,6);
     } else {
       if (ny<-0.2 && b.vy>-3) b.vy=-3;     // keep top-side touches airborne so rallies sustain
@@ -468,7 +484,7 @@ function predictLanding(){
   }
   return { x, frames:200, side:x<CENTER?'left':'right' };
 }
-function effDiff(){ return G.attract ? 'normal' : settings.diff; }
+function effDiff(){ return G.attract ? 'normal' : (G.cup ? G.cup.diff : settings.diff); }
 function computeAI(s){
   const lv=AI_LEVELS[effDiff()]||AI_LEVELS.normal, b=G.ball, left=s.side==='left';
   const myMin=left?SLIME_R*0.4:CENTER+halfNet+SLIME_R;
@@ -548,7 +564,61 @@ function pointTick(){
   const b=G.ball; b.vx*=0.8; b.vy=0; b.y=GROUND-BALL_R;
   if (--G.pointTimer<=0){ if (G._matchWon) endMatch(); else setupServe(G.lastWinner); }
 }
-function endMatch(){ G.winner=G.lastWinner; G.screen=SCREEN.OVER; showGameOver(); }
+function endMatch(){
+  G.winner=G.lastWinner; G.screen=SCREEN.OVER;
+  if (G.cup){ advanceCup(); return; }
+  showGameOver();
+}
+
+/* ----------------------------------------------------------------------------
+   11b. Tournament (1-player knockout): quarter-final → semi-final → final,
+   each round tougher. Plays out as a sequence of normal matches; the cup
+   object tracks progress and the game-over screen shows next/win/out.
+   ---------------------------------------------------------------------------- */
+const CUP_ROUNDS = 3;
+function ladderDiff(base, r){ const L=['easy','normal','hard','pro']; return L[clamp(L.indexOf(base)+r,0,L.length-1)]; }
+function cupRoundName(r){ return t(['cupQF','cupSF','cupFinal'][r]||'cupFinal'); }
+function startCup(){
+  // pick 3 distinct opponents (not the player's team), seeded weakest → strongest
+  const pool=TEAMS.filter(x=>x!==pickP1);
+  for(let i=pool.length-1;i>0;i--){ const j=(Math.random()*(i+1))|0; const tmp=pool[i]; pool[i]=pool[j]; pool[j]=tmp; }
+  const opp=pool.slice(0,CUP_ROUNDS).sort((a,b)=>a.strength-b.strength);
+  G.cup={ base:settings.diff, diff:settings.diff, opp, round:0, playedRound:0, done:false, champ:false, _confetti:false };
+  cupNextMatch();
+}
+function cupNextMatch(){
+  const opp=G.cup.opp[G.cup.round];
+  G.cup.diff=ladderDiff(G.cup.base, G.cup.round);
+  pickP2=opp;
+  G.p1=makeSlime('left',pickP1); G.p2=makeSlime('right',opp); G.ball=makeBall();
+  startMatch();
+}
+function advanceCup(){
+  const c=G.cup, won=(G.winner===0);
+  c.playedRound=c.round;
+  if (won) c.round++;
+  c.champ = won && c.round>=CUP_ROUNDS;
+  c.done  = (!won) || c.champ;
+  showCupResult(won);
+}
+function showCupResult(won){
+  const c=G.cup;
+  $('lbSubmit').style.display='none';
+  let title, sub;
+  if (c.champ){
+    title=t('cupChampion'); sub=t('cupChampSub',{team:teamName(pickP1)});
+    if(!c._confetti){ spawnConfetti(); c._confetti=true; }
+  } else if (!won){
+    title=t('cupEliminated'); sub=t('cupOutSub',{round:cupRoundName(c.playedRound)});
+  } else {
+    title=t('cupWon',{round:cupRoundName(c.playedRound)});
+    sub=t('cupNextSub',{round:cupRoundName(c.round), team:teamName(c.opp[c.round])});
+  }
+  $('overTitle').textContent=title;
+  $('overSub').innerHTML=t('finalScore',{a:G.score[0],b:G.score[1]})+'<br>'+sub;
+  $('overRematch').textContent = c.done ? t('cupNew') : t('cupNext');
+  showOverlay('overScreen'); refreshUI();
+}
 
 function tick(){
   G.frame++;
@@ -577,6 +647,7 @@ function attractTick(){
    12. Render
    ---------------------------------------------------------------------------- */
 const crowdSeed=(()=>{ const a=[]; for(let i=0;i<300;i++) a.push({x:Math.random(), y:Math.random(), f:Math.random()*6.28, c:(Math.random()*6)|0}); return a; })();
+const confettiSeed=(()=>{ const a=[]; for(let i=0;i<40;i++) a.push({x:Math.random(), y:Math.random(), sp:0.15+Math.random()*0.4, sw:0.4+Math.random()*1.2, c:(Math.random()*6)|0, r:Math.random()*6.28}); return a; })();
 function FONT(px,w){ return (w||800)+' '+px+"px Rubik, system-ui, -apple-system, sans-serif"; }
 function roundRect(x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 function lighten(hex,amt){ return shade(hex,amt); }
@@ -607,7 +678,7 @@ function render(){
 
 function drawArena(){
   const g=ctx.createLinearGradient(0,0,0,GROUND);
-  g.addColorStop(0,'#eef4fb'); g.addColorStop(0.55,'#dbe8f6'); g.addColorStop(1,'#c6dcee'); // light hall
+  g.addColorStop(0,'#f3f8ff'); g.addColorStop(0.45,'#dfeaf8'); g.addColorStop(1,'#bcd4ec'); // bright hall
   ctx.fillStyle=g; ctx.fillRect(0,0,W,GROUND+6);
   // ceiling trusses
   ctx.strokeStyle='rgba(120,140,170,0.30)'; ctx.lineWidth=3;
@@ -617,10 +688,12 @@ function drawArena(){
     ctx.fillStyle='rgba(255,255,242,0.95)'; roundRect(x,10,92,15,6); ctx.fill();
     const gl=ctx.createRadialGradient(x+46,28,4,x+46,28,120); gl.addColorStop(0,'rgba(255,255,220,0.28)'); gl.addColorStop(1,'rgba(255,255,220,0)');
     ctx.fillStyle=gl; ctx.beginPath(); ctx.arc(x+46,28,120,0,7); ctx.fill(); }
-  // stands — SlimeScore royal blue
+  // stands — SlimeScore royal blue, with depth gradient
   const standTop=GROUND*0.30, standH=GROUND*0.40;
-  ctx.fillStyle='#2c4196'; ctx.fillRect(0,standTop,W,standH);
-  ctx.fillStyle='#21347e'; ctx.fillRect(0,standTop,W,5);
+  const sg=ctx.createLinearGradient(0,standTop,0,standTop+standH);
+  sg.addColorStop(0,'#34509f'); sg.addColorStop(1,'#1f2f6e');
+  ctx.fillStyle=sg; ctx.fillRect(0,standTop,W,standH);
+  ctx.fillStyle='#1a2a66'; ctx.fillRect(0,standTop,W,5);
   // tier step lines
   ctx.strokeStyle='rgba(255,255,255,0.14)'; ctx.lineWidth=1;
   for(let k=1;k<5;k++){ const y=standTop+standH*k/5; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
@@ -642,6 +715,19 @@ function drawArena(){
   ctx.restore();
   // lower wall
   ctx.fillStyle='#bccde0'; ctx.fillRect(0,boardY+boardH,W,GROUND-(boardY+boardH));
+  // drifting confetti over the hall (matches the SlimeScore vibe)
+  const ccols=['#ff8a1e','#ffd23b','#ffffff','#2b6fff','#e63b2e','#34d17a'];
+  for(const c of confettiSeed){
+    const cy=((c.y + (G.frame*c.sp)/GROUND) % 1)*standTop, cx=(c.x*W + Math.sin(G.frame*0.02+c.r)*16);
+    const w=4*c.sw, h=7*c.sw, rot=c.r+G.frame*0.03;
+    ctx.save(); ctx.translate(cx,cy); ctx.rotate(rot); ctx.globalAlpha=0.85;
+    ctx.fillStyle=ccols[c.c]; ctx.fillRect(-w/2,-h/2,w,h); ctx.restore();
+  }
+  ctx.globalAlpha=1;
+  // soft vignette for depth
+  const vg=ctx.createRadialGradient(CENTER,GROUND*0.5,GROUND*0.3,CENTER,GROUND*0.5,W*0.62);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(8,16,40,0.18)');
+  ctx.fillStyle=vg; ctx.fillRect(0,0,W,GROUND+6);
 }
 
 function drawCourt(){
@@ -660,20 +746,26 @@ function drawCourt(){
 
 function drawNet(){
   const x=CENTER, top=NET_TOP;
-  // shadow strip
-  ctx.fillStyle='rgba(0,0,0,0.10)'; ctx.fillRect(x-halfNet,top,NET_W,NET_H);
-  // mesh
-  ctx.save(); ctx.strokeStyle='rgba(245,250,255,0.55)'; ctx.lineWidth=1;
-  for(let yy=top+6;yy<=GROUND;yy+=7){ ctx.beginPath(); ctx.moveTo(x-halfNet,yy); ctx.lineTo(x+halfNet,yy); ctx.stroke(); }
-  for(let xx=-halfNet+2;xx<=halfNet;xx+=4){ ctx.beginPath(); ctx.moveTo(x+xx,top+6); ctx.lineTo(x+xx,GROUND); ctx.stroke(); }
+  // ground shadow under the net so it reads clearly
+  ctx.fillStyle='rgba(0,0,0,0.10)'; ctx.beginPath(); ctx.ellipse(x,GROUND+5,NET_W*1.6,7,0,0,7); ctx.fill();
+  // posts: solid navy uprights flanking the mesh — gives the net a clear silhouette
+  ctx.fillStyle='#1f2d52';
+  ctx.fillRect(x-halfNet-3,top-6,3,NET_H+6);
+  ctx.fillRect(x+halfNet,   top-6,3,NET_H+6);
+  // dark backing panel so the mesh contrasts against the bright hall
+  ctx.fillStyle='rgba(22,34,66,0.16)'; ctx.fillRect(x-halfNet,top,NET_W,NET_H);
+  // mesh — darker, denser, high-contrast
+  ctx.save(); ctx.strokeStyle='rgba(18,28,58,0.55)'; ctx.lineWidth=1.2;
+  for(let yy=top+5;yy<=GROUND;yy+=6){ ctx.beginPath(); ctx.moveTo(x-halfNet,yy); ctx.lineTo(x+halfNet,yy); ctx.stroke(); }
+  for(let xx=-halfNet+2;xx<=halfNet;xx+=3.5){ ctx.beginPath(); ctx.moveTo(x+xx,top+4); ctx.lineTo(x+xx,GROUND); ctx.stroke(); }
   ctx.restore();
-  // white tape on top
-  ctx.fillStyle='#ffffff'; ctx.fillRect(x-halfNet-2,top-7,NET_W+4,7);
-  ctx.strokeStyle='#c8d2de'; ctx.lineWidth=1; ctx.strokeRect(x-halfNet-2,top-7,NET_W+4,7);
-  // antenna (red/white)
-  for(let k=0;k<4;k++){ ctx.fillStyle=k%2?'#e23b2e':'#ffffff'; ctx.fillRect(x-1,top-40+k*10,2,10); }
+  // bold white tape on top (the bit you aim over)
+  ctx.fillStyle='#ffffff'; ctx.fillRect(x-halfNet-4,top-9,NET_W+8,9);
+  ctx.strokeStyle='#9fb0c6'; ctx.lineWidth=1.5; ctx.strokeRect(x-halfNet-4,top-9,NET_W+8,9);
+  // antenna (red/white) rising from the tape
+  for(let k=0;k<5;k++){ ctx.fillStyle=k%2?'#ffffff':'#e23b2e'; ctx.fillRect(x-1.5,top-46+k*9,3,9); }
   // base anchor
-  ctx.fillStyle='#2c3e54'; ctx.fillRect(x-halfNet-2,GROUND-3,NET_W+4,5);
+  ctx.fillStyle='#1f2d52'; ctx.fillRect(x-halfNet-4,GROUND-4,NET_W+8,6);
 }
 
 function drawSlime(s){
@@ -743,7 +835,8 @@ function drawScoreboard(){
   ctx.fillStyle='#fff'; ctx.font=FONT(28*SC,900);
   ctx.fillText(G.score[0]+' - '+G.score[1], CENTER, y+38*SC);
   ctx.font=FONT(11*SC,700); ctx.fillStyle='#ffd23b';
-  ctx.fillText(t('firstTo').toUpperCase()+' '+G.toWin, CENTER, y+h+13*SC);
+  const sbSub=(G.cup?cupRoundName(G.cup.round).toUpperCase()+' · ':'')+t('firstTo').toUpperCase()+' '+G.toWin;
+  ctx.fillText(sbSub, CENTER, y+h+13*SC);
 }
 function drawServePrompt(){
   const who = G.attract ? '' : (G.mode==='2p' ? t('servePlayer',{n:G.server+1}) : (G.server===0?t('serveYou'):t('serveCpu')));
@@ -822,7 +915,7 @@ function togglePause(){
   refreshUI();
 }
 function quitToMenu(){
-  G.paused=false; G.attract=true; G.screen=SCREEN.MENU;
+  G.paused=false; G.attract=true; G.screen=SCREEN.MENU; G.cup=null;
   initAttract();
   showOverlay('menuScreen'); refreshUI();
 }
@@ -847,7 +940,9 @@ function pickTeam(tm,el){
   el.classList.add('sel');
   if (pickStage===0){
     pickP1=tm;
-    if (G.mode==='1p'){
+    if (G.mode==='cup'){
+      startCup();
+    } else if (G.mode==='1p'){
       const others=TEAMS.filter(x=>x!==tm); pickP2=others[(Math.random()*others.length)|0];
       launchLocal();
     } else {
@@ -871,9 +966,9 @@ function goTeam(){
 
 /* ---- Match setup (level + points-to-win) ---- */
 function openSetup(mode){
-  G.mode=mode; Sound.click();
-  $('setupTitle').textContent = mode==='2p' ? t('setupTitle2p') : t('setupTitle1p');
-  $('setupSub').textContent   = mode==='2p' ? t('setupSub2p')   : t('setupSub');
+  G.cup=null; G.mode=mode; Sound.click();
+  $('setupTitle').textContent = mode==='2p' ? t('setupTitle2p') : mode==='cup' ? t('setupTitleCup') : t('setupTitle1p');
+  $('setupSub').textContent   = mode==='2p' ? t('setupSub2p')   : mode==='cup' ? t('setupSubCup')   : t('setupSub');
   $('setupDiffWrap').style.display = mode==='2p' ? 'none' : 'flex';
   buildSetupRows();
   showOverlay('setupScreen');
@@ -911,6 +1006,7 @@ function showGameOver(){
   let title;
   if (G.mode==='2p') title=t('playerWins',{n:G.winner+1});
   else title=G.winner===0 ? t('youWin') : t('cpuWins');
+  $('overRematch').textContent=t('rematch');
   $('overTitle').textContent=title;
   $('overSub').innerHTML=t('finalScore',{a:left,b:right});
   // leaderboard submit only for a 1-player win
@@ -994,6 +1090,7 @@ function boot(){
   // menu
   bind('btn1p', ()=>{ Sound.unlock(); openSetup('1p'); });
   bind('btn2p', ()=>{ Sound.unlock(); openSetup('2p'); });
+  bind('btnCup', ()=>{ Sound.unlock(); openSetup('cup'); });
   bind('btnSound', ()=>{ settings.sound=!settings.sound; store.save('sound',settings.sound); Sound.unlock(); updateSettingsUI(); });
   bind('btnShare', shareGame);
   bind('btnLeaders', ()=>{ Sound.click(); ensureLeaderboard(); showSlimescore(null,null); });
@@ -1014,7 +1111,11 @@ function boot(){
   $('volRange').addEventListener('input', e=>{ settings.volume=clamp01(e.target.value/100); store.save('volume',settings.volume); Sound.setVol(settings.volume); });
   bind('setBack', ()=>{ Sound.click(); showOverlay('menuScreen'); });
   // over
-  bind('overRematch', ()=>{ Sound.click(); if (G.mode==='2p'){ launchLocal(); } else { goTeam(); } });
+  bind('overRematch', ()=>{ Sound.click();
+    if (G.cup){ if (G.cup.done) startCup(); else cupNextMatch(); }
+    else if (G.mode==='2p'){ launchLocal(); }
+    else { goTeam(); }
+  });
   bind('overLeaders', ()=>{ Sound.click(); ensureLeaderboard(); showSlimescore(null,null); });
   bind('overMenu', ()=>{ Sound.click(); quitToMenu(); });
   bind('lbSend', submitScore);
@@ -1055,5 +1156,5 @@ if (document.readyState==='loading') document.addEventListener('DOMContentLoaded
    ---------------------------------------------------------------------------- */
 if (typeof location!=='undefined' && (location.hostname==='localhost' || location.hostname==='127.0.0.1' || (location.search||'').includes('debug=1'))){
   window.__G=G; window.__TEAMS=TEAMS;
-  window.__TEST={ startMatch, setupServe, scorePoint, volleyPoints, predictLanding, computeAI, SCREEN, settings, G };
+  window.__TEST={ startMatch, setupServe, scorePoint, volleyPoints, predictLanding, computeAI, startCup, cupNextMatch, advanceCup, ladderDiff, SCREEN, settings, G };
 }

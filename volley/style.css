@@ -123,6 +123,7 @@ body.deskgame #quitBtn { display: none; }
 .mode-row { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; width: 100%; }
 .btn.mode { min-width: 0; flex: 1 1 40%; padding: 12px 10px; }
 .btn.mode.vb-blue { background: linear-gradient(180deg,#5a97ff,#2b6fff); color:#fff; border-bottom-color:#0e3aa8; box-shadow:0 4px 14px rgba(43,111,255,.28); }
+.btn.mode.vb-gold { background: linear-gradient(180deg,#ffc548,#f59e1b); color:#3a2600; border-bottom-color:#b86d00; box-shadow:0 4px 14px rgba(245,158,27,.30); }
 .grp-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent2); font-weight: 800; width: 100%; text-align: left; margin: 4px 0 -2px; }
 .grp-label span { color: var(--muted); font-weight: 600; letter-spacing: .5px; text-transform: none; }
 .len-row { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; }
