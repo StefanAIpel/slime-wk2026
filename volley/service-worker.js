@@ -1,7 +1,7 @@
 /* Slime Volleyball — network-first service worker.
    Network-first so new deploys are always visible online; cache is only an
    offline fallback. Cross-origin (fonts/Supabase) is not intercepted. */
-const CACHE = 'slimevolley-v9-ui';
+const CACHE = 'slimevolley-v10-menu';
 const ASSETS = [
   './', './index.html', './404.html', './style.css', './game.js', './leaderboard.js',
   './manifest.webmanifest', './assets/favicon-32-v2.png',
@@ -9,6 +9,7 @@ const ASSETS = [
   './assets/app-icon-volley-v2-180.png', './assets/app-icon-volley-v2-192.png',
   './assets/app-icon-volley-v2-512.png', './assets/app-icon-volley-v2-maskable-512.png',
   './assets/slimescore-app-icon-v2-192.png', './assets/slime-soccer-app-icon-v2-192.png',
+  './assets/slimescore-wk-poule-banner.png', './assets/slime-soccer-wc26-banner.png',
   './assets/ikea-maintenance-slime.png'
 ];
 
