@@ -16,7 +16,7 @@
   --good:      #34d17a;
   --bad:       #ff5470;
   --ui:      'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --display: 'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --display: 'Baloo 2', 'Rubik', system-ui, -apple-system, 'Segoe UI', sans-serif;   /* chunky rounded — SlimeScore wordmark vibe */
   --mono:    ui-monospace, 'SF Mono', 'Roboto Mono', Menlo, monospace;
   --padb:    0px;   /* bottom space reserved for touch controls (tablets); 0 on desktop */
 }
@@ -113,9 +113,9 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 }
 .title .accent {
   display:block; font-size:.6em; letter-spacing:3px; margin-top:6px; font-weight:900;
-  background:linear-gradient(95deg,#3b86ff 0%, #e4002b 52%, #00a64a 100%);   /* United 2026 tricolor */
+  background:linear-gradient(95deg,#e4002b 0%, #1f6fff 33%, #00a64a 66%, #ff7a18 100%);   /* SlimeScore / WC2026: red·blue·green·orange */
   -webkit-background-clip:text; background-clip:text;
-  -webkit-text-fill-color:transparent; color:#3b86ff;
+  -webkit-text-fill-color:transparent; color:#1f6fff;
   text-shadow:none; filter:drop-shadow(0 2px 12px rgba(43,111,255,.40));
 }
 .title.small-title { font-size: clamp(20px, 4.6vw, 36px); letter-spacing: 1px; line-height: 1.1; }
@@ -370,11 +370,11 @@ body.deskgame #quitBtn { display: none; }   /* the floating ☰ is replaced by t
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
 body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 62px; height: 35px; border-radius: 10px;       /* ~20% smaller corner pads */
+  width: 74px; height: 44px; border-radius: 12px;       /* forgiving corner pads (hit zone is enlarged in JS) */
   background: linear-gradient(180deg, rgba(255,172,72,.12), rgba(255,122,24,.05));   /* ~90% transparent fill */
   border: 1.5px solid rgba(255,198,112,.85);            /* border stays clearly visible */
   box-shadow: 0 2px 8px rgba(0,0,0,.30);
-  color: #fff; font-size: 18px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
+  color: #fff; font-size: 20px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
   display: flex; align-items: center; justify-content: center;
   touch-action: none; pointer-events: none;
   -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
@@ -392,9 +392,10 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
 }
 /* a bit bigger on larger touch screens (tablets), still a tidy low overlay */
 @media (pointer: coarse) and (min-width: 760px){
-  :root { --padb: 64px; }
-  .tbtn { width: 112px; height: 46px; font-size: 22px; border-radius: 12px; }
-  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 88px); }
+  :root { --padb: 84px; }
+  .tbtn { width: 156px; height: 68px; font-size: 30px; border-radius: 16px; }   /* big, forgiving tablet pads */
+  .pad { gap: 26px; }
+  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 112px); }
 }
 
 /* ---- Rotate device hint (zichtbaarheid via JS: alleen tijdens het spelen) ---- */
