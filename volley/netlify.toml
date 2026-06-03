@@ -16,6 +16,10 @@
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
 [[headers]]
+  for = "/404.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+[[headers]]
   for = "/service-worker.js"
   [headers.values]
     Cache-Control = "public, max-age=0, must-revalidate"
