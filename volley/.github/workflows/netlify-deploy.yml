@@ -1,0 +1,47 @@
+name: Deploy to Netlify
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: netlify-production
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate static bundle
+        run: |
+          node --check service-worker.js
+          node --check game.js
+          node --check leaderboard.js
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+
+          for name in ('index.html', '404.html'):
+              p = Path(name)
+              if not p.exists():
+                  raise SystemExit(f'{name} missing')
+              HTMLParser().feed(p.read_text())
+              print(f'{name}: ok')
+
+          asset = Path('assets/ikea-maintenance-slime.png')
+          if not asset.exists() or asset.stat().st_size < 100_000:
+              raise SystemExit('Ikea Slime asset missing or unexpectedly small')
+          print(f'{asset}: {asset.stat().st_size} bytes')
+          PY
+
+      - name: Deploy production to Netlify
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        run: npx --yes netlify-cli@latest deploy --prod --dir=. --site "$NETLIFY_SITE_ID" --auth "$NETLIFY_AUTH_TOKEN" --message "GitHub auto-deploy ${GITHUB_SHA}"

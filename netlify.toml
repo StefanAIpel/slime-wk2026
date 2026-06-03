@@ -3,10 +3,12 @@
   publish = "."
   command = ""
 
-# Security + correctness headers (no CSP yet — needs testing against PeerJS/WebRTC + Supabase)
+# Security + correctness headers. CSP only controls who may embed this app;
+# it does not restrict the app's own PeerJS/WebRTC/Supabase connections.
 [[headers]]
   for = "/*"
   [headers.values]
+    Content-Security-Policy = "frame-ancestors 'self' https://slimescore.com https://slimescore.app"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=()"
