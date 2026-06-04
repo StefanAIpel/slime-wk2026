@@ -35,12 +35,23 @@
 
   <!-- pitch -->
   <div id="stage">
-    <div id="stageTitle" class="title stage-title">SLIME<span class="accent">WORLD CUP &rsquo;26</span></div>
-    <canvas id="game"></canvas>
-    <div id="stageControls">
-      <button id="stagePause" class="btn secondary small" data-i18n="pauseBtn">⏸ Pause</button>
-      <button id="stageQuit" class="btn secondary small" data-i18n="quitBtn2">✕ Quit</button>
+    <div id="stageTitle">
+      <span class="stage-side-icon" aria-hidden="true"><img src="assets/icons/app-icon-soccer-wc26-v2-192.png" width="64" height="64" alt=""></span>
+      <div class="title stage-title">SLIME<span class="accent">WORLD CUP &rsquo;26</span></div>
+      <a class="stage-side-icon" id="stageScoreIcon" href="https://slimescore.com" target="_blank" rel="noopener" aria-label="Open SlimeScore.com"><img src="assets/icons/slimescore-icon.svg" width="64" height="64" alt=""></a>
     </div>
+    <div id="stageWrap">
+      <canvas id="game"></canvas>
+      <div class="stage-corner tl">
+        <button id="stagePause" class="btn secondary small" data-i18n="pauseBtn">⏸ Pause</button>
+        <button id="stageQuit" class="btn secondary small" data-i18n="quitBtn2">✕ Quit</button>
+      </div>
+      <div class="stage-corner tr">
+        <button id="stageRules" class="corner-ic" aria-label="How to play">❓</button>
+        <button id="stageMute" class="corner-ic" aria-label="sound on/off">🔊</button>
+      </div>
+    </div>
+    <div id="stageHint" class="stage-hint"></div>
   </div>
 
   <!-- ======================= MENU (retro layout over the live pitch) ======================= -->
