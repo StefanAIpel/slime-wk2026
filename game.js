@@ -181,7 +181,7 @@ const I18N = {
     grp1p:'1 Player', grp1pSub:'· keyboard or touch', grpMulti:'Multiplayer', grp1pHtml:'1 Player <span>· keyboard or touch</span>',
     mFriendly:'⚽ Friendly', mWorldCup:'🏆 World Cup 2026', m2p:'2 Players · same device', mOnline:'🌐 Online',
     tagHost:'WORLD CUP 2026 · USA · MEXICO · CANADA',
-    pickYourCountry:'Pick <b>your</b> country', pickP1:'Player <b>1</b> (left): pick your country',
+    pickYourCountry:'Pick <b>your</b> country', pickP1:'Player <b>1</b> (left): pick your country', pickOpp:'Pick the <b>opponent</b>',
     pickWC:'Pick <b>your</b> country · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦', back:'‹ Back',
     online:'ONLINE', onlineSub:'P2P connection · no account needed',
     playFriend:'👥 Play a friend', quickMatch:'⚡ Quick match',
@@ -235,7 +235,7 @@ const I18N = {
     grp1p:'1 Speler', grp1pSub:'· toetsenbord of touch', grpMulti:'Multiplayer', grp1pHtml:'1 Speler <span>· toetsenbord of touch</span>',
     mFriendly:'⚽ Oefenpotje', mWorldCup:'🏆 World Cup 2026', m2p:'2 Spelers · zelfde toestel', mOnline:'🌐 Online',
     tagHost:'WORLD CUP 2026 · USA · MEXICO · CANADA',
-    pickYourCountry:'Kies <b>jouw</b> land', pickP1:'Speler <b>1</b> (links): kies je land',
+    pickYourCountry:'Kies <b>jouw</b> land', pickP1:'Speler <b>1</b> (links): kies je land', pickOpp:'Kies de <b>tegenstander</b>',
     pickWC:'Kies <b>jouw</b> land · WORLD CUP 2026 🇺🇸🇲🇽🇨🇦', back:'‹ Terug',
     online:'ONLINE', onlineSub:'P2P-verbinding · geen account nodig',
     playFriend:'👥 Tegen een vriend', quickMatch:'⚡ Snelle match',
@@ -1236,6 +1236,14 @@ function render(){
   if (settings.crt) drawCRT();
 }
 
+// Pitchside advertisers shown on the scrolling boards (and click targets).
+const AD_BOARDS = [
+  { t:'SLIMESCORE.COM',  c:'#ffd23b', u:'https://slimescore.com' },
+  { t:'SLIME SOCCER',    c:'#ff7a18', u:'https://soccer.slimescore.com' },
+  { t:'SLIME VOLLEYBALL', c:'#1f6fff', u:'https://volley.slimescore.com' },
+  { t:'FELIRO.NL',       c:'#00a64a', u:'https://feliro.nl' },
+];
+
 function drawStadium(){
   // night sky
   const sky = ctx.createLinearGradient(0,0,0,GROUND);
@@ -1300,15 +1308,24 @@ function drawStadium(){
     ctx.restore();
   }
 
-  // scrolling banner (tiled by measured width so the loop is seamless in any font)
+  // interactive pitchside ad boards — discrete, clickable brand tiles that scroll.
+  // Each visible tile's on-screen x-range + url is recorded in G._adHit so a click
+  // on a board opens that advertiser (see the adBoards() handler).
   ctx.fillStyle='#06060f'; ctx.fillRect(0,GROUND-22,W,22);
   ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
-  const msg='SLIMESCORE.COM  ↗   •   SLIME SOCCER   •   SLIME VOLLEYBALL   •   WORLD CUP 2026   •   ';
-  const mw=ctx.measureText(msg).width || 1;
-  const scroll=(G.frame*1.1)%mw;
-  // tint each repeat with rotating WC + orange accents
-  const bcols=['#ff7a18','#1f6fff','#e4002b','#00a64a']; let bi=0;
-  for (let x=-scroll; x<W; x+=mw){ ctx.fillStyle=bcols[bi++%bcols.length]; ctx.fillText(msg, x, GROUND-7); }
+  const sep='   •   ';
+  let unit=0; const widths=AD_BOARDS.map(b=>{ const w=ctx.measureText(b.t+sep).width; unit+=w; return w; });
+  const scroll=(G.frame*1.1)%unit;
+  const hits=[];
+  for (let x=-scroll; x<W; ){
+    for (let i=0;i<AD_BOARDS.length && x<W;i++){
+      const b=AD_BOARDS[i], w=widths[i];
+      ctx.fillStyle=b.c; ctx.fillText(b.t+sep, x, GROUND-7);
+      if (x+w>0) hits.push({ l:x, r:x+w, u:b.u });
+      x+=w;
+    }
+  }
+  G._adHit=hits;
 }
 
 function drawPitch(){
@@ -1510,8 +1527,8 @@ function drawGoalText(){
   ctx.fillStyle='#fff'; ctx.font=FONT(66,900);
   ctx.fillText('GOAL!',0,wob);
   const scorerTeam = G.lastScorer===0?G.p1.team:G.p2.team;
-  ctx.fillStyle=scorerTeam.color; ctx.font=FONT(18,800);
-  ctx.fillText(scorerTeam.name.toUpperCase()+' SCORES', 0, 42);
+  ctx.fillStyle='#fff'; ctx.font=FONT(20,800);
+  ctx.fillText(teamName(scorerTeam).toUpperCase()+' SCORES', 0, 42);
   ctx.restore();
 }
 function drawPaused(){
@@ -1562,13 +1579,16 @@ requestAnimationFrame(frame);
    match opens slimescore.com (the SlimeScore hub). */
 (function adBoards(){
   const inMatch = () => [SCREEN.PLAY, SCREEN.GOAL, SCREEN.COUNT].indexOf(G.screen) >= 0 && !G.paused;
-  const onBoard = (clientX, clientY) => {
-    const rc = canvas.getBoundingClientRect(); if (!rc.width || !rc.height) return false;
-    const ly = (clientY - rc.top) / rc.height * H;
-    return ly >= GROUND - 26 && ly <= GROUND + 2;            // the banner band along the stand front
+  const hitAt = (clientX, clientY) => {
+    const rc = canvas.getBoundingClientRect(); if (!rc.width || !rc.height) return null;
+    const lx = (clientX - rc.left) / rc.width * W, ly = (clientY - rc.top) / rc.height * H;
+    if (ly < GROUND - 26 || ly > GROUND + 2) return null;          // outside the board band
+    const hits = G._adHit || [];
+    for (const h of hits){ if (lx >= h.l && lx <= h.r) return h.u; }
+    return hits.length ? 'https://slimescore.com' : null;          // gap between tiles -> the hub
   };
-  canvas.addEventListener('click', e => { if (inMatch() && onBoard(e.clientX, e.clientY)) window.open('https://slimescore.com', '_blank', 'noopener'); });
-  canvas.addEventListener('mousemove', e => { canvas.style.cursor = (inMatch() && onBoard(e.clientX, e.clientY)) ? 'pointer' : ''; });
+  canvas.addEventListener('click', e => { if (!inMatch()) return; const u = hitAt(e.clientX, e.clientY); if (u) window.open(u, '_blank', 'noopener'); });
+  canvas.addEventListener('mousemove', e => { canvas.style.cursor = (inMatch() && hitAt(e.clientX, e.clientY)) ? 'pointer' : ''; });
 })();
 
 /* ----------------------------------------------------------------------------
@@ -1585,9 +1605,9 @@ function updateTouchVisibility(){
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
   document.body.classList.toggle('m2p', G.mode==='2p');
   refreshBtnZones();                                   // recompute enlarged tap zones for this layout
-  const hint = $('playHint');
-  hint.innerHTML = (G.mode==='2p') ? t('playHint2p') : t('playHint');
-  hint.style.display = (G.screen===SCREEN.PLAY && !IS_TOUCH && !G.paused) ? 'block' : 'none';
+  const hintTxt = (G.mode==='2p') ? t('playHint2p') : t('playHint');
+  const hint = $('playHint'); hint.innerHTML = hintTxt; hint.style.display = 'none';   // desktop shows it under the pitch via #stageHint
+  const sh = $('stageHint'); if (sh) sh.innerHTML = hintTxt;
   $('quitBtn').classList.toggle('show', inGame);
   $('muteBtn').classList.toggle('show', inGame);
   $('rulesBtn').classList.toggle('show', inGame);
@@ -1625,9 +1645,10 @@ function pickTeam(t,el){
   if (pickStage===0){
     pickP1=t;
     if (G.mode==='1p'){
-      // AI picks a random different team
-      const others=TEAMS.filter(x=>x!==t); pickP2=others[(Math.random()*others.length)|0];
-      launchLocal();
+      // Friendly: you also choose the opponent — pick a second country (it plays the AI)
+      pickStage=1; el.classList.add('taken');
+      $('pickLabel').innerHTML=(I18N[settings.lang]&&I18N[settings.lang].pickOpp)||I18N.en.pickOpp;
+      setTimeout(()=>document.querySelectorAll('.team').forEach(e=>{ if(!e.classList.contains('taken')) e.classList.remove('sel'); }),120);
     } else if (G.mode==='host'){
       // host picks own team, guest picks later
       pickP2=null; waitForGuestTeam();
@@ -2384,7 +2405,7 @@ function refreshToggles(){
   const vr=$('volRange'); if(vr) vr.value=Math.round(settings.volume*100);
 }
 function cycleLang(){ settings.lang = settings.lang==='nl'?'en':'nl'; store.save('lang',settings.lang); applyStaticI18n(); refreshToggles(); renderMenuPills(); }
-function updateSoundBtn(){ const i = settings.sound?'🔊':'🔇'; const b=$('btnSound'); if(b) b.textContent=i; const m=$('muteBtn'); if(m) m.textContent=i; }
+function updateSoundBtn(){ const i = settings.sound?'🔊':'🔇'; const b=$('btnSound'); if(b) b.textContent=i; const m=$('muteBtn'); if(m) m.textContent=i; const sm=$('stageMute'); if(sm) sm.textContent=i; }
 function toggleSound(){ settings.sound=!settings.sound; store.save('sound',settings.sound); if(settings.sound)Audio.unlock(); Audio.setSound(settings.sound); updateSoundBtn(); refreshToggles(); }
 function setupVolume(){
   const r=$('volRange'); if(!r) return;
@@ -2449,6 +2470,8 @@ wire('rulesBtn', ()=>openRules('game'));   // in-game ❓ : pause + show the rul
 wire('rulesBack', rulesBack);
 wire('stagePause', quitButton);
 wire('stageQuit', ()=>askEndWK(backToMenu, ()=>{}));   // desktop frame: quit to menu (guarded mid-tournament)
+wire('stageRules', ()=>openRules('game'));              // desktop frame: top-right ❓
+{ const sm=$('stageMute'); if (sm) sm.onclick = ()=>{ toggleSound(); }; }   // desktop frame: top-right sound
 wire('confirmYes', ()=>{ const f=_cfYes; _cfYes=_cfNo=null; if(f) f(); });
 wire('confirmNo',  ()=>{ const f=_cfNo;  _cfYes=_cfNo=null; if(f) f(); else backToMenu(); });
 wire('tMode', toggleMode);
