@@ -7,11 +7,11 @@ new developer or an AI agent working in this repo.
 | Game | Source | Lives at | Deploys to | Domain |
 |---|---|---|---|---|
 | **Slime Soccer** (Slime World Cup '26) | this repo root (`slime-wk2026`) | — | Netlify (git, from `main`) | **soccer.slimescore.com** (+ `slime-wk2026.netlify.app` fallback) |
-| **Slime Volleyball** | `volley/` in this repo | auto-synced → `StefanAIpel/slime-volley` (root) | Netlify (from `slime-volley`) | **volley.slimescore.com / .app** |
+| **Slime Volleyball** | dedicated repo `StefanAIpel/slime-volley`; legacy copy in `volley/` here | sync disabled | Netlify (from `slime-volley`) | **volley.slimescore.com / .app** |
 
-**Auto-sync:** `.github/workflows/sync-volley.yml` mirrors `volley/` → the root of the
-`slime-volley` repo on every push to `main` (SSH deploy key secret `SLIME_VOLLEY_DEPLOY_KEY`).
-So you can develop the volley game here in `volley/`; the workflow fills `slime-volley`.
+**Auto-sync:** disabled. `.github/workflows/sync-volley.yml` is manual-only and the GitHub
+workflow is disabled manually, so `volley/` no longer overwrites the root of `slime-volley` on pushes.
+`slime-volley` is now the dedicated repo/source for volleyball work unless explicitly re-enabled.
 > Pick ONE source per game. If a dedicated session works **directly** in `slime-volley`,
 > disable this workflow + remove `volley/` here to avoid two sources clobbering each other.
 

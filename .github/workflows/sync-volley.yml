@@ -1,11 +1,6 @@
-name: Sync volley to slime-volley
+name: Manual sync volley to slime-volley
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'volley/**'
-      - '.github/workflows/sync-volley.yml'
   workflow_dispatch:
 
 permissions:
