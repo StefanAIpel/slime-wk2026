@@ -70,7 +70,8 @@ npx http-server . -p 8080     # soccer ;  use volley/ for the volley app
 
 ## Working agreement
 - Branch + PR into `main` (don't push to `main` directly). Squash-merge on green CI.
-- Touch the soccer app at the repo root; touch the volley app under `volley/` (auto-syncs on merge).
+- Touch the soccer app at the repo root. Do **not** use `volley/` here as the source of truth;
+  Slime Volleyball lives in the dedicated `StefanAIpel/slime-volley` repo and the old sync is disabled.
 - When you change deploy/domains, update the table at the top of this file.
 
 ➡️ **Porting work (volley ← soccer): [`volley/PORTING.md`](volley/PORTING.md).**

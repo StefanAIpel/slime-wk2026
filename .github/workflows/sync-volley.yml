@@ -1,78 +1,20 @@
-name: Manual sync volley to slime-volley
+name: Disabled legacy sync volley to slime-volley
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: none
 
 concurrency:
   group: sync-volley
   cancel-in-progress: false
 
 jobs:
-  sync:
+  disabled:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out source repo
-        uses: actions/checkout@v4
-
-      - name: Stop if volley folder does not exist yet
-        id: source
-        shell: bash
+      - name: Sync disabled
         run: |
-          if [ ! -d volley ]; then
-            echo "No volley/ directory in slime-wk2026 yet; nothing to sync."
-            echo "exists=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "exists=true" >> "$GITHUB_OUTPUT"
-
-      - name: Configure SSH deploy key
-        if: steps.source.outputs.exists == 'true'
-        shell: bash
-        run: |
-          install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.SLIME_VOLLEY_DEPLOY_KEY }}" > ~/.ssh/slime_volley_deploy_key
-          chmod 600 ~/.ssh/slime_volley_deploy_key
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-          cat > ~/.ssh/config <<'EOF'
-          Host github.com
-            HostName github.com
-            User git
-            IdentityFile ~/.ssh/slime_volley_deploy_key
-            IdentitiesOnly yes
-          EOF
-
-      - name: Clone target repo
-        if: steps.source.outputs.exists == 'true'
-        shell: bash
-        run: |
-          git clone git@github.com:StefanAIpel/slime-volley.git /tmp/slime-volley
-
-      - name: Copy volley bundle into target repo
-        if: steps.source.outputs.exists == 'true'
-        shell: bash
-        run: |
-          rsync -a --delete \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='dist' \
-            --exclude='.next' \
-            --exclude='.netlify' \
-            volley/ /tmp/slime-volley/
-
-      - name: Commit and push changes
-        if: steps.source.outputs.exists == 'true'
-        shell: bash
-        working-directory: /tmp/slime-volley
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          if git diff --quiet --exit-code && git diff --cached --quiet --exit-code; then
-            echo "No changes to sync."
-            exit 0
-          fi
-          git add -A
-          git commit -m "chore: sync volley from slime-wk2026"
-          git push origin main
+          echo "The legacy sync from slime-wk2026/volley to StefanAIpel/slime-volley is disabled."
+          echo "Edit and deploy Slime Volleyball from the dedicated StefanAIpel/slime-volley repository."

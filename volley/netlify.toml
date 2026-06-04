@@ -1,6 +1,7 @@
 # Slime Volleyball — static site (no build step).
-# This folder is auto-synced (via slime-wk2026's .github/workflows/sync-volley.yml)
-# to the ROOT of the StefanAIpel/slime-volley repo, which Netlify deploys.
+# Legacy copy only: the old auto-sync from slime-wk2026/volley to the ROOT of
+# StefanAIpel/slime-volley is disabled. Edit/deploy from the dedicated
+# StefanAIpel/slime-volley repo instead.
 #   • Netlify site connected to: slime-volley
 #   • Base directory:     (repo root)
 #   • Publish directory:  .

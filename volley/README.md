@@ -3,11 +3,10 @@
 Retro slime volleyball in a bright indoor arena — part of **SlimeScore**, the
 sibling of [Slime Soccer / Slime World Cup](https://soccer.slimescore.com).
 
-> **This folder is the source of truth for the standalone Slime Volleyball bundle.**
-> It is automatically synced to [`StefanAIpel/slime-volley`](https://github.com/StefanAIpel/slime-volley)
-> by `.github/workflows/sync-volley.yml` (SSH deploy key `SLIME_VOLLEY_DEPLOY_KEY`)
-> on every change under `volley/` on `main`. Netlify deploys `slime-volley` →
-> **volley.slimescore.com / .app**. So: just edit files here; the rest is automatic.
+> **Legacy copy only. Do not edit this folder as the source of truth.**
+> The old sync from this folder to [`StefanAIpel/slime-volley`](https://github.com/StefanAIpel/slime-volley)
+> is disabled so this repo can no longer overwrite the dedicated volleyball repo.
+> Edit and deploy Slime Volleyball from `StefanAIpel/slime-volley`.
 
 Built the same way as the soccer game: **vanilla JS + HTML5 Canvas, no build step**.
 Three files do everything — `index.html` (DOM screens), `game.js` (the whole game),
@@ -54,9 +53,9 @@ are part of *SlimeScore*. Points are recomputed server-side from the match facts
 14. UI / DOM screens · 15. Wiring · 16. Test hooks (`?debug=1`)
 
 ## Deploy
-Handled automatically (see the note at the top): edit under `volley/` → push to
-`main` → the GitHub Action mirrors this folder to the **root** of `slime-volley` →
-Netlify (connected to `slime-volley`, no build) serves **volley.slimescore.com / .app**.
+Deployment is handled from the dedicated `StefanAIpel/slime-volley` repository.
+This legacy `volley/` folder is not synced automatically and must not be used to
+overwrite the standalone volleyball repo.
 
 ## Develop / test
 ```bash
