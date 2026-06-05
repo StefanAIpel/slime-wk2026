@@ -48,7 +48,7 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(new URL('./game.js', import.meta.url), 'utf8'), sandbox);
 // top-level const/function bindings live in the context's lexical scope; surface them
-vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, wkPoints, tick, render, go1p, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES };', sandbox);
+vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, wkPoints, tick, render, go1p, startTeamSelect, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES };', sandbox);
 
 const T = sandbox.__TEST;
 const { G, TEAMS, SCREEN, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner } = T;
@@ -124,8 +124,10 @@ try {
 
   // start a 1P match and run the countdown out to play
   T.go1p();
-  T.pickTeam(TEAMS[2], makeEl('t'));                // Brazil vs random AI -> startMatch
-  ok(G.screen===SCREEN.COUNT, 'picking a team starts the kickoff countdown');
+  T.startTeamSelect();
+  T.pickTeam(TEAMS[2], makeEl('t1'));               // Friendly: pick your team first
+  T.pickTeam(TEAMS[3], makeEl('t2'));               // then pick the AI opponent -> startMatch
+  ok(G.screen===SCREEN.COUNT, 'picking teams starts the kickoff countdown');
   for (let i=0;i<260 && G.screen!==SCREEN.PLAY;i++){ T.tick(); }
   ok(G.screen===SCREEN.PLAY, 'countdown reaches play');
   T.render();
