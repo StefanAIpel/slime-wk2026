@@ -72,15 +72,21 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
   align-items: center;
   justify-content: center;
   grid-template-columns: auto minmax(190px, max-content) auto;
-  gap: clamp(18px, 5.8vw, 76px);
-  width: min(62vw, calc(64vh * 1160 / 600));
-  max-width: 860px;
+  gap: clamp(18px, 4.2vw, 58px);
+  width: min(72vw, calc(64vh * 1160 / 600));
+  max-width: 980px;
   margin-inline: auto;
 }
 .stage-side-icon { display: none; flex: 0 0 auto; line-height: 0; }
 .stage-side-icon-left { justify-self: end; }
 .stage-side-icon-right { justify-self: start; }
-.stage-side-icon img { width: clamp(42px, 6.4vh, 64px); height: auto; border-radius: 14px; box-shadow: 0 5px 16px rgba(0,0,0,.45); }
+.stage-side-icon img {
+  width: clamp(112px, 19vh, 128px);
+  height: clamp(112px, 19vh, 128px);
+  object-fit: contain;
+  border-radius: 24px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.48), 0 0 28px rgba(43,111,255,.20);
+}
 #stageWrap { position: relative; display: flex; }
 .stage-corner { position: absolute; top: 8px; display: none; gap: 8px; z-index: 6; }
 .stage-corner.tl { left: 8px; }
