@@ -123,9 +123,12 @@ try {
   T.render();                                       // draw menu frame with stubbed canvas
 
   // start a 1P match and run the countdown out to play
+  // Friendly now lets you choose the opponent too: pick your team, then the opponent.
   T.go1p();
-  T.pickTeam(TEAMS[2], makeEl('t'));                // Brazil vs random AI -> startMatch
-  ok(G.screen===SCREEN.COUNT, 'picking a team starts the kickoff countdown');
+  T.pickTeam(TEAMS[2], makeEl('t'));                // your team (Brazil) -> "pick the opponent"
+  ok(G.screen!==SCREEN.COUNT, 'first pick does not start yet (you choose the opponent)');
+  T.pickTeam(TEAMS[5], makeEl('t2'));               // opponent -> startMatch
+  ok(G.screen===SCREEN.COUNT, 'picking both teams starts the kickoff countdown');
   for (let i=0;i<260 && G.screen!==SCREEN.PLAY;i++){ T.tick(); }
   ok(G.screen===SCREEN.PLAY, 'countdown reaches play');
   T.render();
