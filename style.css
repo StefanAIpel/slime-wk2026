@@ -67,10 +67,15 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
    under the field. body.deskgame is toggled on by JS on desktop during a match. */
 .stage-title { font-size: clamp(13px, 2vh, 19px); letter-spacing: 1px; line-height: 1; text-align: center; }
 .stage-title .accent { font-size: .56em; margin-top: 4px; letter-spacing: 2px; }
-#stageTitle { display: none; align-items: center; justify-content: center; gap: 10px; }
-#stageTitle .stage-title { font-size: clamp(16px, 3.6vh, 32px); line-height: 1.04; }   /* ~half size (beats the big .title rule) */
+/* ~half the size of the enlarged (#56) header, per request. Flex layout. */
+#stageTitle { display: none; align-items: center; justify-content: center; gap: clamp(12px, 2.4vw, 26px); }
+#stageTitle .stage-title { font-size: clamp(16px, 3.8vh, 36px); line-height: 1.04; }   /* ~half (beats the big .title rule) */
 .stage-side-icon { display: none; flex: 0 0 auto; line-height: 0; }
-.stage-side-icon img { width: clamp(24px, 3.4vh, 34px); height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,.45); }
+.stage-side-icon-left, .stage-side-icon-right { justify-self: center; }
+.stage-side-icon img {
+  width: clamp(54px, 9vh, 64px); height: auto; object-fit: contain;
+  border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.45), 0 0 20px rgba(43,111,255,.16);
+}
 #stageWrap { position: relative; display: flex; }
 .stage-corner { position: absolute; top: 8px; display: none; gap: 8px; z-index: 6; }
 .stage-corner.tl { left: 8px; }
@@ -82,7 +87,7 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
   background: rgba(0,0,0,.42); padding: 7px 14px; border-radius: 20px; max-width: 92vw; }
 .stage-hint b { color: var(--ink); }
 body.deskgame #stage { flex-direction: column; gap: 10px; justify-content: flex-start; padding-top: max(10px, 2vh); }
-body.deskgame #stageTitle { display: flex; }
+body.deskgame #stageTitle { display: grid; }
 body.deskgame .stage-side-icon { display: block; }
 body.deskgame .stage-corner { display: flex; }
 body.deskgame .stage-hint { display: block; }
