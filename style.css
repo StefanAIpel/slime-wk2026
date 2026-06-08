@@ -395,20 +395,20 @@ body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { displa
 #touch { position: fixed; inset: 0; z-index: 12; display: none; pointer-events: none; }
 #touch.show { display: block; }
 .pad {
-  position: absolute; bottom: max(22px, calc(env(safe-area-inset-bottom) + 10px));   /* lift clear of the iOS home-indicator swipe strip */
-  pointer-events: none; display: flex; gap: 18px;       /* tight pair; hit-testing is coordinate-based */
+  position: absolute; bottom: max(40px, calc(env(safe-area-inset-bottom) + 26px));   /* lifted higher so the bottom edge stays clear of the iOS home-indicator / app-swipe strip */
+  pointer-events: none; display: flex; gap: 13px;       /* tighter pair; hit-testing is coordinate-based */
 }
-#padMove1 { left: max(56px, env(safe-area-inset-left)); }
-#padAct1  { right: max(56px, env(safe-area-inset-right)); }
-#pad2     { right: max(56px, env(safe-area-inset-right)); }
+#padMove1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); }    /* pulled inward, out of the bottom corners */
+#padAct1  { right: max(8vw, calc(env(safe-area-inset-right) + 34px)); }
+#pad2     { right: max(8vw, calc(env(safe-area-inset-right) + 34px)); }
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
-body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
+body.m2p #padAct1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 74px; height: 44px; border-radius: 12px;       /* forgiving corner pads (hit zone is enlarged in JS) */
+  width: 60px; height: 38px; border-radius: 11px;       /* smaller phone pads (hit zone is enlarged in JS) */
   background: linear-gradient(180deg, rgba(255,172,72,.12), rgba(255,122,24,.05));   /* ~90% transparent fill */
   border: 1.5px solid rgba(255,198,112,.85);            /* border stays clearly visible */
   box-shadow: 0 2px 8px rgba(0,0,0,.30);
-  color: #fff; font-size: 20px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
+  color: #fff; font-size: 18px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
   display: flex; align-items: center; justify-content: center;
   touch-action: none; pointer-events: none;
   -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
@@ -424,10 +424,11 @@ body.m2p #padAct1 { left: max(56px, env(safe-area-inset-left)); right: auto; bot
   :root { --padb: 52px; }   /* smaller reserved strip -> the pitch fills more width (toward the buttons) */
   #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
 }
-/* a bit bigger on larger touch screens (tablets), still a tidy low overlay */
-@media (pointer: coarse) and (min-width: 760px){
+/* Bigger pads on real tablets only. Gate on height too: a phone in LANDSCAPE is
+   wide (>760) but short (<600), so this keeps the small phone pads there. */
+@media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
   :root { --padb: 84px; }
-  .tbtn { width: 156px; height: 68px; font-size: 30px; border-radius: 16px; }   /* big, forgiving tablet pads */
+  .tbtn { width: 140px; height: 60px; font-size: 28px; border-radius: 15px; }   /* tablet: still big & forgiving */
   .pad { gap: 26px; }
   body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 112px); }
 }
