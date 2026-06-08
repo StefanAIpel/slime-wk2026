@@ -65,11 +65,12 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
    (Slime Soccer icon · title · SlimeScore.com link), Pause/Quit overlaid in the
    field's top-left, rules+sound in the top-right, and the controls hint directly
    under the field. body.deskgame is toggled on by JS on desktop during a match. */
-.stage-title { font-size: clamp(20px, 3.4vh, 34px); letter-spacing: 1px; line-height: 1; text-align: center; }
+.stage-title { font-size: clamp(13px, 2vh, 19px); letter-spacing: 1px; line-height: 1; text-align: center; }
 .stage-title .accent { font-size: .56em; margin-top: 4px; letter-spacing: 2px; }
-#stageTitle { display: none; align-items: center; justify-content: center; gap: 16px; }
+#stageTitle { display: none; align-items: center; justify-content: center; gap: 10px; }
+#stageTitle .stage-title { font-size: clamp(16px, 3.6vh, 32px); line-height: 1.04; }   /* ~half size (beats the big .title rule) */
 .stage-side-icon { display: none; flex: 0 0 auto; line-height: 0; }
-.stage-side-icon img { width: clamp(42px, 6.4vh, 64px); height: auto; border-radius: 14px; box-shadow: 0 5px 16px rgba(0,0,0,.45); }
+.stage-side-icon img { width: clamp(24px, 3.4vh, 34px); height: auto; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,.45); }
 #stageWrap { position: relative; display: flex; }
 .stage-corner { position: absolute; top: 8px; display: none; gap: 8px; z-index: 6; }
 .stage-corner.tl { left: 8px; }
