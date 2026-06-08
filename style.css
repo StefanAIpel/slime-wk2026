@@ -73,8 +73,8 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
 .stage-side-icon { display: none; flex: 0 0 auto; line-height: 0; }
 .stage-side-icon-left, .stage-side-icon-right { justify-self: center; }
 .stage-side-icon img {
-  width: clamp(54px, 9vh, 64px); height: auto; object-fit: contain;
-  border-radius: 16px; box-shadow: 0 6px 18px rgba(0,0,0,.45), 0 0 20px rgba(43,111,255,.16);
+  width: clamp(38px, 6vh, 50px); height: auto; object-fit: contain;
+  border-radius: 14px; box-shadow: 0 6px 18px rgba(0,0,0,.45), 0 0 20px rgba(43,111,255,.16);
 }
 #stageWrap { position: relative; display: flex; }
 .stage-corner { position: absolute; top: 8px; display: none; gap: 8px; z-index: 6; }
@@ -87,13 +87,13 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
   background: rgba(0,0,0,.42); padding: 7px 14px; border-radius: 20px; max-width: 92vw; }
 .stage-hint b { color: var(--ink); }
 body.deskgame #stage { flex-direction: column; gap: 10px; justify-content: flex-start; padding-top: max(10px, 2vh); }
-body.deskgame #stageTitle { display: grid; }
+body.deskgame #stageTitle { display: flex; }                /* icons BESIDE the title (row), like Slime Volleyball */
 body.deskgame .stage-side-icon { display: block; }
 body.deskgame .stage-corner { display: flex; }
 body.deskgame .stage-hint { display: block; }
-body.deskgame #game {
-  width:  min(62vw, calc(64vh * 1160 / 600));
-  height: min(64vh, calc(62vw * 600 / 1160));
+body.deskgame #game {                                       /* smaller field, leaving room for the title above + hint below */
+  width:  min(54vw, calc(58vh * 1160 / 600));
+  height: min(58vh, calc(54vw * 600 / 1160));
 }
 body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { display: none; }   /* replaced by the corner + title-icon controls */
 
