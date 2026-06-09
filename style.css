@@ -404,11 +404,11 @@ body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { displa
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
 body.m2p #padAct1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 90px; height: 45px; border-radius: 12px;       /* phone pads (hit zone is enlarged in JS for forgiving taps) */
+  width: 108px; height: 54px; border-radius: 13px;      /* phone pads (+20%); hit zone is enlarged in JS for forgiving taps */
   background: linear-gradient(180deg, rgba(255,172,72,.12), rgba(255,122,24,.05));   /* ~90% transparent fill */
   border: 1.5px solid rgba(255,198,112,.85);            /* border stays clearly visible */
   box-shadow: 0 2px 8px rgba(0,0,0,.30);
-  color: #fff; font-size: 22px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
+  color: #fff; font-size: 26px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
   display: flex; align-items: center; justify-content: center;
   touch-action: none; pointer-events: none;
   -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
