@@ -142,8 +142,8 @@ TEAMS.forEach(t=>{ t.flag = flagBg(t.code); });   // supersede the old gradient 
 const AI_LEVELS = {
   easy:     { label:'Easy',      speed:0.90, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false, attack:0.00 },
   normal:   { label:'Normal',    speed:1.00, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false, attack:0.22 },
-  hard:     { label:'Hard',      speed:1.14, react:10,  jump:0.20,  predict:58, mistake:0.015, smart:true, defend:0.48, attack:0.85, catch:0.15 },
-  worldcup: { label:'World Cup', speed:1.40, react:2,   jump:0.36,  predict:86, mistake:0.0,   smart:true, defend:0.60, attack:1.00, catch:0.32 },
+  hard:     { label:'Hard',      speed:1.12, react:10,  jump:0.20,  predict:58, mistake:0.015, smart:true, defend:0.48, attack:0.85, catch:0.15 },
+  worldcup: { label:'World Cup', speed:1.30, react:2,   jump:0.36,  predict:86, mistake:0.0,   smart:true, defend:0.60, attack:1.00, catch:0.32 },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -790,6 +790,9 @@ function predictBallX(frames){
   return x;
 }
 function effDiff(){ return (G.wkMode && G.wk) ? G.wk.diffs[G.wk.round] : settings.diff; }
+// the HUMAN gets a small run-speed boost on Hard/World Cup (and Rising's harder rounds),
+// so the higher levels feel faster for BOTH and the AI's edge is skill, not a big speed gap.
+function playerSpeedMul(){ const d=effDiff(); return d==='worldcup' ? 1.22 : d==='hard' ? 1.10 : 1; }
 function computeAI(s){
   const p = AI_LEVELS[effDiff()] || AI_LEVELS.normal;
   s.speedMul = p.speed || 1;                           // level speed actually applies (updateSlime)
@@ -1045,9 +1048,11 @@ function updateAntiCamp(){
 function assignInputs(frozen){
   if (G.mode==='1p'){
     G.p1.input = humanInput();
+    G.p1.speedMul = playerSpeedMul();                     // human boost on Hard/WC (AI sets its own in computeAI)
     if (frozen){ G.p2.input={left:false,right:false,jump:false}; } else computeAI(G.p2);
     if (frozen) G.p1.input={left:false,right:false,jump:false};
   } else if (G.mode==='2p'){
+    G.p1.speedMul = G.p2.speedMul = 1;                    // local 2P: both at the same player speed
     G.p1.input = frozen?{left:false,right:false,jump:false}:p1KeyInput();
     G.p2.input = frozen?{left:false,right:false,jump:false}:p2KeyInput();
   } else if (G.mode==='host'){
