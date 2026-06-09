@@ -449,7 +449,7 @@ function refreshBtnZones(){
       if (!r.width) return;
       // VERY forgiving tap zone — scales with the button, extra-tall so a press
       // just above/below the (larger, on tablets) button still registers.
-      const padX = Math.max(40, r.width*0.7), padY = Math.max(80, r.height*1.7);
+      const padX = Math.max(44, r.width*0.75), padY = Math.max(100, r.height*2.2);   /* very forgiving, esp. above/below */
       btnZones.push({ id:b.id, l:Math.max(EG, r.left-padX), r:Math.min(vw-EG, r.right+padX),
                       t:r.top-padY, b:Math.min(vh-EGB, r.bottom+padY),
                       cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
