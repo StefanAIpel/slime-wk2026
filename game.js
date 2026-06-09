@@ -136,11 +136,14 @@ function flagImage(code){ if (typeof Image==='undefined') return null;   // non-
   let i=_flagImgCache[code]; if(!i){ i=new Image(); i.src=flagDataURI(code); _flagImgCache[code]=i; } return i; }
 TEAMS.forEach(t=>{ t.flag = flagBg(t.code); });   // supersede the old gradient approximations
 
+/* speed = run-speed multiplier vs the player (applied in updateSlime via speedMul).
+   Easy/Normal ≈ the long-time live feel; Hard and especially World Cup are
+   deliberately faster + sharper (Rising inherits these per round). */
 const AI_LEVELS = {
-  easy:     { label:'Easy',      speed:0.50, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false, attack:0.00 },
-  normal:   { label:'Normal',    speed:0.78, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false, attack:0.22 },
-  hard:     { label:'Hard',      speed:1.05, react:16,  jump:0.14,  predict:46, mistake:0.03, smart:true, defend:0.38, attack:0.70, catch:0.10 },
-  worldcup: { label:'World Cup', speed:1.24, react:5,   jump:0.24,  predict:68, mistake:0.0,  smart:true, defend:0.46, attack:0.98, catch:0.22 },
+  easy:     { label:'Easy',      speed:0.90, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false, attack:0.00 },
+  normal:   { label:'Normal',    speed:1.00, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false, attack:0.22 },
+  hard:     { label:'Hard',      speed:1.14, react:10,  jump:0.20,  predict:58, mistake:0.015, smart:true, defend:0.48, attack:0.85, catch:0.15 },
+  worldcup: { label:'World Cup', speed:1.40, react:2,   jump:0.36,  predict:86, mistake:0.0,   smart:true, defend:0.60, attack:1.00, catch:0.32 },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -609,7 +612,8 @@ function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 function updateSlime(s){
   const i = s.input;
   if (s.catchCD>0) s.catchCD--;
-  s.vx = (i.right?SLIME_SPEED:0) - (i.left?SLIME_SPEED:0);
+  const sp = SLIME_SPEED * (s.speedMul || 1);   // AI levels can run faster than the player (speedMul set in computeAI)
+  s.vx = (i.right?sp:0) - (i.left?sp:0);
   s.x += s.vx;
   // full-field movement (you can chase the opponent to steal a held ball)
   s.x = clamp(s.x, SLIME_R*0.5, W - SLIME_R*0.5);
@@ -788,6 +792,7 @@ function predictBallX(frames){
 function effDiff(){ return (G.wkMode && G.wk) ? G.wk.diffs[G.wk.round] : settings.diff; }
 function computeAI(s){
   const p = AI_LEVELS[effDiff()] || AI_LEVELS.normal;
+  s.speedMul = p.speed || 1;                           // level speed actually applies (updateSlime)
   const b = G.ball;
   const myGoalX = W*0.80;                              // AI defends the right goal
   const oppHolds = b.held && b.held!==s;
@@ -1679,7 +1684,7 @@ const _WK_RKEY = ['r16','qf','sf','final'];
 function wkRoundName(i){ return t(_WK_RKEY[i] || 'final'); }              // translated round name (display)
 const WK_HEAD   = ['R16','QF','SF','FINAL'];          // compact bracket column heads
 const WK_DIFFS  = ['normal','hard','hard','worldcup'];// AI level per round
-const WK_DIFF_MULT = { easy:1, normal:2, hard:3, worldcup:4, rising:3 };  // leaderboard points multiplier
+const WK_DIFF_MULT = { easy:1, normal:2, hard:3.5, worldcup:5, rising:3 };  // leaderboard points multiplier (mirrors slime_submit_score)
 const WK_COUNTS = [8,4,2,1];                          // matches per round
 // real 2026 host cities; your run is played across them, with the final in New York/New Jersey
 const WK_VENUES = ['Los Angeles','Dallas','Atlanta','Houston','Kansas City','Seattle','Bay Area','Philadelphia','Miami','Boston','Mexico City','Guadalajara','Monterrey','Toronto','Vancouver'];
@@ -1830,8 +1835,8 @@ function wkPoints(){
   const winFactor = champ ? 1.5 : (roundsWon>0 ? 1.0 : 0.6);     // win/loss bonus
   const base = roundsWon*8 + (champ?40:0);                        // reward progress + the title
   const goalPts = (gf - ga)*4;                                    // goal difference matters
-  const floor = gf*mult;                                          // participation floor: goals always pay a little
-  return Math.max(floor|0, Math.round((base + goalPts) * mult * winFactor / 2));
+  const floor = Math.floor(gf*mult);                              // participation floor: goals always pay a little (trunc = server parity)
+  return Math.max(floor, Math.round((base + goalPts) * mult * winFactor / 2));
 }
 function wkShowResult(champion){
   const wk=G.wk; const pts=wkPoints(); wk._pts=pts;
