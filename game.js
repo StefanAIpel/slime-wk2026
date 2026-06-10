@@ -142,8 +142,8 @@ TEAMS.forEach(t=>{ t.flag = flagBg(t.code); });   // supersede the old gradient 
 const AI_LEVELS = {
   easy:     { label:'Easy',      speed:0.90, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false, attack:0.00 },
   normal:   { label:'Normal',    speed:1.00, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false, attack:0.22 },
-  hard:     { label:'Hard',      speed:1.12, react:10,  jump:0.20,  predict:58, mistake:0.015, smart:true, defend:0.48, attack:0.85, catch:0.15 },
-  worldcup: { label:'World Cup', speed:1.30, react:2,   jump:0.36,  predict:86, mistake:0.0,   smart:true, defend:0.60, attack:1.00, catch:0.32 },
+  hard:     { label:'Hard',      speed:1.12, react:10,  jump:0.20,  predict:58, mistake:0.015, smart:true, defend:0.36, attack:0.90, catch:0.12 },
+  worldcup: { label:'World Cup', speed:1.30, react:2,   jump:0.36,  predict:86, mistake:0.0,   smart:true, defend:0.42, attack:1.00, catch:0.20 },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -797,7 +797,7 @@ function computeAI(s){
   const p = AI_LEVELS[effDiff()] || AI_LEVELS.normal;
   s.speedMul = p.speed || 1;                           // level speed actually applies (updateSlime)
   const b = G.ball;
-  const myGoalX = W*0.80;                              // AI defends the right goal
+  const myGoalX = W*0.73;                              // home/defensive base — in FRONT of the goal, out of the 0.80 camp zone
   const oppHolds = b.held && b.held!==s;
   aiState.reactT--;
   if (aiState.reactT <= 0){
@@ -809,15 +809,17 @@ function computeAI(s){
       const attack = p.attack || 0;
       const threat = p.defend && b.vx > 0.6 && b.x > CENTER;      // ball driving toward OUR goal
       if (threat){
-        tx = tx + (myGoalX - tx) * p.defend;                      // hold a goal-side line
-        if (b.x > W*0.66) tx = Math.max(tx, b.x + SLIME_R*0.3);   // never let the ball get goal-side of you near our goal
+        tx = tx + (myGoalX - tx) * p.defend;                      // hold a line in FRONT of the goal
+        tx = Math.min(tx, W*0.79);                                // ...but never camp in the goal mouth (no goal-hanging)
       } else {
-        // loose / idle ball anywhere (incl. our own half) — go get it; aggressive levels
-        // press hard instead of letting it lie. Approach from the goal-side to knock it upfield.
-        const hold  = tx*0.4 + myGoalX*0.6;                       // passive levels still hang back
+        // loose / idle ball anywhere — aggressive levels press it forward instead of sitting back
+        const hold  = tx*0.55 + myGoalX*0.45;
         const press = b.x + SLIME_R*0.45;
         tx = hold + (press - hold) * attack;
       }
+      // smart levels: step out toward midfield before lingering becomes goal-hanging,
+      // unless the ball is genuinely deep on our side and needs clearing right now
+      if (p.smart && s.hang > CAMP_WARN*0.55 && !(b.x > W*0.78 && b.vx > 0)) tx = Math.min(tx, W*0.62);
     }
     tx += (Math.random()-0.5) * (p.mistake*300);
     aiState.targetX = clamp(tx, SLIME_R*0.5, W-SLIME_R*0.5);
@@ -832,7 +834,7 @@ function computeAI(s){
 
   // smart levels: occasionally CLAMP the ball, then throw it toward the opponent's goal
   if (p.smart){
-    if (s.aiCatchT<=0 && !b.held && s.catchCD<=0 && horiz<SLIME_R && b.y>s.y-SLIME_R-BALL_R-24 && b.y<=s.y+2 && Math.random()<(p.catch||0.05))
+    if (s.aiCatchT<=0 && !b.held && s.catchCD<=0 && !inCampZone(s) && horiz<SLIME_R && b.y>s.y-SLIME_R-BALL_R-24 && b.y<=s.y+2 && Math.random()<(p.catch||0.05))
       s.aiCatchT = 24 + (Math.random()*46|0);
     if (s.aiCatchT>0 && (s.holding || (!b.held && s.catchCD<=0))){ inp.down=true; s.aiCatchT--; }
     else s.aiCatchT = 0;
