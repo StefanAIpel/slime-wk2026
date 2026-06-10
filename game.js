@@ -1246,12 +1246,12 @@ function render(){
   if (settings.crt) drawCRT();
 }
 
-// Pitchside advertisers shown on the scrolling boards (and click targets).
+// Pitchside advertisers shown on the scrolling boards (decorative only — not links).
 const AD_BOARDS = [
-  { t:'SLIMESCORE.COM',  c:'#ffd23b', u:'https://slimescore.com' },
-  { t:'SLIME SOCCER',    c:'#ff7a18', u:'https://soccer.slimescore.com' },
-  { t:'SLIME VOLLEYBALL', c:'#1f6fff', u:'https://volley.slimescore.com' },
-  { t:'FELIRO.NL',       c:'#00a64a', u:'https://feliro.nl' },
+  { t:'SLIMESCORE.COM',  c:'#ffd23b' },
+  { t:'SLIME SOCCER',    c:'#ff7a18' },
+  { t:'SLIME VOLLEYBALL', c:'#1f6fff' },
+  { t:'FELIRO.NL',       c:'#00a64a' },
 ];
 
 function drawStadium(){
@@ -1318,24 +1318,19 @@ function drawStadium(){
     ctx.restore();
   }
 
-  // interactive pitchside ad boards — discrete, clickable brand tiles that scroll.
-  // Each visible tile's on-screen x-range + url is recorded in G._adHit so a click
-  // on a board opens that advertiser (see the adBoards() handler).
+  // pitchside ad boards — scrolling brand tiles (decorative only; not clickable links)
   ctx.fillStyle='#06060f'; ctx.fillRect(0,GROUND-22,W,22);
   ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   const sep='   •   ';
   let unit=0; const widths=AD_BOARDS.map(b=>{ const w=ctx.measureText(b.t+sep).width; unit+=w; return w; });
   const scroll=(G.frame*1.1)%unit;
-  const hits=[];
   for (let x=-scroll; x<W; ){
     for (let i=0;i<AD_BOARDS.length && x<W;i++){
       const b=AD_BOARDS[i], w=widths[i];
       ctx.fillStyle=b.c; ctx.fillText(b.t+sep, x, GROUND-7);
-      if (x+w>0) hits.push({ l:x, r:x+w, u:b.u });
       x+=w;
     }
   }
-  G._adHit=hits;
 }
 
 function drawPitch(){
@@ -1585,21 +1580,8 @@ function frame(t){
 }
 requestAnimationFrame(frame);
 
-/* Interactive pitchside ad boards: clicking/tapping the scrolling banner during a
-   match opens slimescore.com (the SlimeScore hub). */
-(function adBoards(){
-  const inMatch = () => [SCREEN.PLAY, SCREEN.GOAL, SCREEN.COUNT].indexOf(G.screen) >= 0 && !G.paused;
-  const hitAt = (clientX, clientY) => {
-    const rc = canvas.getBoundingClientRect(); if (!rc.width || !rc.height) return null;
-    const lx = (clientX - rc.left) / rc.width * W, ly = (clientY - rc.top) / rc.height * H;
-    if (ly < GROUND - 26 || ly > GROUND + 2) return null;          // outside the board band
-    const hits = G._adHit || [];
-    for (const h of hits){ if (lx >= h.l && lx <= h.r) return h.u; }
-    return hits.length ? 'https://slimescore.com' : null;          // gap between tiles -> the hub
-  };
-  canvas.addEventListener('click', e => { if (!inMatch()) return; const u = hitAt(e.clientX, e.clientY); if (u) window.open(u, '_blank', 'noopener'); });
-  canvas.addEventListener('mousemove', e => { canvas.style.cursor = (inMatch() && hitAt(e.clientX, e.clientY)) ? 'pointer' : ''; });
-})();
+/* The pitchside ad boards are decorative only — intentionally NOT clickable links,
+   so a tap during play never navigates away from the game. */
 
 /* ----------------------------------------------------------------------------
    15. UI / schermbeheer  (DOM overlays)
