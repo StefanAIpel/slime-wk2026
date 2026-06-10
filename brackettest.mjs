@@ -51,7 +51,7 @@ vm.runInContext(fs.readFileSync(new URL('./game.js', import.meta.url), 'utf8'), 
 vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, wkPoints, tick, render, go1p, startTeamSelect, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES };', sandbox);
 
 const T = sandbox.__TEST;
-const { G, TEAMS, SCREEN, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner } = T;
+const { G, TEAMS, SCREEN, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, W } = T;
 
 // ---- 1. draw integrity over many random setups ----------------------------
 console.log('Draw integrity (200 random tournaments):');
@@ -119,7 +119,7 @@ try {
   G.wkMode = false; G.wk = null; G.golden = false; G.mode = '1p';
   G.screen = SCREEN.MENU; G.attract = true;
   for (let i=0;i<400;i++){ T.tick(); }
-  ok(G.ball.x>=0 && G.ball.x<=1056 && G.ball.y<=600, 'attract ball stays on the pitch');
+  ok(G.ball.x>=0 && G.ball.x<=W && G.ball.y<=600, 'attract ball stays on the pitch');
   T.render();                                       // draw menu frame with stubbed canvas
 
   // start a 1P match and run the countdown out to play
