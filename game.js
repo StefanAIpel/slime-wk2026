@@ -142,8 +142,8 @@ TEAMS.forEach(t=>{ t.flag = flagBg(t.code); });   // supersede the old gradient 
 const AI_LEVELS = {
   easy:     { label:'Easy',      speed:0.90, react:150, jump:0.012, predict:8,  mistake:0.42, smart:false, attack:0.00 },
   normal:   { label:'Normal',    speed:1.00, react:55,  jump:0.05,  predict:24, mistake:0.16, smart:false, attack:0.22 },
-  hard:     { label:'Hard',      speed:1.12, react:10,  jump:0.20,  predict:58, mistake:0.015, smart:true, defend:0.36, attack:0.90, catch:0.12 },
-  worldcup: { label:'World Cup', speed:1.30, react:2,   jump:0.36,  predict:86, mistake:0.0,   smart:true, defend:0.42, attack:1.00, catch:0.20 },
+  hard:     { label:'Hard',      speed:1.16, react:8,   jump:0.26,  predict:70, mistake:0.010, smart:true, defend:0.48, attack:0.55, catch:0.16 },
+  worldcup: { label:'World Cup', speed:1.32, react:3,   jump:0.36,  predict:110, mistake:0.0,  smart:true, defend:0.55, attack:0.60, catch:0.24 },
 };
 // migrate older saved difficulty keys (Dutch) -> English
 const DIFF_MIGRATE = { makkelijk:'easy', normaal:'normal', moeilijk:'hard', wk:'worldcup' };
@@ -789,6 +789,17 @@ function predictBallX(frames){
   }
   return x;
 }
+// where a lobbed ball will first hit the ground — lets the AI retreat UNDER lobs (anti-lob defence)
+function predictLandingX(maxF){
+  let x=G.ball.x, y=G.ball.y, vx=G.ball.vx, vy=G.ball.vy;
+  for(let f=0;f<maxF;f++){
+    vy+=BALL_GRAV; x+=vx; y+=vy;
+    if (x<BALL_R){x=BALL_R;vx=-vx*BALL_REST;}
+    if (x>W-BALL_R){x=W-BALL_R;vx=-vx*BALL_REST;}
+    if (y>=GROUND-BALL_R) return x;                 // first ground contact = landing spot
+  }
+  return x;
+}
 function effDiff(){ return (G.wkMode && G.wk) ? G.wk.diffs[G.wk.round] : settings.diff; }
 // the HUMAN gets a small run-speed boost on Hard/World Cup (and Rising's harder rounds),
 // so the higher levels feel faster for BOTH and the AI's edge is skill, not a big speed gap.
@@ -797,7 +808,8 @@ function computeAI(s){
   const p = AI_LEVELS[effDiff()] || AI_LEVELS.normal;
   s.speedMul = p.speed || 1;                           // level speed actually applies (updateSlime)
   const b = G.ball;
-  const myGoalX = W*0.73;                              // home/defensive base — in FRONT of the goal, out of the 0.80 camp zone
+  const attack = p.attack || 0, defend = p.defend || 0;
+  const homeX = W*0.66;                                // defensive home — goal-biased, but forward enough to counter
   const oppHolds = b.held && b.held!==s;
   aiState.reactT--;
   if (aiState.reactT <= 0){
@@ -805,32 +817,41 @@ function computeAI(s){
     let tx;
     if (oppHolds) tx = b.held.x;                       // chase the holder to steal
     else {
-      tx = predictBallX(p.predict);
-      const attack = p.attack || 0;
-      const threat = p.defend && b.vx > 0.6 && b.x > CENTER;      // ball driving toward OUR goal
-      if (threat){
-        tx = tx + (myGoalX - tx) * p.defend;                      // hold a line in FRONT of the goal
-        tx = Math.min(tx, W*0.79);                                // ...but never camp in the goal mouth (no goal-hanging)
+      const land = predictLandingX(Math.max(50, p.predict*1.6));   // read the lob; smarter levels see it sooner
+      const ref  = Math.max(land, b.x);               // deepest threat: landing spot or the ball itself
+      // KEY: stay goal-side of that point so a lob/drive can't drop in behind us
+      const goalSide = ref + SLIME_R*(0.25 + defend*0.5);
+      const incoming = b.x > CENTER || (b.vx > 0.3 && land > CENTER);   // on our half, or a lob dropping onto it
+      if (incoming){
+        // defend goal-side and clear it — but stay OUT of the 0.80 camp zone so the
+        // anti-goal-hang rule never shoves us off the goal (no open nets)
+        tx = Math.min(goalSide, W*0.79);
       } else {
-        // loose / idle ball anywhere — aggressive levels press it forward instead of sitting back
-        const hold  = tx*0.55 + myGoalX*0.45;
-        const press = b.x + SLIME_R*0.45;
-        tx = hold + (press - hold) * attack;
+        // ball staying on the OPPONENT'S half — hold a goal-biased line; press up only 'attack' much
+        const press = Math.min(goalSide, CENTER + SLIME_R*1.5);
+        tx = homeX + (press - homeX) * attack;
       }
-      // smart levels: step out toward midfield before lingering becomes goal-hanging,
-      // unless the ball is genuinely deep on our side and needs clearing right now
-      if (p.smart && s.hang > CAMP_WARN*0.55 && !(b.x > W*0.78 && b.vx > 0)) tx = Math.min(tx, W*0.62);
+      // only bail from deep defence to dodge the anti-camp penalty, and only when the ball isn't there
+      if (p.smart && s.hang > CAMP_MAX*0.8 && b.x <= W*0.80) tx = Math.min(tx, W*0.66);
     }
     tx += (Math.random()-0.5) * (p.mistake*300);
     aiState.targetX = clamp(tx, SLIME_R*0.5, W-SLIME_R*0.5);
   }
   const inp = { left:false, right:false, jump:false, down:false };
-  const dead = 10;
+  const dead = p.smart ? 6 : 10;                        // smart levels track their line more tightly
   if (s.x < aiState.targetX - dead) inp.right = true;
   else if (s.x > aiState.targetX + dead) inp.left = true;
 
   const horiz = Math.abs(b.x - s.x);
   const ballAbove = b.y < s.y - 70;
+  const ballNear = horiz < SLIME_R+50;
+
+  // CRITICAL: the ball inherits the slime's velocity on contact (reflectOffSlime: vx += s.vx*0.85).
+  // When the ball is close on our goal-side, drive LEFT through it (clear toward the opponent) and
+  // never push RIGHT into it — otherwise our own momentum knocks the ball into our own net.
+  if (p.smart && (s.x - b.x) > SLIME_R*0.1 && horiz < SLIME_R+BALL_R+12 && b.y < s.y+SLIME_R && b.x > CENTER){
+    inp.left = true; inp.right = false;
+  }
 
   // smart levels: occasionally CLAMP the ball, then throw it toward the opponent's goal
   if (p.smart){
@@ -840,10 +861,13 @@ function computeAI(s){
     else s.aiCatchT = 0;
   }
 
-  // jump to reach the ball; smart levels double-jump (air toggle) for very high balls
-  if (s.onGround && ballAbove && horiz < SLIME_R+50 && b.vy > -3 && Math.random() < (p.jump+0.05)) inp.jump = true;
+  // jump to reach the ball; smart levels are reliable headers when the ball drops onto their half
+  if (s.onGround && ballAbove && ballNear && b.vy > -3){
+    const clear = p.smart && b.x > CENTER && horiz < SLIME_R+20;   // surely head a ball dropping onto our half away
+    if (clear || Math.random() < (p.jump+0.05)) inp.jump = true;
+  }
   if (s.onGround && oppHolds && Math.abs(s.x-b.held.x) < SLIME_R*1.1 && Math.random() < p.jump+0.1) inp.jump = true;  // jump in to steal
-  if (p.smart && !s.onGround && s.canDouble && ballAbove && b.y < s.y-150 && horiz < SLIME_R+50) inp.jump = !!(G.frame & 1);
+  if (p.smart && !s.onGround && s.canDouble && ballAbove && b.y < s.y-150 && ballNear) inp.jump = !!(G.frame & 1);
   s.input = inp;
 }
 
