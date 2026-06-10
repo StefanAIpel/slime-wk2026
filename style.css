@@ -395,7 +395,7 @@ body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { displa
 #touch { position: fixed; inset: 0; z-index: 12; display: none; pointer-events: none; }
 #touch.show { display: block; }
 .pad {
-  position: absolute; bottom: max(40px, calc(env(safe-area-inset-bottom) + 26px));   /* lifted higher so the bottom edge stays clear of the iOS home-indicator / app-swipe strip */
+  position: absolute; bottom: max(26px, calc(env(safe-area-inset-bottom) + 16px));   /* sit in the reserved strip BELOW the pitch, clear of the iOS bottom-edge swipe */
   pointer-events: none; display: flex; gap: 13px;       /* tighter pair; hit-testing is coordinate-based */
 }
 #padMove1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); }    /* pulled inward, out of the bottom corners */
@@ -404,11 +404,11 @@ body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { displa
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
 body.m2p #padAct1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
 .tbtn {
-  width: 108px; height: 54px; border-radius: 13px;      /* phone pads (+20%); hit zone is enlarged in JS for forgiving taps */
+  width: 97px; height: 49px; border-radius: 12px;       /* phone pads (-10%); hit zone is enlarged in JS for forgiving taps */
   background: linear-gradient(180deg, rgba(255,172,72,.12), rgba(255,122,24,.05));   /* ~90% transparent fill */
   border: 1.5px solid rgba(255,198,112,.85);            /* border stays clearly visible */
   box-shadow: 0 2px 8px rgba(0,0,0,.30);
-  color: #fff; font-size: 26px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
+  color: #fff; font-size: 24px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);   /* glyph clearly visible */
   display: flex; align-items: center; justify-content: center;
   touch-action: none; pointer-events: none;
   -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
@@ -421,13 +421,13 @@ body.m2p #padAct1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); righ
 @media (pointer: coarse){
   /* tiny reserved strip so the pitch fills more of the screen; the flat buttons
      overlap its bottom edge and read as a low HUD bar */
-  :root { --padb: 52px; }   /* smaller reserved strip -> the pitch fills more width (toward the buttons) */
+  :root { --padb: 104px; }   /* taller reserved strip so the pads sit BELOW the pitch, not over the slimes */
   #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
 }
 /* Bigger pads on real tablets only. Gate on height too: a phone in LANDSCAPE is
    wide (>760) but short (<600), so this keeps the small phone pads there. */
 @media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
-  :root { --padb: 84px; }
+  :root { --padb: 120px; }
   .tbtn { width: 140px; height: 60px; font-size: 28px; border-radius: 15px; }   /* tablet: still big & forgiving */
   .pad { gap: 26px; }
   body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 112px); }
