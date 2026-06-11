@@ -1368,24 +1368,35 @@ const AD_BOARDS = [
 ];
 
 function drawStadium(){
-  // evening sky — lighter, warmer match-night blue
+  // "blue hour" sky over a floodlit bowl — clearly lighter scene
   const sky = ctx.createLinearGradient(0,0,0,GROUND);
-  sky.addColorStop(0,'#1c2b60'); sky.addColorStop(0.55,'#2e4489'); sky.addColorStop(1,'#4259a4');
+  sky.addColorStop(0,'#2a3f86'); sky.addColorStop(0.55,'#41599f'); sky.addColorStop(1,'#6b81c4');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND+6);
+
+  // two slow searchlight beams sweeping the sky (big-final atmosphere)
+  for (const [bx, ph] of [[W*0.18, 0],[W*0.82, 2.1]]){
+    const ang = Math.sin(G.frame*0.004 + ph) * 0.35 + (bx<CENTER ? -0.20 : 0.20);
+    ctx.save(); ctx.translate(bx, GROUND*0.62); ctx.rotate(ang);
+    const bg = ctx.createLinearGradient(0,0,0,-GROUND*0.72);
+    bg.addColorStop(0,'rgba(225,238,255,0.11)'); bg.addColorStop(1,'rgba(225,238,255,0)');
+    ctx.fillStyle=bg; ctx.beginPath();
+    ctx.moveTo(-7,0); ctx.lineTo(7,0); ctx.lineTo(36,-GROUND*0.72); ctx.lineTo(-36,-GROUND*0.72);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
 
   // subtle WC 2026 colour sweeps across the upper stands (USA/Mexico/Canada: red · blue · green)
   const sweep=(yC, rad, col, a)=>{ ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle=col; ctx.lineWidth=46;
     ctx.beginPath(); ctx.ellipse(CENTER, yC, W*0.62, rad, 0, Math.PI, 0); ctx.stroke(); ctx.restore(); };
-  sweep(GROUND*0.30, 150, '#e4002b', 0.09);    // red
-  sweep(GROUND*0.42, 120, '#1f6fff', 0.10);    // blue
-  sweep(GROUND*0.54,  96, '#00a64a', 0.09);    // green
+  sweep(GROUND*0.30, 150, '#e4002b', 0.11);    // red
+  sweep(GROUND*0.42, 120, '#1f6fff', 0.12);    // blue
+  sweep(GROUND*0.54,  96, '#00a64a', 0.11);    // green
 
   // curved stadium bowl: two tiers + a lit front rail (front-on bowl => "smile" curves)
   const band=(yEdge,yMid,h,col)=>{ ctx.fillStyle=col; ctx.beginPath();
     ctx.moveTo(0,yEdge); ctx.quadraticCurveTo(CENTER,yMid,W,yEdge);
     ctx.lineTo(W,yEdge+h); ctx.quadraticCurveTo(CENTER,yMid+h,0,yEdge+h); ctx.closePath(); ctx.fill(); };
-  band(70, 150, GROUND*0.34, '#182552');                 // upper tier — lighter stand blue
-  band(GROUND*0.52, GROUND*0.60, GROUND*0.40, '#13204a'); // lower tier (closer/slightly darker)
+  band(70, 150, GROUND*0.34, '#233570');                 // upper tier — lighter stand blue
+  band(GROUND*0.52, GROUND*0.60, GROUND*0.40, '#1b2a60'); // lower tier (closer/slightly darker)
   // roof edge + tier separation lines so the bowl reads clearly
   ctx.save(); ctx.lineWidth=2;
   ctx.strokeStyle='rgba(120,150,220,0.45)';
@@ -1404,6 +1415,17 @@ function drawStadium(){
   }
   ctx.globalAlpha=1;
 
+  // paparazzi camera flashes popping in the stands (short bright blooms that fade)
+  const fwin=18, ft=(G.frame/fwin)|0, ff=1-(G.frame%fwin)/fwin;
+  for (let k=0;k<3;k++){
+    const s=crowdSeed[(ft*31 + k*149) % crowdSeed.length];
+    const cx=s.x*W, cy=72 + s.y*(GROUND-150);
+    ctx.fillStyle=`rgba(255,255,255,${0.9*ff})`; ctx.fillRect(cx-1,cy-1,5,5);
+    const fg=ctx.createRadialGradient(cx+1,cy+1,1,cx+1,cy+1,11);
+    fg.addColorStop(0,`rgba(255,255,255,${0.5*ff})`); fg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(cx+1,cy+1,11,0,7); ctx.fill();
+  }
+
   // lit front rail (bright curved line with a soft glow)
   ctx.save(); ctx.strokeStyle='rgba(150,200,255,0.85)'; ctx.lineWidth=2.5; ctx.shadowColor='rgba(120,180,255,0.9)'; ctx.shadowBlur=10;
   ctx.beginPath(); ctx.moveTo(0,GROUND*0.50); ctx.quadraticCurveTo(CENTER,GROUND*0.585,W,GROUND*0.50); ctx.stroke(); ctx.restore();
@@ -1412,10 +1434,11 @@ function drawStadium(){
   for (const fx of [W*0.10, W*0.90]){
     const inward = fx<CENTER ? 1 : -1;          // tilt the lamp head toward the pitch
     const headY = 16, poleH = GROUND*0.42, gx = fx+inward*8;
-    // glow cone projected down-inward
-    const g=ctx.createRadialGradient(gx,headY+4,6,gx,headY+4,250);
-    g.addColorStop(0,'rgba(228,240,255,0.50)'); g.addColorStop(0.5,'rgba(175,208,255,0.12)'); g.addColorStop(1,'rgba(175,208,255,0)');
-    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(gx,headY+4,250,0,7); ctx.fill();
+    // glow cone projected down-inward, with a gentle live flicker
+    const fl = 0.92 + 0.08*Math.sin(G.frame*0.21 + fx);
+    const g=ctx.createRadialGradient(gx,headY+4,6,gx,headY+4,260);
+    g.addColorStop(0,`rgba(228,240,255,${0.55*fl})`); g.addColorStop(0.5,`rgba(175,208,255,${0.14*fl})`); g.addColorStop(1,'rgba(175,208,255,0)');
+    ctx.fillStyle=g; ctx.beginPath(); ctx.arc(gx,headY+4,260,0,7); ctx.fill();
     // pylon (two-tone for roundness)
     ctx.fillStyle='#454b69'; ctx.fillRect(fx-3, headY, 6, poleH);
     ctx.fillStyle='#2c3048'; ctx.fillRect(fx+(inward>0?1:-3), headY, 2, poleH);
@@ -1432,7 +1455,7 @@ function drawStadium(){
   }
 
   // pitchside ad boards — scrolling brand tiles (decorative only; not clickable links)
-  ctx.fillStyle='#06060f'; ctx.fillRect(0,GROUND-22,W,22);
+  ctx.fillStyle='#0c1334'; ctx.fillRect(0,GROUND-22,W,22);
   ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   const sep='   •   ';
   let unit=0; const widths=AD_BOARDS.map(b=>{ const w=ctx.measureText(b.t+sep).width; unit+=w; return w; });
@@ -1447,14 +1470,18 @@ function drawStadium(){
 }
 
 function drawPitch(){
-  // gras met maaibanen
+  // gras met maaibanen — frisser, voller groen onder de floodlights
   for (let i=0;i<14;i++){
-    ctx.fillStyle = i%2? '#1f8f3a' : '#1b8235';
+    ctx.fillStyle = i%2? '#28a449' : '#23963f';
     ctx.fillRect(i*(W/14), GROUND, W/14+1, H-GROUND);
   }
-  ctx.fillStyle='rgba(0,0,0,0.18)'; ctx.fillRect(0,GROUND,W,4);
+  // floodlit sheen: het gras vangt bovenaan wat licht
+  const lit = ctx.createLinearGradient(0,GROUND,0,H);
+  lit.addColorStop(0,'rgba(255,255,235,0.12)'); lit.addColorStop(0.45,'rgba(255,255,235,0)');
+  ctx.fillStyle=lit; ctx.fillRect(0,GROUND,W,H-GROUND);
+  ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(0,GROUND,W,4);
   // lijnen
-  ctx.strokeStyle='rgba(255,255,255,0.55)'; ctx.lineWidth=3;
+  ctx.strokeStyle='rgba(255,255,255,0.66)'; ctx.lineWidth=3;
   ctx.beginPath(); ctx.moveTo(CENTER,GROUND); ctx.lineTo(CENTER,H); ctx.stroke();
   ctx.beginPath(); ctx.arc(CENTER,H+6,46,Math.PI,0,true); ctx.stroke();
 }
@@ -1463,7 +1490,7 @@ function drawGoal(left){
   const x = left ? 0 : W-GOAL_D;
   ctx.save();
   // net
-  ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(255,255,255,0.36)'; ctx.lineWidth=1;
   for (let i=0;i<=GOAL_D;i+=8){ ctx.beginPath(); ctx.moveTo(x+i,BAR_Y); ctx.lineTo(x+i,GROUND); ctx.stroke(); }
   for (let j=BAR_Y;j<=GROUND;j+=8){ ctx.beginPath(); ctx.moveTo(x,j); ctx.lineTo(x+GOAL_D,j); ctx.stroke(); }
   // palen

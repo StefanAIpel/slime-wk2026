@@ -46,9 +46,9 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
   background:
     radial-gradient(135% 95% at 50% -18%, rgba(255,140,51,.30), transparent 58%),
     radial-gradient(120% 80% at 50% 118%, rgba(52,209,122,.26), transparent 62%),
-    radial-gradient(100% 85% at 12% 50%, rgba(43,111,255,.16), transparent 55%),
-    radial-gradient(100% 85% at 88% 50%, rgba(228,0,43,.13), transparent 55%),
-    linear-gradient(180deg, #131c3e 0%, #101736 48%, #0c1129 100%);
+    radial-gradient(100% 85% at 12% 50%, rgba(43,111,255,.18), transparent 55%),
+    radial-gradient(100% 85% at 88% 50%, rgba(228,0,43,.15), transparent 55%),
+    linear-gradient(180deg, #18234c 0%, #141d42 48%, #101633 100%);
   overflow: hidden;
 }
 /* two soft colour blobs drifting very slowly behind the pitch — dynamic, not distracting */
@@ -82,7 +82,7 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
      riding up over the field. Falls back to the vh pair above where dvh is unsupported. */
   width:  min(100vw, calc((100dvh - var(--padb)) * 1160 / 600));
   height: min(calc(100dvh - var(--padb)), calc(100vw * 600 / 1160));
-  background: #0b1b2b;
+  background: #2a3f86;   /* matches the in-game sky so the first frame doesn't flash dark */
   box-shadow: 0 0 0 2px rgba(130,160,255,.22), 0 0 44px rgba(64,120,255,.22), 0 16px 56px rgba(0,0,0,.55);
   border-radius: 10px;
 }
