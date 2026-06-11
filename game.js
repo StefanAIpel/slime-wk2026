@@ -211,7 +211,7 @@ const I18N = {
     rematchTitle:'REMATCH', rematchMsg:'Keep the same teams or pick new ones?', newTeams:'🎲 New teams', sameTeams:'🔁 Same teams',
     settings:'SETTINGS', sound:'Sound', volume:'Volume', crt:'CRT effect', matchType:'Match type',
     firstTo:'First to', matchLenMin:'Match length (min)', language:'Language', on:'ON', off:'OFF', matchTime:'Match time',
-    powerups:'Power-ups ⚡', powerupsHint:'Power-ups: bonus pickups drop onto the pitch (Friendly only)',
+    powerups:'Power-ups ⚡', powerupsHint:'Pickups parachute onto the pitch — ⚡ faster · 🌙 higher · 💪 bigger · ❄️ freeze · 🔥 power shot · 🔻 shrink (that red one shrinks YOU!). Friendly only.',
     youWin:'YOU WIN!', cpuWins:'COMPUTER WINS', oppWins:'OPPONENT WINS', playerWins:'PLAYER {n} WINS!',
     waitHostRestart:'Waiting for the host to restart…', putName:'Put your name on the leaderboard:',
     yourName:'YOUR NAME', submit:'🏆 Submit', rematch:'🔁 Rematch', highScores:'🏆 High scores', mainMenu:'🏠 Main menu',
@@ -233,7 +233,7 @@ const I18N = {
     rulesControlsTxt:'<b>Player 1</b> — WASD: A/D move, W jump, S hold ball (or touch controls).<br><b>Player 2</b> — arrow keys: ←/→ move, ↑ jump, ↓ hold ball.',
     rulesMovesTxt:'<b>Double jump</b> — tap jump again in mid-air for an extra boost to reach high balls.<br><b>Catch &amp; throw</b> — hold the catch key by the ball to grab it (up to ~3s), then release to throw it upfield.',
     rulesRulesTxt:'<b>No goal-hanging</b> — lingering in your own goal area gets you sent out (mind the warning flash).<br><b>Golden goal</b> — a tied timed match goes to sudden death: the next goal wins.',
-    rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.<br><b>Power-ups ⚡</b> — Friendly bonus mode (toggle in the menu): pickups drop onto the pitch — ⚡ turbo · 🌙 moon jump · 💪 mega slime · ❄️ freeze · 🔥 power shot.',
+    rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.<br><b>Power-ups ⚡</b> — Friendly bonus mode (tick the box on the setup screen): pickups parachute onto the pitch — grab them by touch. ⚡ turbo (faster) · 🌙 moon jump (higher) · 💪 mega slime (bigger) · ❄️ freeze (chills the opponent) · 🔥 power shot (rocket the next hit). Watch out for the red 🔻 <b>shrink</b> — that one makes YOU smaller!',
   },
   nl: {
     teamLeft:'TEAM LINKS', teamRight:'TEAM RECHTS', tagline:'slime voetbal · een moderne remake ⚽',
@@ -266,7 +266,7 @@ const I18N = {
     rematchTitle:'REVANCHE', rematchMsg:'Zelfde teams of nieuwe kiezen?', newTeams:'🎲 Nieuwe teams', sameTeams:'🔁 Zelfde teams',
     settings:'INSTELLINGEN', sound:'Geluid', volume:'Volume', crt:'CRT-effect', matchType:'Wedstrijdtype',
     firstTo:'Eerste tot', matchLenMin:'Wedstrijdduur (min)', language:'Taal', on:'AAN', off:'UIT', matchTime:'Op tijd',
-    powerups:'Power-ups ⚡', powerupsHint:'Power-ups: bonussen vallen op het veld (alleen Oefenpotje)',
+    powerups:'Power-ups ⚡', powerupsHint:'Bonussen zweven op het veld — ⚡ sneller · 🌙 hoger · 💪 groter · ❄️ bevriezen · 🔥 powerschot · 🔻 krimp (die rode maakt JOU kleiner!). Alleen Oefenpotje.',
     youWin:'JIJ WINT!', cpuWins:'COMPUTER WINT', oppWins:'TEGENSTANDER WINT', playerWins:'SPELER {n} WINT!',
     waitHostRestart:'Wachten tot de host herstart…', putName:'Zet je naam op de ranglijst:',
     yourName:'JOUW NAAM', submit:'🏆 Verstuur', rematch:'🔁 Opnieuw', highScores:'🏆 Toplijst', mainMenu:'🏠 Hoofdmenu',
@@ -288,7 +288,7 @@ const I18N = {
     rulesControlsTxt:'<b>Speler 1</b> — WASD: A/D bewegen, W springen, S bal vasthouden (of touch).<br><b>Speler 2</b> — pijltjestoetsen: ←/→ bewegen, ↑ springen, ↓ bal vasthouden.',
     rulesMovesTxt:'<b>Dubbele sprong</b> — tik in de lucht nogmaals op springen voor een extra zet naar hoge ballen.<br><b>Vangen en gooien</b> — houd de vang-toets ingedrukt bij de bal om hem te pakken (max ~3s), laat los om hem naar voren te gooien.',
     rulesRulesTxt:'<b>Niet in je goal hangen</b> — te lang in je eigen doelgebied blijven stuurt je weg (let op de waarschuwing).<br><b>Golden goal</b> — een gelijke wedstrijd op tijd gaat naar sudden death: de volgende goal wint.',
-    rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.<br><b>Power-ups ⚡</b> — bonusmodus voor het Oefenpotje (zet aan in het menu): bonussen vallen op het veld — ⚡ turbo · 🌙 maansprong · 💪 mega-slime · ❄️ bevriezen · 🔥 powerschot.',
+    rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.<br><b>Power-ups ⚡</b> — bonusmodus voor het Oefenpotje (vink aan op het instelscherm): bonussen zweven met een parachute op het veld — raak ze aan om te pakken. ⚡ turbo (sneller) · 🌙 maansprong (hoger) · 💪 mega-slime (groter) · ❄️ bevriezen (verkleumt de tegenstander) · 🔥 powerschot (knal het volgende balcontact weg). Pas op voor de rode 🔻 <b>krimp</b> — die maakt JOU kleiner!',
   },
 };
 const NL_NAMES = { NED:'Nederland', ARG:'Argentinië', BRA:'Brazilië', FRA:'Frankrijk', ENG:'Engeland', ESP:'Spanje',
@@ -618,14 +618,15 @@ function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 
 /* ---- Power-ups (Friendly bonus mode): pickup types + per-slime effect helpers ---- */
 const POWER_TYPES = {
-  turbo:  { e:'⚡', c:'#ffd23b', dur:480 },   // run 1.5x for 8s
-  moon:   { e:'🌙', c:'#7cc0ee', dur:480 },   // jump 1.33x for 8s
-  mega:   { e:'💪', c:'#34d17a', dur:540 },   // grow 1.38x for 9s
-  freeze: { e:'❄️', c:'#9bd0f8', dur:150 },   // opponent frozen 2.5s
-  shot:   { e:'🔥', c:'#ff5470', dur:600 },   // next ball contact 1.65x speed (10s window)
+  turbo:  { e:'⚡', c:'#ffd23b', dur:480, good:true },   // run 1.5x for 8s
+  moon:   { e:'🌙', c:'#7cc0ee', dur:480, good:true },   // jump 1.33x for 8s
+  mega:   { e:'💪', c:'#34d17a', dur:540, good:true },   // grow 1.38x for 9s
+  freeze: { e:'❄️', c:'#9bd0f8', dur:150, good:true },   // opponent frozen 2.5s
+  shot:   { e:'🔥', c:'#ff8a3c', dur:600, good:true },   // next ball contact 1.65x speed (10s window)
+  shrink: { e:'🔻', c:'#ff4040', dur:420, bad:true  },   // NEGATIVE: YOU shrink to 0.62x for 7s
 };
 function fxType(s){ return s.fx ? s.fx.type : null; }
-function slimeR(s){ return SLIME_R * (fxType(s)==='mega' ? 1.38 : 1); }   // physics + drawing both use the live radius
+function slimeR(s){ const f=fxType(s); return SLIME_R * (f==='mega'?1.38 : f==='shrink'?0.62 : 1); }   // physics + drawing both use the live radius
 
 function updateSlime(s){
   // power-up effect timers (only ticked here, i.e. during live play)
@@ -860,9 +861,9 @@ function computeAI(s){
       }
       // only bail from deep defence to dodge the anti-camp penalty, and only when the ball isn't there
       if (p.smart && s.hang > CAMP_MAX*0.8 && b.x <= W*0.80) tx = Math.min(tx, W*0.66);
-      // power-ups mode: smart levels grab a nearby pickup while the ball is safely on the other half
+      // power-ups mode: smart levels grab a nearby GOOD pickup while the ball is safely on the other half
       if (G.powerMode && p.smart && b.x < CENTER*0.8){
-        const pow = G.pows.find(q=>q.landed && Math.abs(q.x-s.x)<320);
+        const pow = G.pows.find(q=>q.landed && !POWER_TYPES[q.type].bad && Math.abs(q.x-s.x)<320);
         if (pow) tx = pow.x;
       }
     }
@@ -1130,9 +1131,10 @@ function applyPow(s, type){
   const opp = s===G.p1 ? G.p2 : G.p1;
   if (type==='freeze'){ opp.frozen = POWER_TYPES.freeze.dur; opp.fx = null; }
   else if (type==='shot'){ s.powShot = POWER_TYPES.shot.dur; }
-  else { s.fx = { type, t: POWER_TYPES[type].dur, dur: POWER_TYPES[type].dur }; }
+  else { s.fx = { type, t: POWER_TYPES[type].dur, dur: POWER_TYPES[type].dur }; }   // turbo/moon/mega/shrink
   spawnDust(s.x, s.y - SLIME_R, 12, POWER_TYPES[type].c);
-  Audio.click();
+  if (POWER_TYPES[type].bad){ G.shake = Math.max(G.shake, 6); Audio.whistle(); }    // negative pickup: a little sting
+  else Audio.click();
 }
 function powerTick(){
   if (!G.powerMode) return;
@@ -1346,6 +1348,7 @@ function render(){
   if (G.p1) drawSlime(G.p1);
   if (G.p2) drawSlime(G.p2);
   drawParticles();
+  if (G.powerMode && (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL)) drawPowerSticker();
   if (G.p1 && G.p2 && G.screen!==SCREEN.MENU) drawScoreboard();
 
   if (G.screen===SCREEN.COUNT) drawCountdown();
@@ -1549,40 +1552,103 @@ function drawSlime(s){
     ctx.beginPath(); ctx.arc(s.x, s.y, r+3, Math.PI, 0); ctx.closePath(); ctx.fill();
   }
   const badges = [];
-  if (s.fx)        badges.push({ e:POWER_TYPES[s.fx.type].e, c:POWER_TYPES[s.fx.type].c, f:s.fx.t/s.fx.dur });
-  if (s.powShot>0) badges.push({ e:POWER_TYPES.shot.e,       c:POWER_TYPES.shot.c,       f:s.powShot/POWER_TYPES.shot.dur });
-  if (s.frozen>0)  badges.push({ e:POWER_TYPES.freeze.e,     c:POWER_TYPES.freeze.c,     f:s.frozen/POWER_TYPES.freeze.dur });
+  if (s.fx)        badges.push({ k:s.fx.type, c:POWER_TYPES[s.fx.type].c, f:s.fx.t/s.fx.dur });
+  if (s.powShot>0) badges.push({ k:'shot',    c:POWER_TYPES.shot.c,       f:s.powShot/POWER_TYPES.shot.dur });
+  if (s.frozen>0)  badges.push({ k:'freeze',  c:POWER_TYPES.freeze.c,     f:s.frozen/POWER_TYPES.freeze.dur });
   if (badges.length){
-    const by = s.y - r - 26;
+    const by = s.y - r - 28;
     badges.forEach((b,i)=>{
       const bx = s.x + (i - (badges.length-1)/2) * 34;
-      ctx.font='15px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-      ctx.fillText(b.e, bx, by);
-      ctx.fillStyle='rgba(8,10,24,0.7)'; ctx.fillRect(bx-13, by+11, 26, 4);
-      ctx.fillStyle=b.c;                 ctx.fillRect(bx-13, by+11, 26*Math.max(0,Math.min(1,b.f)), 4);
+      ctx.fillStyle='rgba(8,10,24,0.78)'; roundRect(bx-15, by-15, 30, 30, 8); ctx.fill();
+      ctx.strokeStyle=b.c; ctx.lineWidth=2; roundRect(bx-15, by-15, 30, 30, 8); ctx.stroke();
+      drawPowGlyph(b.k, bx, by-1, 8, b.c);
+      ctx.fillStyle='rgba(8,10,24,0.7)'; ctx.fillRect(bx-13, by+12, 26, 4);
+      ctx.fillStyle=b.c;                 ctx.fillRect(bx-13, by+12, 26*Math.max(0,Math.min(1,b.f)), 4);
     });
-    ctx.textBaseline='alphabetic';
   }
 }
 
-// power-up pickups: glowing orb + emoji, gentle bob once landed, blink before despawn
+// recognisable vector icon for each power-up, centred at (x,y), drawn in `col`
+function drawPowGlyph(type, x, y, r, col){
+  ctx.save(); ctx.translate(x,y);
+  ctx.fillStyle=col; ctx.strokeStyle=col; ctx.lineWidth=Math.max(2, r*0.30);
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  if (type==='turbo'){                                   // lightning bolt
+    ctx.beginPath();
+    ctx.moveTo(r*0.20,-r); ctx.lineTo(-r*0.55,r*0.18); ctx.lineTo(-r*0.06,r*0.18);
+    ctx.lineTo(-r*0.22,r); ctx.lineTo(r*0.55,-r*0.20); ctx.lineTo(r*0.04,-r*0.20);
+    ctx.closePath(); ctx.fill();
+  } else if (type==='moon'){                             // crescent moon
+    ctx.beginPath(); ctx.arc(0,0,r,0,7); ctx.fill();
+    ctx.globalCompositeOperation='destination-out';
+    ctx.beginPath(); ctx.arc(r*0.45,-r*0.20,r*0.86,0,7); ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+  } else if (type==='mega'){                             // GROW: up double-chevron
+    for (const dy of [r*0.20,-r*0.42]){
+      ctx.beginPath(); ctx.moveTo(-r*0.72,dy+r*0.48); ctx.lineTo(0,dy-r*0.30); ctx.lineTo(r*0.72,dy+r*0.48); ctx.stroke();
+    }
+  } else if (type==='shrink'){                           // SHRINK: down double-chevron (opposite of mega)
+    for (const dy of [-r*0.20,r*0.42]){
+      ctx.beginPath(); ctx.moveTo(-r*0.72,dy-r*0.48); ctx.lineTo(0,dy+r*0.30); ctx.lineTo(r*0.72,dy-r*0.48); ctx.stroke();
+    }
+  } else if (type==='freeze'){                           // snowflake: 3 spokes + tips
+    for (let k=0;k<3;k++){
+      ctx.save(); ctx.rotate(k*Math.PI/3);
+      ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(0,r); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,-r); ctx.lineTo(-r*0.32,-r*0.64); ctx.moveTo(0,-r); ctx.lineTo(r*0.32,-r*0.64);
+                       ctx.moveTo(0, r); ctx.lineTo(-r*0.32, r*0.64); ctx.moveTo(0, r); ctx.lineTo(r*0.32, r*0.64); ctx.stroke();
+      ctx.restore();
+    }
+  } else if (type==='shot'){                             // flame
+    ctx.beginPath(); ctx.moveTo(0,r);
+    ctx.bezierCurveTo(-r*0.95,r*0.45,-r*0.5,-r*0.35,0,-r);
+    ctx.bezierCurveTo(r*0.18,-r*0.45,r*0.16,-r*0.10,r*0.36,r*0.04);
+    ctx.bezierCurveTo(r*0.95,r*0.5,r*0.5,r,0,r);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// power-up pickups: parachute while falling, glowing disc + vector icon, bob once landed
 function drawPows(){
   for (const p of G.pows){
     if (p.landed && p.t < 120 && (G.frame>>3 & 1)) continue;     // blink when about to fade
     const def = POWER_TYPES[p.type];
     const y = p.y + (p.landed ? Math.sin(G.frame*0.1)*3 : 0);
     const pulse = 1 + 0.08*Math.sin(G.frame*0.15);
-    const g = ctx.createRadialGradient(p.x, y, 4, p.x, y, 34);
-    g.addColorStop(0, def.c+'66'); g.addColorStop(1, def.c+'00');
-    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, y, 34, 0, 7); ctx.fill();
-    ctx.fillStyle = 'rgba(255,255,255,0.94)';
-    ctx.beginPath(); ctx.arc(p.x, y, 16*pulse, 0, 7); ctx.fill();
-    ctx.strokeStyle = def.c; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(p.x, y, 16*pulse, 0, 7); ctx.stroke();
-    ctx.font = '17px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText(def.e, p.x, y+1);
-    ctx.textBaseline='alphabetic';
+    if (!p.landed){                                              // little parachute on the way down
+      ctx.strokeStyle=def.c; ctx.fillStyle=def.c+'cc'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(p.x, y-30, 20, Math.PI, 0); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(p.x-19,y-30); ctx.lineTo(p.x-5,y-16); ctx.moveTo(p.x,y-50); ctx.lineTo(p.x,y-16); ctx.moveTo(p.x+19,y-30); ctx.lineTo(p.x+5,y-16);
+      ctx.stroke();
+    }
+    const g = ctx.createRadialGradient(p.x, y, 4, p.x, y, 36);
+    g.addColorStop(0, def.c+'77'); g.addColorStop(1, def.c+'00');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, y, 36, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.96)';
+    ctx.beginPath(); ctx.arc(p.x, y, 17*pulse, 0, 7); ctx.fill();
+    ctx.strokeStyle = def.c; ctx.lineWidth = 3.5;
+    ctx.beginPath(); ctx.arc(p.x, y, 17*pulse, 0, 7); ctx.stroke();
+    drawPowGlyph(p.type, p.x, y, 9.5*pulse, def.c);
   }
+}
+
+// top-left play-screen sticker telling you power-ups are live (sits below the corner buttons)
+function drawPowerSticker(){
+  const ic = Object.keys(POWER_TYPES), pad=12, h=34, x=14, y=108;
+  ctx.save();
+  ctx.font=FONT(12,900);
+  const tw = ctx.measureText('POWER-UPS').width;
+  const w = pad + tw + 14 + ic.length*20 + pad-6;
+  roundRect(x,y,w,h,10); ctx.fillStyle='rgba(10,14,30,0.86)'; ctx.fill();
+  ctx.lineWidth=2; ctx.strokeStyle='rgba(255,210,90,0.92)'; roundRect(x,y,w,h,10); ctx.stroke();
+  ctx.fillStyle='#ffd23b'; ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('POWER-UPS', x+pad, y+h/2+1);
+  let gx = x+pad+tw+16;
+  for (const k of ic){ drawPowGlyph(k, gx, y+h/2, 7.5, POWER_TYPES[k].c); gx+=20; }
+  ctx.textBaseline='alphabetic';
+  ctx.restore();
 }
 
 // goal-hanging zones marked on the pitch near each goal; they light up when a slime camps
@@ -1676,11 +1742,11 @@ function drawScoreboard(){
       const sec=Math.max(0,Math.ceil(G.matchTime/60));
       const txt=(sec/60|0)+':'+String(sec%60).padStart(2,'0');
       ctx.font=FONT(16*SC,800); ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
-      ctx.fillText(txt + (G.powerMode?' ⚡':''), CENTER, y+h+15*SC);
+      ctx.fillText(txt, CENTER, y+h+15*SC);
     }
   } else {
     ctx.font=FONT(11*SC,700); ctx.fillStyle='#9a9ad0';
-    ctx.fillText('FIRST TO '+G.toWin + (G.powerMode?' · ⚡ POWER-UPS':''), CENTER, y+h+13*SC);
+    ctx.fillText('FIRST TO '+G.toWin, CENTER, y+h+13*SC);
   }
 }
 
@@ -2082,6 +2148,20 @@ function startTeamSelect(){
   else openTeamSelect(t('pickYourCountry'));
 }
 function renderSetupPills(){
+  // Power-ups toggle: Friendly (1P) + 2 Players only — never World Cup (leaderboard fairness)
+  const pw=$('setupPowerWrap');
+  if (pw){
+    const show = setupKind!=='wk';
+    pw.style.display = show ? '' : 'none';
+    if (show){
+      const tg=$('setupPowerToggle');
+      if (tg){
+        tg.setAttribute('aria-pressed', settings.powerups?'true':'false');
+        const txt=tg.querySelector('.pt-text'); if(txt) txt.textContent = settings.powerups?t('on'):t('off');
+      }
+      const hint=$('setupPowerHint'); if(hint) hint.textContent=t('powerupsHint');
+    }
+  }
   if (setupKind==='wk'){
     // World Cup: AI level (Rising ramps up each round, default) + match length — always timed
     const dr=$('setupDiffRow');
@@ -2642,6 +2722,7 @@ wire('btnSettings', openSettings);
 wire('pauseResume', resumeGame);
 wire('pauseQuit', ()=>askEndWK(backToMenu, ()=>showOverlay('pauseScreen')));   // confirm before abandoning a WC run
 wire('setupPlay', startTeamSelect);
+wire('setupPowerToggle', ()=>{ settings.powerups=!settings.powerups; store.save('powerups',settings.powerups); Audio.click(); renderSetupPills(); refreshToggles(); });
 wire('setupBack', backToMenu);
 wire('btnRules', ()=>openRules('menu'));
 wire('rulesBtn', ()=>openRules('game'));   // in-game ❓ : pause + show the rules

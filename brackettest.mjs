@@ -257,6 +257,12 @@ try {
   ok(G.p2.x===900, 'a frozen slime cannot move');
   G.p2.frozen=0;
 
+  // shrink (NEGATIVE): grabbing it makes YOU smaller
+  T.applyPow(G.p1,'shrink');
+  ok(G.p1.fx && G.p1.fx.type==='shrink' && T.slimeR(G.p1) < T.SLIME_R*0.7, 'shrink pickup shrinks the grabber');
+  ok(T.POWER_TYPES.shrink.bad===true, 'shrink is flagged as a negative pickup');
+  G.p1.fx=null;
+
   // mega: bigger dome that really deflects from further away
   T.applyPow(G.p2,'mega');
   ok(T.slimeR(G.p2) > T.SLIME_R*1.3, 'mega grows the slime');
@@ -281,13 +287,17 @@ try {
   T.resetPositions();
   ok(!G.p1.fx && G.pows.length===0, 'kickoff clears active effects and pickups');
 
-  // renderer draws pickups + badges without throwing
+  // renderer draws every pickup glyph, the badges and the top-left sticker without throwing
   let powDrawErr=null;
-  try { T.powSpawn('mega'); T.applyPow(G.p1,'turbo'); T.applyPow(G.p2,'freeze'); T.render(); }
-  catch(e){ powDrawErr=e; }
-  ok(!powDrawErr, 'renderer handles pickups & effect badges'+(powDrawErr?(' — '+powDrawErr.message):''));
+  try {
+    G.powerMode=true; G.screen=SCREEN.PLAY; G.pows.length=0;
+    Object.keys(T.POWER_TYPES).forEach((k,i)=>{ const q=T.powSpawn(k); q.x=120+i*90; q.landed=(i%2===0); });  // all 6 icons, falling + landed
+    T.applyPow(G.p1,'turbo'); T.applyPow(G.p2,'freeze'); G.p2.powShot=200;
+    T.render();
+  } catch(e){ powDrawErr=e; }
+  ok(!powDrawErr, 'renderer handles pickups, effect badges & the power-up sticker'+(powDrawErr?(' — '+powDrawErr.message):''));
 
-  T.settings.powerups = false;
+  G.powerMode=false; G.pows.length=0; T.settings.powerups = false;
 } catch(e){ ok(false, 'power-ups threw — '+e.message); }
 
 console.log('\n' + (fails ? ('FAILED (' + fails + ')') : 'ALL TESTS PASSED'));
