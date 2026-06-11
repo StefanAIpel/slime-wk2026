@@ -211,7 +211,8 @@ const I18N = {
     rematchTitle:'REMATCH', rematchMsg:'Keep the same teams or pick new ones?', newTeams:'🎲 New teams', sameTeams:'🔁 Same teams',
     settings:'SETTINGS', sound:'Sound', volume:'Volume', crt:'CRT effect', matchType:'Match type',
     firstTo:'First to', matchLenMin:'Match length (min)', language:'Language', on:'ON', off:'OFF', matchTime:'Match time',
-    powerups:'Power-ups ⚡', powerupsHint:'Pickups parachute onto the pitch — ⚡ faster · 🌙 higher · 💪 bigger · ❄️ freeze · 🔥 power shot · 🔻 shrink (that red one shrinks YOU!). Friendly only.',
+    powerups:'Power-ups ⚡', powerupsHint:'Friendly only',
+    powSpeed:'Super speed', powJump:'Super jump', powBig:'Bigger', powFreeze:'Freeze', powShot:'Power shot', powShrink:'You shrink',
     youWin:'YOU WIN!', cpuWins:'COMPUTER WINS', oppWins:'OPPONENT WINS', playerWins:'PLAYER {n} WINS!',
     waitHostRestart:'Waiting for the host to restart…', putName:'Put your name on the leaderboard:',
     yourName:'YOUR NAME', submit:'🏆 Submit', rematch:'🔁 Rematch', highScores:'🏆 High scores', mainMenu:'🏠 Main menu',
@@ -233,7 +234,7 @@ const I18N = {
     rulesControlsTxt:'<b>Player 1</b> — WASD: A/D move, W jump, S hold ball (or touch controls).<br><b>Player 2</b> — arrow keys: ←/→ move, ↑ jump, ↓ hold ball.',
     rulesMovesTxt:'<b>Double jump</b> — tap jump again in mid-air for an extra boost to reach high balls.<br><b>Catch &amp; throw</b> — hold the catch key by the ball to grab it (up to ~3s), then release to throw it upfield.',
     rulesRulesTxt:'<b>No goal-hanging</b> — lingering in your own goal area gets you sent out (mind the warning flash).<br><b>Golden goal</b> — a tied timed match goes to sudden death: the next goal wins.',
-    rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.<br><b>Power-ups ⚡</b> — Friendly bonus mode (tick the box on the setup screen): pickups parachute onto the pitch — grab them by touch. ⚡ turbo (faster) · 🌙 moon jump (higher) · 💪 mega slime (bigger) · ❄️ freeze (chills the opponent) · 🔥 power shot (rocket the next hit). Watch out for the red 🔻 <b>shrink</b> — that one makes YOU smaller!',
+    rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.<br><b>Power-ups ⚡</b> — Friendly bonus (tick it on setup): grab the drops — ⚡ super speed · 🌙 super jump · 💪 bigger · ❄️ freeze · 🔥 power shot · 🔻 you shrink (red — careful!).',
   },
   nl: {
     teamLeft:'TEAM LINKS', teamRight:'TEAM RECHTS', tagline:'slime voetbal · een moderne remake ⚽',
@@ -266,7 +267,8 @@ const I18N = {
     rematchTitle:'REVANCHE', rematchMsg:'Zelfde teams of nieuwe kiezen?', newTeams:'🎲 Nieuwe teams', sameTeams:'🔁 Zelfde teams',
     settings:'INSTELLINGEN', sound:'Geluid', volume:'Volume', crt:'CRT-effect', matchType:'Wedstrijdtype',
     firstTo:'Eerste tot', matchLenMin:'Wedstrijdduur (min)', language:'Taal', on:'AAN', off:'UIT', matchTime:'Op tijd',
-    powerups:'Power-ups ⚡', powerupsHint:'Bonussen zweven op het veld — ⚡ sneller · 🌙 hoger · 💪 groter · ❄️ bevriezen · 🔥 powerschot · 🔻 krimp (die rode maakt JOU kleiner!). Alleen Oefenpotje.',
+    powerups:'Power-ups ⚡', powerupsHint:'Alleen Oefenpotje',
+    powSpeed:'Supersnelheid', powJump:'Supersprong', powBig:'Groter', powFreeze:'Bevriezen', powShot:'Powerschot', powShrink:'Jij krimpt',
     youWin:'JIJ WINT!', cpuWins:'COMPUTER WINT', oppWins:'TEGENSTANDER WINT', playerWins:'SPELER {n} WINT!',
     waitHostRestart:'Wachten tot de host herstart…', putName:'Zet je naam op de ranglijst:',
     yourName:'JOUW NAAM', submit:'🏆 Verstuur', rematch:'🔁 Opnieuw', highScores:'🏆 Toplijst', mainMenu:'🏠 Hoofdmenu',
@@ -288,7 +290,7 @@ const I18N = {
     rulesControlsTxt:'<b>Speler 1</b> — WASD: A/D bewegen, W springen, S bal vasthouden (of touch).<br><b>Speler 2</b> — pijltjestoetsen: ←/→ bewegen, ↑ springen, ↓ bal vasthouden.',
     rulesMovesTxt:'<b>Dubbele sprong</b> — tik in de lucht nogmaals op springen voor een extra zet naar hoge ballen.<br><b>Vangen en gooien</b> — houd de vang-toets ingedrukt bij de bal om hem te pakken (max ~3s), laat los om hem naar voren te gooien.',
     rulesRulesTxt:'<b>Niet in je goal hangen</b> — te lang in je eigen doelgebied blijven stuurt je weg (let op de waarschuwing).<br><b>Golden goal</b> — een gelijke wedstrijd op tijd gaat naar sudden death: de volgende goal wint.',
-    rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.<br><b>Power-ups ⚡</b> — bonusmodus voor het Oefenpotje (vink aan op het instelscherm): bonussen zweven met een parachute op het veld — raak ze aan om te pakken. ⚡ turbo (sneller) · 🌙 maansprong (hoger) · 💪 mega-slime (groter) · ❄️ bevriezen (verkleumt de tegenstander) · 🔥 powerschot (knal het volgende balcontact weg). Pas op voor de rode 🔻 <b>krimp</b> — die maakt JOU kleiner!',
+    rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.<br><b>Power-ups ⚡</b> — bonus in het Oefenpotje (vink aan bij instellen): pak de drops — ⚡ supersnelheid · 🌙 supersprong · 💪 groter · ❄️ bevriezen · 🔥 powerschot · 🔻 jij krimpt (rood — pas op!).',
   },
 };
 const NL_NAMES = { NED:'Nederland', ARG:'Argentinië', BRA:'Brazilië', FRA:'Frankrijk', ENG:'Engeland', ESP:'Spanje',
@@ -1371,85 +1373,81 @@ const AD_BOARDS = [
 ];
 
 function drawStadium(){
-  // "blue hour" sky over a floodlit bowl — clearly lighter scene
+  // sky — blue-hour gradient
   const sky = ctx.createLinearGradient(0,0,0,GROUND);
-  sky.addColorStop(0,'#2a3f86'); sky.addColorStop(0.55,'#41599f'); sky.addColorStop(1,'#6b81c4');
+  sky.addColorStop(0,'#1a2a60'); sky.addColorStop(0.5,'#2f478e'); sky.addColorStop(1,'#5a72b6');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND+6);
 
-  // two slow searchlight beams sweeping the sky (big-final atmosphere)
-  for (const [bx, ph] of [[W*0.18, 0],[W*0.82, 2.1]]){
-    const ang = Math.sin(G.frame*0.004 + ph) * 0.35 + (bx<CENTER ? -0.20 : 0.20);
-    ctx.save(); ctx.translate(bx, GROUND*0.62); ctx.rotate(ang);
-    const bg = ctx.createLinearGradient(0,0,0,-GROUND*0.72);
-    bg.addColorStop(0,'rgba(225,238,255,0.11)'); bg.addColorStop(1,'rgba(225,238,255,0)');
-    ctx.fillStyle=bg; ctx.beginPath();
-    ctx.moveTo(-7,0); ctx.lineTo(7,0); ctx.lineTo(36,-GROUND*0.72); ctx.lineTo(-36,-GROUND*0.72);
-    ctx.closePath(); ctx.fill(); ctx.restore();
-  }
+  // distant floodlight haze high over the bowl
+  const haze=ctx.createRadialGradient(CENTER,-30,40,CENTER,-30,W*0.7);
+  haze.addColorStop(0,'rgba(150,185,255,0.16)'); haze.addColorStop(1,'rgba(150,185,255,0)');
+  ctx.fillStyle=haze; ctx.fillRect(0,0,W,GROUND*0.6);
 
-  // subtle WC 2026 colour sweeps across the upper stands (USA/Mexico/Canada: red · blue · green)
-  const sweep=(yC, rad, col, a)=>{ ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle=col; ctx.lineWidth=46;
-    ctx.beginPath(); ctx.ellipse(CENTER, yC, W*0.62, rad, 0, Math.PI, 0); ctx.stroke(); ctx.restore(); };
-  sweep(GROUND*0.30, 150, '#e4002b', 0.11);    // red
-  sweep(GROUND*0.42, 120, '#1f6fff', 0.12);    // blue
-  sweep(GROUND*0.54,  96, '#00a64a', 0.11);    // green
-
-  // curved stadium bowl: two tiers + a lit front rail (front-on bowl => "smile" curves)
-  const band=(yEdge,yMid,h,col)=>{ ctx.fillStyle=col; ctx.beginPath();
+  // stadium bowl: two curved tiers, vertically shaded for depth
+  const band=(yEdge,yMid,h,c0,c1)=>{ const g=ctx.createLinearGradient(0,yEdge,0,yEdge+h);
+    g.addColorStop(0,c0); g.addColorStop(1,c1); ctx.fillStyle=g; ctx.beginPath();
     ctx.moveTo(0,yEdge); ctx.quadraticCurveTo(CENTER,yMid,W,yEdge);
     ctx.lineTo(W,yEdge+h); ctx.quadraticCurveTo(CENTER,yMid+h,0,yEdge+h); ctx.closePath(); ctx.fill(); };
-  band(70, 150, GROUND*0.34, '#233570');                 // upper tier — lighter stand blue
-  band(GROUND*0.52, GROUND*0.60, GROUND*0.40, '#1b2a60'); // lower tier (closer/slightly darker)
-  // roof edge + tier separation lines so the bowl reads clearly
-  ctx.save(); ctx.lineWidth=2;
-  ctx.strokeStyle='rgba(120,150,220,0.45)';
-  ctx.beginPath(); ctx.moveTo(0,70); ctx.quadraticCurveTo(CENTER,150,W,70); ctx.stroke();          // upper roof rim
-  ctx.strokeStyle='rgba(90,120,190,0.35)';
-  ctx.beginPath(); ctx.moveTo(0,GROUND*0.52); ctx.quadraticCurveTo(CENTER,GROUND*0.60,W,GROUND*0.52); ctx.stroke(); // tier gap
-  ctx.restore();
+  band(62,138, GROUND*0.42, '#26407f','#1a2b58');                 // upper tier
+  band(GROUND*0.50, GROUND*0.585, GROUND*0.46, '#1d3168','#101d44'); // lower tier (closer/darker)
 
-  // crowd: lively WC stands — brighter fan colours, always clearly visible, gentle twinkle
-  const t=G.frame*0.05;
-  const cols=['#4a69b8','#5d7bcc','#ff8c33','#46e08c','#ff6b85','#ffffff'];   // 0,1 light blue · 2 NL orange · 3 green · 4 red · 5 white
+  // soft team-colour tifo glow washing the stands (subtle, not smudgy)
+  const tifo=(yC,rad,col,a)=>{ ctx.save(); ctx.globalAlpha=a; ctx.fillStyle=col;
+    ctx.beginPath(); ctx.ellipse(CENTER,yC,W*0.5,rad,0,0,7); ctx.fill(); ctx.restore(); };
+  tifo(GROUND*0.34,70,'#e4002b',0.05); tifo(GROUND*0.44,58,'#2b6fff',0.06); tifo(GROUND*0.55,50,'#00a64a',0.05);
+
+  // crowd seated in the bowl — denser lower, calm twinkle, gangway gaps between tiers
+  const t=G.frame*0.045;
+  const cols=['#6f87c6','#8ba1dd','#ff9b4d','#46c98a','#ff7088','#eef2ff'];
   for (const s of crowdSeed){
-    const cx=s.x*W, cy=72 + s.y*(GROUND-150);
-    const tw=0.72+0.28*Math.sin(t+s.f);
-    ctx.globalAlpha=tw; ctx.fillStyle=cols[s.c]; ctx.fillRect(cx,cy,4,4);
+    if (Math.abs(s.y-0.50)<0.02 || Math.abs(s.y-0.80)<0.018) continue;   // gangways between tiers
+    const cx=s.x*W, cy=66 + s.y*(GROUND-150);
+    const tw=0.58+0.26*Math.sin(t+s.f)+s.y*0.16;
+    ctx.globalAlpha=Math.min(1,tw); ctx.fillStyle=cols[s.c]; ctx.fillRect(cx,cy,4,4);
   }
   ctx.globalAlpha=1;
 
-  // paparazzi camera flashes popping in the stands (short bright blooms that fade)
-  const fwin=18, ft=(G.frame/fwin)|0, ff=1-(G.frame%fwin)/fwin;
-  for (let k=0;k<3;k++){
-    const s=crowdSeed[(ft*31 + k*149) % crowdSeed.length];
-    const cx=s.x*W, cy=72 + s.y*(GROUND-150);
-    ctx.fillStyle=`rgba(255,255,255,${0.9*ff})`; ctx.fillRect(cx-1,cy-1,5,5);
-    const fg=ctx.createRadialGradient(cx+1,cy+1,1,cx+1,cy+1,11);
-    fg.addColorStop(0,`rgba(255,255,255,${0.5*ff})`); fg.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(cx+1,cy+1,11,0,7); ctx.fill();
+  // roof rim + tier gangway line
+  ctx.save(); ctx.lineWidth=2; ctx.strokeStyle='rgba(140,170,235,0.42)';
+  ctx.beginPath(); ctx.moveTo(0,62); ctx.quadraticCurveTo(CENTER,138,W,62); ctx.stroke();
+  ctx.strokeStyle='rgba(90,120,190,0.30)';
+  ctx.beginPath(); ctx.moveTo(0,GROUND*0.50); ctx.quadraticCurveTo(CENTER,GROUND*0.585,W,GROUND*0.50); ctx.stroke();
+  ctx.restore();
+
+  // one soft camera flash at a time in the stands (subtle, not strobey)
+  const fwin=34, ff=1-(G.frame%fwin)/fwin;
+  if (ff>0.04){ const s=crowdSeed[((G.frame/fwin|0)*53)%crowdSeed.length];
+    const cx=s.x*W, cy=66+s.y*(GROUND-150);
+    const fg=ctx.createRadialGradient(cx,cy,0,cx,cy,13);
+    fg.addColorStop(0,`rgba(255,255,255,${0.7*ff})`); fg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=fg; ctx.beginPath(); ctx.arc(cx,cy,13,0,7); ctx.fill();
   }
 
-  // lit front rail (bright curved line with a soft glow)
-  ctx.save(); ctx.strokeStyle='rgba(150,200,255,0.85)'; ctx.lineWidth=2.5; ctx.shadowColor='rgba(120,180,255,0.9)'; ctx.shadowBlur=10;
-  ctx.beginPath(); ctx.moveTo(0,GROUND*0.50); ctx.quadraticCurveTo(CENTER,GROUND*0.585,W,GROUND*0.50); ctx.stroke(); ctx.restore();
+  // slow searchlight beams (very subtle)
+  for (const [bx,ph] of [[W*0.20,0],[W*0.80,2.1]]){
+    const ang=Math.sin(G.frame*0.004+ph)*0.30+(bx<CENTER?-0.18:0.18);
+    ctx.save(); ctx.translate(bx,GROUND*0.60); ctx.rotate(ang);
+    const bg=ctx.createLinearGradient(0,0,0,-GROUND*0.66);
+    bg.addColorStop(0,'rgba(220,235,255,0.08)'); bg.addColorStop(1,'rgba(220,235,255,0)');
+    ctx.fillStyle=bg; ctx.beginPath();
+    ctx.moveTo(-6,0); ctx.lineTo(6,0); ctx.lineTo(32,-GROUND*0.66); ctx.lineTo(-32,-GROUND*0.66);
+    ctx.closePath(); ctx.fill(); ctx.restore();
+  }
 
   // floodlights: a slim pylon + an angled lamp bank (grid of lit cells) casting a soft glow cone
   for (const fx of [W*0.10, W*0.90]){
     const inward = fx<CENTER ? 1 : -1;          // tilt the lamp head toward the pitch
     const headY = 16, poleH = GROUND*0.42, gx = fx+inward*8;
-    // glow cone projected down-inward, with a gentle live flicker
     const fl = 0.92 + 0.08*Math.sin(G.frame*0.21 + fx);
     const g=ctx.createRadialGradient(gx,headY+4,6,gx,headY+4,260);
     g.addColorStop(0,`rgba(228,240,255,${0.55*fl})`); g.addColorStop(0.5,`rgba(175,208,255,${0.14*fl})`); g.addColorStop(1,'rgba(175,208,255,0)');
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(gx,headY+4,260,0,7); ctx.fill();
-    // pylon (two-tone for roundness)
     ctx.fillStyle='#454b69'; ctx.fillRect(fx-3, headY, 6, poleH);
     ctx.fillStyle='#2c3048'; ctx.fillRect(fx+(inward>0?1:-3), headY, 2, poleH);
-    // lamp bank, tilted toward the pitch
     ctx.save(); ctx.translate(fx, headY); ctx.rotate(inward*0.20);
-    ctx.fillStyle='#9aa2bd'; ctx.fillRect(-27,-13,54,20);          // housing
-    ctx.fillStyle='#6c7290'; ctx.fillRect(-27,-13,54,3);           // top frame
-    for (let i=0;i<4;i++) for (let j=0;j<2;j++){                   // 4×2 grid of lit cells
+    ctx.fillStyle='#9aa2bd'; ctx.fillRect(-27,-13,54,20);
+    ctx.fillStyle='#6c7290'; ctx.fillRect(-27,-13,54,3);
+    for (let i=0;i<4;i++) for (let j=0;j<2;j++){
       const lx=-19+i*12.7, ly=-6+j*10;
       ctx.fillStyle='rgba(255,250,224,0.96)'; ctx.beginPath(); ctx.arc(lx,ly,4,0,7); ctx.fill();
       ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.arc(lx-0.6,ly-0.6,1.6,0,7); ctx.fill();
@@ -1457,8 +1455,16 @@ function drawStadium(){
     ctx.restore();
   }
 
-  // pitchside ad boards — scrolling brand tiles (decorative only; not clickable links)
-  ctx.fillStyle='#0c1334'; ctx.fillRect(0,GROUND-22,W,22);
+  // lit front rail (bright curved line with a soft glow)
+  ctx.save(); ctx.strokeStyle='rgba(150,200,255,0.85)'; ctx.lineWidth=2.5; ctx.shadowColor='rgba(120,180,255,0.9)'; ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.moveTo(0,GROUND*0.50); ctx.quadraticCurveTo(CENTER,GROUND*0.585,W,GROUND*0.50); ctx.stroke(); ctx.restore();
+
+  // pitchside LED ad boards — polished board (top highlight + bottom shade) with scrolling text
+  const adY=GROUND-24, adH=24;
+  const adg=ctx.createLinearGradient(0,adY,0,adY+adH); adg.addColorStop(0,'#1a254f'); adg.addColorStop(1,'#0a1130');
+  ctx.fillStyle=adg; ctx.fillRect(0,adY,W,adH);
+  ctx.fillStyle='rgba(255,255,255,0.14)'; ctx.fillRect(0,adY,W,1.5);
+  ctx.fillStyle='rgba(0,0,0,0.40)'; ctx.fillRect(0,adY+adH-2,W,2);
   ctx.font=FONT(13,800); ctx.textAlign='left'; ctx.textBaseline='alphabetic';
   const sep='   •   ';
   let unit=0; const widths=AD_BOARDS.map(b=>{ const w=ctx.measureText(b.t+sep).width; unit+=w; return w; });
@@ -1466,27 +1472,37 @@ function drawStadium(){
   for (let x=-scroll; x<W; ){
     for (let i=0;i<AD_BOARDS.length && x<W;i++){
       const b=AD_BOARDS[i], w=widths[i];
-      ctx.fillStyle=b.c; ctx.fillText(b.t+sep, x, GROUND-7);
+      ctx.fillStyle=b.c; ctx.fillText(b.t+sep, x, adY+adH-8);
       x+=w;
     }
   }
+
+  // broadcast vignette to frame the backdrop (behind the pitch + players)
+  const vig=ctx.createRadialGradient(CENTER,GROUND*0.64,GROUND*0.46,CENTER,GROUND*0.64,W*0.66);
+  vig.addColorStop(0,'rgba(0,0,0,0)'); vig.addColorStop(1,'rgba(5,7,20,0.42)');
+  ctx.fillStyle=vig; ctx.fillRect(0,0,W,GROUND+6);
 }
 
 function drawPitch(){
-  // gras met maaibanen — frisser, voller groen onder de floodlights
-  for (let i=0;i<14;i++){
-    ctx.fillStyle = i%2? '#28a449' : '#23963f';
-    ctx.fillRect(i*(W/14), GROUND, W/14+1, H-GROUND);
-  }
-  // floodlit sheen: het gras vangt bovenaan wat licht
-  const lit = ctx.createLinearGradient(0,GROUND,0,H);
-  lit.addColorStop(0,'rgba(255,255,235,0.12)'); lit.addColorStop(0.45,'rgba(255,255,235,0)');
+  // grass with mow stripes
+  for (let i=0;i<14;i++){ ctx.fillStyle = i%2? '#2aa64b' : '#23973f'; ctx.fillRect(i*(W/14), GROUND, W/14+1, H-GROUND); }
+  // top-lit sheen + a soft spotlight pool so the play area pops (broadcast look)
+  const lit=ctx.createLinearGradient(0,GROUND,0,H); lit.addColorStop(0,'rgba(255,255,235,0.16)'); lit.addColorStop(0.5,'rgba(255,255,235,0)');
   ctx.fillStyle=lit; ctx.fillRect(0,GROUND,W,H-GROUND);
-  ctx.fillStyle='rgba(0,0,0,0.12)'; ctx.fillRect(0,GROUND,W,4);
-  // lijnen
-  ctx.strokeStyle='rgba(255,255,255,0.66)'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.moveTo(CENTER,GROUND); ctx.lineTo(CENTER,H); ctx.stroke();
-  ctx.beginPath(); ctx.arc(CENTER,H+6,46,Math.PI,0,true); ctx.stroke();
+  const spot=ctx.createRadialGradient(CENTER,GROUND,20,CENTER,GROUND,W*0.55);
+  spot.addColorStop(0,'rgba(255,255,225,0.10)'); spot.addColorStop(1,'rgba(255,255,225,0)');
+  ctx.fillStyle=spot; ctx.fillRect(0,GROUND-30,W,H-GROUND+30);
+  // contact shadow where the stands meet the grass
+  ctx.fillStyle='rgba(0,0,0,0.16)'; ctx.fillRect(0,GROUND,W,3);
+  // pitch markings — halfway line, perspective centre circle + spot, goal-area arcs
+  const my=GROUND+(H-GROUND)*0.55;
+  ctx.strokeStyle='rgba(255,255,255,0.62)'; ctx.lineWidth=3; ctx.lineCap='round';
+  ctx.beginPath(); ctx.moveTo(CENTER,GROUND); ctx.lineTo(CENTER,H); ctx.stroke();             // halfway line
+  ctx.beginPath(); ctx.ellipse(CENTER,my,86,18,0,0,7); ctx.stroke();                           // centre circle (flattened)
+  ctx.fillStyle='rgba(255,255,255,0.62)'; ctx.beginPath(); ctx.ellipse(CENTER,my,3.4,1.7,0,0,7); ctx.fill();   // centre spot
+  ctx.lineWidth=2.5;
+  ctx.beginPath(); ctx.ellipse(GOAL_D+6, my, 58, 14, 0, -0.62, 0.62); ctx.stroke();            // left goal-area arc
+  ctx.beginPath(); ctx.ellipse(W-GOAL_D-6, my, 58, 14, 0, Math.PI-0.62, Math.PI+0.62); ctx.stroke();  // right goal-area arc
 }
 
 function drawGoal(left){
@@ -2159,7 +2175,13 @@ function renderSetupPills(){
         tg.setAttribute('aria-pressed', settings.powerups?'true':'false');
         const txt=tg.querySelector('.pt-text'); if(txt) txt.textContent = settings.powerups?t('on'):t('off');
       }
-      const hint=$('setupPowerHint'); if(hint) hint.textContent=t('powerupsHint');
+      const lg=$('setupPowerLegend');
+      if (lg){
+        const good=[['⚡',t('powSpeed')],['🌙',t('powJump')],['💪',t('powBig')],['❄️',t('powFreeze')],['🔥',t('powShot')]];
+        lg.innerHTML = good.map(([e,l])=>`<span class="pchip"><span class="pe">${e}</span>${l}</span>`).join('')
+          + `<span class="pchip bad"><span class="pe">🔻</span>${t('powShrink')}</span>`;
+        lg.style.opacity = settings.powerups ? '1' : '.45';
+      }
     }
   }
   if (setupKind==='wk'){

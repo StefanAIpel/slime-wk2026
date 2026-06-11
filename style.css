@@ -282,15 +282,21 @@ body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { displa
   font-size: 15px; font-weight: 900; color: transparent; background: rgba(0,0,0,.25); flex: 0 0 auto;
 }
 .power-toggle .pt-text { min-width: 30px; }
-.power-toggle .pt-icons { font-size: 16px; letter-spacing: 2px; }
-.power-toggle .pt-bad { filter: drop-shadow(0 0 4px rgba(255,64,64,.5)); }
 .power-toggle:hover { border-color: var(--oranje2); }
 .power-toggle[aria-pressed="true"] {
   background: linear-gradient(180deg, rgba(255,210,90,.22), rgba(255,122,24,.12));
   border-color: var(--oranje2);
 }
 .power-toggle[aria-pressed="true"] .pt-box { background: var(--good); border-color: var(--good); color: #06200f; }
-.grp-hint { font-size: 11px; color: var(--muted); line-height: 1.5; text-align: left; max-width: 400px; }
+/* centred power-ups block with a compact icon legend */
+.power-grp { align-items: center; }
+.power-grp .grp-label { text-align: center; }
+.power-grp .power-toggle { align-self: center; }
+.power-legend { display: flex; flex-wrap: wrap; gap: 7px; justify-content: center; max-width: 440px; transition: opacity .15s ease; }
+.pchip { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px;
+  background: rgba(255,255,255,.06); border: 1px solid var(--line); font-size: 12px; font-weight: 700; color: var(--ink); }
+.pchip .pe { font-size: 14px; line-height: 1; }
+.pchip.bad { background: rgba(255,64,64,.15); border-color: rgba(255,90,90,.55); color: #ffd2d2; }
 /* online: short explainer of the format + the two modes */
 .online-help { font-size: clamp(10px, 1.5vw, 12px); color: var(--muted); line-height: 1.75; text-align: left; padding: 2px 2px 0; }
 .online-count { font-size: clamp(11px, 1.6vw, 13px); color: var(--good); font-weight: 700; text-align: center; min-height: 16px; }
