@@ -48,7 +48,7 @@ sandbox.window = sandbox;
 vm.createContext(sandbox);
 vm.runInContext(fs.readFileSync(new URL('./game.js', import.meta.url), 'utf8'), sandbox);
 // top-level const/function bindings live in the context's lexical scope; surface them
-vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, wkPoints, tick, render, go1p, startTeamSelect, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES };', sandbox);
+vm.runInContext('window.__TEST = { G, TEAMS, SCREEN, settings, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, wkPoints, tick, render, go1p, startTeamSelect, pickTeam, score, openSettings, showLeaderboard, updateBall, updateSlime, resetPositions, separateSlimes, GROUND, SLIME_R, BALL_R, CENTER, W, renderMenuPills, WK_VENUES, startMatch, applyPow, powSpawn, powerTick, slimeR, reflectOffSlime, POWER_TYPES, SLIME_SPEED };', sandbox);
 
 const T = sandbox.__TEST;
 const { G, TEAMS, SCREEN, setupWK, wkMatchEnd, wkBracketHTML, wkUserMatch, wkWinner, W } = T;
@@ -217,6 +217,78 @@ try {
   G.score=[0,2]; wkMatchEnd(false);                            // lose in R16
   ok(T.wkPoints()>=0, 'a knocked-out run still computes points');
 } catch(e){ ok(false,'points threw — '+e.message); }
+
+// ---- 10. Power-ups (Friendly bonus mode) -----------------------------------
+console.log('Power-ups (friendly bonus mode):');
+try {
+  const NOIN = ()=>({left:false,right:false,jump:false,down:false});
+  // gating: ON in a friendly, OFF in a World Cup match (leaderboard purity)
+  T.settings.powerups = true;
+  G.wkMode=false; G.wk=null; G.mode='1p'; T.startMatch();
+  ok(G.powerMode===true, 'power-ups arm in a 1P friendly when the toggle is on');
+  G.wkMode=true; T.startMatch();
+  ok(G.powerMode===false, 'power-ups never arm in a World Cup match');
+  G.wkMode=false; G.mode='host'; T.startMatch();
+  ok(G.powerMode===false, 'power-ups never arm in an online match');
+  G.mode='1p'; T.startMatch(); G.screen=SCREEN.PLAY;
+
+  // spawn + collect on touch
+  G.pows.length=0;
+  const pow = T.powSpawn('turbo');
+  ok(G.pows.length===1, 'a pickup spawns');
+  pow.x=G.p1.x; pow.y=G.p1.y - T.SLIME_R*0.5; pow.landed=true;     // drop it onto P1
+  G.p1.input=NOIN(); G.p2.input=NOIN(); G.p2.x=900;
+  T.powerTick();
+  ok(G.pows.length===0 && G.p1.fx && G.p1.fx.type==='turbo', 'touching a pickup collects it (⚡ turbo active)');
+
+  // turbo: 1.5x run speed while active
+  G.p1.speedMul=1; G.p1.x=300; G.p1.input={left:false,right:true,jump:false,down:false};
+  T.updateSlime(G.p1);
+  ok(Math.abs((G.p1.x-300) - T.SLIME_SPEED*1.5) < 0.01, 'turbo runs 1.5x the base speed');
+  G.p1.fx=null;
+  G.p1.x=300; T.updateSlime(G.p1);
+  ok(Math.abs((G.p1.x-300) - T.SLIME_SPEED) < 0.01, 'speed returns to normal when the effect ends');
+
+  // freeze hits the OPPONENT and immobilises it
+  T.applyPow(G.p1,'freeze');
+  ok(G.p2.frozen>0, 'freeze pickup freezes the opponent');
+  G.p2.x=900; G.p2.speedMul=1; G.p2.input={left:false,right:true,jump:false,down:false};
+  T.updateSlime(G.p2);
+  ok(G.p2.x===900, 'a frozen slime cannot move');
+  G.p2.frozen=0;
+
+  // mega: bigger dome that really deflects from further away
+  T.applyPow(G.p2,'mega');
+  ok(T.slimeR(G.p2) > T.SLIME_R*1.3, 'mega grows the slime');
+  G.p2.x=700; G.p2.y=T.GROUND; G.p2.vx=0; G.p2.vy=0;
+  const bb=G.ball; bb.held=null; bb.x=700+85; bb.y=T.GROUND; bb.vx=-4; bb.vy=0;
+  ok(T.reflectOffSlime(bb,G.p2)===true, 'mega dome deflects a ball a normal slime would miss');
+  G.p2.fx=null;
+  bb.x=700+85; bb.y=T.GROUND; bb.vx=-4; bb.vy=0;
+  ok(T.reflectOffSlime(bb,G.p2)===false, 'same ball misses once mega expires');
+
+  // power shot: the next contact rockets away, then the charge is spent
+  T.applyPow(G.p1,'shot');
+  ok(G.p1.powShot>0, 'power shot charges');
+  G.p1.x=400; G.p1.y=T.GROUND; G.p1.vx=0; G.p1.vy=0;
+  bb.x=430; bb.y=T.GROUND-55; bb.vx=2; bb.vy=2;
+  T.reflectOffSlime(bb,G.p1);
+  ok(Math.hypot(bb.vx,bb.vy) > 12, 'power shot launches the ball much faster (got '+Math.hypot(bb.vx,bb.vy).toFixed(1)+')');
+  ok(G.p1.powShot===0, 'the charge is consumed by the contact');
+
+  // kickoff hygiene: effects + pickups reset
+  T.applyPow(G.p1,'moon'); T.powSpawn();
+  T.resetPositions();
+  ok(!G.p1.fx && G.pows.length===0, 'kickoff clears active effects and pickups');
+
+  // renderer draws pickups + badges without throwing
+  let powDrawErr=null;
+  try { T.powSpawn('mega'); T.applyPow(G.p1,'turbo'); T.applyPow(G.p2,'freeze'); T.render(); }
+  catch(e){ powDrawErr=e; }
+  ok(!powDrawErr, 'renderer handles pickups & effect badges'+(powDrawErr?(' — '+powDrawErr.message):''));
+
+  T.settings.powerups = false;
+} catch(e){ ok(false, 'power-ups threw — '+e.message); }
 
 console.log('\n' + (fails ? ('FAILED (' + fails + ')') : 'ALL TESTS PASSED'));
 process.exit(fails ? 1 : 0);
