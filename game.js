@@ -158,7 +158,7 @@ const store = {
 };
 const settings = {
   sound:     store.load('sound', true),
-  crt:       store.load('crt', true),
+  crt:       store.load('crt', false),            // retro scanlines OFF by default (toggle in settings)
   matchMode: store.load('matchMode', 'goals'),   // 'goals' | 'time'
   toWin:     store.load('toWin', 5),
   matchMin:  store.load('matchMin', 2),           // match length in minutes (time mode)
@@ -167,6 +167,7 @@ const settings = {
   wkMin:     store.load('wkMin', 2),               // World Cup: minutes per match
   wkDiff:    store.load('wkDiff', 'rising'),        // World Cup: 'rising' | easy|normal|hard|worldcup
   lang:      store.load('lang', 'en'),             // UI language: 'en' | 'nl'
+  powerups:  store.load('powerups', false),        // Friendly bonus mode: power-ups drop onto the pitch
 };
 function clamp01(v){ v=+v; return isNaN(v)?0.7:(v<0?0:v>1?1:v); }
 // drop retired longest modes (8 min / 10 goals) from any older saved settings
@@ -210,6 +211,7 @@ const I18N = {
     rematchTitle:'REMATCH', rematchMsg:'Keep the same teams or pick new ones?', newTeams:'🎲 New teams', sameTeams:'🔁 Same teams',
     settings:'SETTINGS', sound:'Sound', volume:'Volume', crt:'CRT effect', matchType:'Match type',
     firstTo:'First to', matchLenMin:'Match length (min)', language:'Language', on:'ON', off:'OFF', matchTime:'Match time',
+    powerups:'Power-ups ⚡', powerupsHint:'Power-ups: bonus pickups drop onto the pitch (Friendly only)',
     youWin:'YOU WIN!', cpuWins:'COMPUTER WINS', oppWins:'OPPONENT WINS', playerWins:'PLAYER {n} WINS!',
     waitHostRestart:'Waiting for the host to restart…', putName:'Put your name on the leaderboard:',
     yourName:'YOUR NAME', submit:'🏆 Submit', rematch:'🔁 Rematch', highScores:'🏆 High scores', mainMenu:'🏠 Main menu',
@@ -231,7 +233,7 @@ const I18N = {
     rulesControlsTxt:'<b>Player 1</b> — WASD: A/D move, W jump, S hold ball (or touch controls).<br><b>Player 2</b> — arrow keys: ←/→ move, ↑ jump, ↓ hold ball.',
     rulesMovesTxt:'<b>Double jump</b> — tap jump again in mid-air for an extra boost to reach high balls.<br><b>Catch &amp; throw</b> — hold the catch key by the ball to grab it (up to ~3s), then release to throw it upfield.',
     rulesRulesTxt:'<b>No goal-hanging</b> — lingering in your own goal area gets you sent out (mind the warning flash).<br><b>Golden goal</b> — a tied timed match goes to sudden death: the next goal wins.',
-    rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.',
+    rulesModesTxt:'<b>Friendly</b> — first to a set number of goals, or a timed match.<br><b>World Cup</b> — 16-team knockout; win 4 rounds to be champion and post your score.<br><b>Online</b> — 2-minute matches vs a friend (share a code) or a random opponent.<br><b>Power-ups ⚡</b> — Friendly bonus mode (toggle in the menu): pickups drop onto the pitch — ⚡ turbo · 🌙 moon jump · 💪 mega slime · ❄️ freeze · 🔥 power shot.',
   },
   nl: {
     teamLeft:'TEAM LINKS', teamRight:'TEAM RECHTS', tagline:'slime voetbal · een moderne remake ⚽',
@@ -264,6 +266,7 @@ const I18N = {
     rematchTitle:'REVANCHE', rematchMsg:'Zelfde teams of nieuwe kiezen?', newTeams:'🎲 Nieuwe teams', sameTeams:'🔁 Zelfde teams',
     settings:'INSTELLINGEN', sound:'Geluid', volume:'Volume', crt:'CRT-effect', matchType:'Wedstrijdtype',
     firstTo:'Eerste tot', matchLenMin:'Wedstrijdduur (min)', language:'Taal', on:'AAN', off:'UIT', matchTime:'Op tijd',
+    powerups:'Power-ups ⚡', powerupsHint:'Power-ups: bonussen vallen op het veld (alleen Oefenpotje)',
     youWin:'JIJ WINT!', cpuWins:'COMPUTER WINT', oppWins:'TEGENSTANDER WINT', playerWins:'SPELER {n} WINT!',
     waitHostRestart:'Wachten tot de host herstart…', putName:'Zet je naam op de ranglijst:',
     yourName:'JOUW NAAM', submit:'🏆 Verstuur', rematch:'🔁 Opnieuw', highScores:'🏆 Toplijst', mainMenu:'🏠 Hoofdmenu',
@@ -285,7 +288,7 @@ const I18N = {
     rulesControlsTxt:'<b>Speler 1</b> — WASD: A/D bewegen, W springen, S bal vasthouden (of touch).<br><b>Speler 2</b> — pijltjestoetsen: ←/→ bewegen, ↑ springen, ↓ bal vasthouden.',
     rulesMovesTxt:'<b>Dubbele sprong</b> — tik in de lucht nogmaals op springen voor een extra zet naar hoge ballen.<br><b>Vangen en gooien</b> — houd de vang-toets ingedrukt bij de bal om hem te pakken (max ~3s), laat los om hem naar voren te gooien.',
     rulesRulesTxt:'<b>Niet in je goal hangen</b> — te lang in je eigen doelgebied blijven stuurt je weg (let op de waarschuwing).<br><b>Golden goal</b> — een gelijke wedstrijd op tijd gaat naar sudden death: de volgende goal wint.',
-    rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.',
+    rulesModesTxt:'<b>Oefenpotje</b> — eerste bij een aantal goals, of op tijd.<br><b>World Cup</b> — knock-out met 16 landen; win 4 rondes om wereldkampioen te worden en je score te plaatsen.<br><b>Online</b> — wedstrijden van 2 minuten tegen een vriend (deel een code) of een willekeurige speler.<br><b>Power-ups ⚡</b> — bonusmodus voor het Oefenpotje (zet aan in het menu): bonussen vallen op het veld — ⚡ turbo · 🌙 maansprong · 💪 mega-slime · ❄️ bevriezen · 🔥 powerschot.',
   },
 };
 const NL_NAMES = { NED:'Nederland', ARG:'Argentinië', BRA:'Brazilië', FRA:'Frankrijk', ENG:'Engeland', ESP:'Spanje',
@@ -539,6 +542,7 @@ function makeSlime(side, team){
     jumpWasDown:false, lastJumpFrame:-99, canDouble:false,   // double-tap = double jump
     coyote:0, jumpBuffer:0,                                   // jump grace (coyote + small pre-land buffer)
     aiCatchT:0,                          // AI hold-ball timer
+    fx:null, frozen:0, powShot:0,        // power-ups: active effect {type,t,dur} · freeze frames · power-shot window
     input:{left:false,right:false,jump:false,down:false},
   };
 }
@@ -560,6 +564,9 @@ const G = {
   golden: false,                   // golden goal (sudden death) na gelijkspel op tijd
   wkMode: false,                   // World Cup tournament active
   wk: null,                        // tournament state
+  powerMode: false,                // Friendly power-ups mode active this match
+  pows: [],                        // falling/landed power-up pickups
+  powTimer: 0,                     // frames until the next pickup drops
   attract: false,                  // menu "attract mode": two slimes idling on the pitch
   countdown: 0,            // frames
   goalTimer: 0,            // frames in GOAL-state
@@ -609,24 +616,40 @@ function updateParticles(){
    ---------------------------------------------------------------------------- */
 function clamp(v,a,b){ return v<a?a:v>b?b:v; }
 
+/* ---- Power-ups (Friendly bonus mode): pickup types + per-slime effect helpers ---- */
+const POWER_TYPES = {
+  turbo:  { e:'⚡', c:'#ffd23b', dur:480 },   // run 1.5x for 8s
+  moon:   { e:'🌙', c:'#7cc0ee', dur:480 },   // jump 1.33x for 8s
+  mega:   { e:'💪', c:'#34d17a', dur:540 },   // grow 1.38x for 9s
+  freeze: { e:'❄️', c:'#9bd0f8', dur:150 },   // opponent frozen 2.5s
+  shot:   { e:'🔥', c:'#ff5470', dur:600 },   // next ball contact 1.65x speed (10s window)
+};
+function fxType(s){ return s.fx ? s.fx.type : null; }
+function slimeR(s){ return SLIME_R * (fxType(s)==='mega' ? 1.38 : 1); }   // physics + drawing both use the live radius
+
 function updateSlime(s){
-  const i = s.input;
+  // power-up effect timers (only ticked here, i.e. during live play)
+  if (s.fx && --s.fx.t <= 0) s.fx = null;
+  if (s.powShot > 0) s.powShot--;
+  if (s.frozen > 0) s.frozen--;
+  const i = s.frozen>0 ? {left:false,right:false,jump:false,down:false} : s.input;
   if (s.catchCD>0) s.catchCD--;
-  const sp = SLIME_SPEED * (s.speedMul || 1);   // AI levels can run faster than the player (speedMul set in computeAI)
+  const sp = SLIME_SPEED * (s.speedMul || 1) * (fxType(s)==='turbo' ? 1.5 : 1);   // AI levels can run faster (speedMul); ⚡ turbo on top
   s.vx = (i.right?sp:0) - (i.left?sp:0);
   s.x += s.vx;
   // full-field movement (you can chase the opponent to steal a held ball)
-  s.x = clamp(s.x, SLIME_R*0.5, W - SLIME_R*0.5);
+  s.x = clamp(s.x, slimeR(s)*0.5, W - slimeR(s)*0.5);
   // jumping — double-tap = one mid-air boost; plus coyote grace + a tiny pre-land buffer
+  const jm = fxType(s)==='moon' ? 1.33 : 1;                  // 🌙 moon-jump boost
   const edge = i.jump && !s.jumpWasDown;
   s.jumpWasDown = i.jump;
   if (s.onGround) s.coyote = COYOTE_FRAMES; else if (s.coyote>0) s.coyote--;
   if (s.jumpBuffer>0) s.jumpBuffer--;
   if (edge){
     if (s.onGround || s.coyote>0){
-      s.vy = -SLIME_JUMP; s.onGround=false; s.coyote=0; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
+      s.vy = -SLIME_JUMP*jm; s.onGround=false; s.coyote=0; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
     } else if (s.canDouble && (G.frame - s.lastJumpFrame) < 16){
-      s.vy = -SLIME_JUMP * 1.05; s.canDouble=false; s.squash=-0.20; Audio.jump();   // double-jump boost
+      s.vy = -SLIME_JUMP * 1.05 * jm; s.canDouble=false; s.squash=-0.20; Audio.jump();   // double-jump boost
     } else {
       s.jumpBuffer = JUMP_BUFFER_FRAMES;   // pressed a touch early -> remember briefly
     }
@@ -636,7 +659,7 @@ function updateSlime(s){
     if (!s.onGround) s.squash = 0.22;
     s.y = GROUND; s.vy = 0; s.onGround = true; s.canDouble=false;
     if (s.jumpBuffer>0){                    // buffered tap just before landing -> fire on touchdown
-      s.jumpBuffer=0; s.coyote=0; s.vy=-SLIME_JUMP; s.onGround=false; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
+      s.jumpBuffer=0; s.coyote=0; s.vy=-SLIME_JUMP*jm; s.onGround=false; s.squash=-0.18; s.canDouble=true; s.lastJumpFrame=G.frame; Audio.jump();
     }
   }
   s.squash *= 0.82;
@@ -651,14 +674,18 @@ function reflectOffSlime(b, s){
   // collision-cirkel zit op grondniveau; alleen bovenste helft telt
   const dx = b.x - s.x, dy = b.y - s.y;
   const dist = Math.hypot(dx,dy);
-  const minD = SLIME_R + BALL_R;
+  const minD = slimeR(s) + BALL_R;            // 💪 mega slime has a bigger dome
   if (dist < minD && b.y <= s.y + 2 && dist > 0){
     const nx = dx/dist, ny = dy/dist;
     // bal op het oppervlak plaatsen
     b.x = s.x + nx*minD; b.y = s.y + ny*minD;
     // klassieke slime-bounce: bal vliegt langs de normaal, snelheid ~ inkomende snelheid
     const speed = Math.hypot(b.vx, b.vy);
-    const out = Math.max(speed*0.92, 8.5);
+    let out = Math.max(speed*0.92, 8.5);
+    if (s.powShot > 0){                       // 🔥 power shot: this contact rockets away
+      out *= 1.65; s.powShot = 0;
+      spawnDust(b.x, b.y, 14, '#ff5470'); G.shake = Math.max(G.shake, 7);
+    }
     b.vx = nx*out + s.vx*0.85;
     b.vy = ny*out + s.vy*0.55;
     // lichte opwaartse bias bij een bovenkant-treffer; een dalende slime mag wél smashen
@@ -678,9 +705,9 @@ function reflectOffSlime(b, s){
 const HOLD_MAX = 180;   // max hold ~3s, then auto-release
 function tryCatch(s){
   const b = G.ball;
-  if (b.held || !s.input.down || s.catchCD>0) return false;
+  if (b.held || !s.input.down || s.catchCD>0 || s.frozen>0) return false;
   const dx=b.x-s.x, dy=b.y-s.y;
-  if (Math.hypot(dx,dy) < SLIME_R+BALL_R+12 && b.y <= s.y+2){   // touching the dome's top
+  if (Math.hypot(dx,dy) < slimeR(s)+BALL_R+12 && b.y <= s.y+2){   // touching the dome's top
     b.held=s; s.holding=true; s.holdT=0; b.vx=0; b.vy=0;
     return true;
   }
@@ -833,6 +860,11 @@ function computeAI(s){
       }
       // only bail from deep defence to dodge the anti-camp penalty, and only when the ball isn't there
       if (p.smart && s.hang > CAMP_MAX*0.8 && b.x <= W*0.80) tx = Math.min(tx, W*0.66);
+      // power-ups mode: smart levels grab a nearby pickup while the ball is safely on the other half
+      if (G.powerMode && p.smart && b.x < CENTER*0.8){
+        const pow = G.pows.find(q=>q.landed && Math.abs(q.x-s.x)<320);
+        if (pow) tx = pow.x;
+      }
     }
     tx += (Math.random()-0.5) * (p.mistake*300);
     aiState.targetX = clamp(tx, SLIME_R*0.5, W-SLIME_R*0.5);
@@ -878,17 +910,19 @@ function resetPositions(){
   G.p1.x = W*0.25; G.p1.y=GROUND; G.p1.vx=G.p1.vy=0; G.p1.onGround=true;
   G.p2.x = W*0.75; G.p2.y=GROUND; G.p2.vx=G.p2.vy=0; G.p2.onGround=true;
   G.p1.holding=G.p2.holding=false; G.p1.holdT=G.p2.holdT=0; G.p1.catchCD=G.p2.catchCD=0;
+  [G.p1,G.p2].forEach(s=>{ s.fx=null; s.frozen=0; s.powShot=0; });   // fresh kickoff: power effects reset
+  clearPows();
   G.ball = makeBall();
   // the team that CONCEDED kicks off: drop the ball on their side (lastScorer 0 = left scored -> ball to right)
   G.ball.x = G.lastScorer===0 ? W*0.68 : W*0.32;
 }
 // keep the two slimes from overlapping now that they share the whole pitch
 function separateSlimes(){
-  const a=G.p1, b=G.p2, min=SLIME_R*1.18, dx=b.x-a.x, gap=Math.abs(dx);
+  const a=G.p1, b=G.p2, min=(slimeR(a)+slimeR(b))*0.59, dx=b.x-a.x, gap=Math.abs(dx);
   if (gap < min && gap > 0.0001){
     const push=(min-gap)/2, dir=dx>0?1:-1;
-    a.x=clamp(a.x-dir*push, SLIME_R*0.5, W-SLIME_R*0.5);
-    b.x=clamp(b.x+dir*push, SLIME_R*0.5, W-SLIME_R*0.5);
+    a.x=clamp(a.x-dir*push, slimeR(a)*0.5, W-slimeR(a)*0.5);
+    b.x=clamp(b.x+dir*push, slimeR(b)*0.5, W-slimeR(b)*0.5);
   }
 }
 /* ---- Menu attract mode (two CPU slimes knock the ball about; no scoring) ---- */
@@ -925,6 +959,9 @@ function attractBall(){
 function startMatch(){
   G.attract=false;
   G.score=[0,0]; G.winner=0; G.particles=[]; G.lastScorer=0;
+  // Friendly bonus mode only — never World Cup (leaderboard fairness) or Online (no netcode for it)
+  G.powerMode = settings.powerups && !G.wkMode && (G.mode==='1p' || G.mode==='2p');
+  clearPows();
   if (G.wkMode){ G.matchMode='time'; G.matchMin=(G.wk && G.wk.min) || settings.wkMin || 2; }   // World Cup: time mode, chosen length
   else if (G.mode==='host'){ G.matchMode='time'; G.matchMin=2; }   // online: standard 2-minute timed games
   else { G.matchMode=settings.matchMode; G.matchMin=settings.matchMin; }
@@ -960,6 +997,7 @@ function score(who){
 }
 function endMatch(){
   G.winner = G.score[0]===G.score[1] ? 1 : (G.score[0]>G.score[1] ? 1 : 2);  // tie can't happen here (golden goal)
+  clearPows();
   G.screen = SCREEN.OVER;
   Audio.endWhistle(); Audio.win();
   haptic([60,40,120]);                                                  // celebratory buzz at full time
@@ -1038,7 +1076,7 @@ function tick(){
     assignInputs(false);
     updateSlime(G.p1); updateSlime(G.p2);   // slimes pass THROUGH each other (jump into a holder to steal)
     updateBall();
-    if (G.screen===SCREEN.PLAY){ updateMatchTimer(); updateAntiCamp(); }   // updateBall kan al scoren
+    if (G.screen===SCREEN.PLAY){ updateMatchTimer(); updateAntiCamp(); powerTick(); }   // updateBall kan al scoren
     sendStateMaybe();
   }
 }
@@ -1070,6 +1108,54 @@ function updateAntiCamp(){
     if (s.penalty > 0) s.penalty--;
   });
 }
+
+/* ----------------------------------------------------------------------------
+   10b. Power-ups (Friendly bonus mode) — pickups drop from the sky; touch to
+   collect. Effects: ⚡ turbo · 🌙 moon jump · 💪 mega slime · ❄️ freeze · 🔥 power shot.
+   Friendly (1P/2P local) only — never World Cup or Online, so leaderboard runs
+   and netplay stay pure.
+   ---------------------------------------------------------------------------- */
+function powSpawn(type){
+  const keys = Object.keys(POWER_TYPES);
+  const pow = {
+    type: type || keys[(Math.random()*keys.length)|0],
+    x: W*(0.15 + Math.random()*0.70), y: -24,
+    vy: 1.5 + Math.random()*0.8, sway: Math.random()*6.28,
+    landed: false, t: 900,                       // ~15s on the pitch before fading out
+  };
+  G.pows.push(pow);
+  return pow;
+}
+function applyPow(s, type){
+  const opp = s===G.p1 ? G.p2 : G.p1;
+  if (type==='freeze'){ opp.frozen = POWER_TYPES.freeze.dur; opp.fx = null; }
+  else if (type==='shot'){ s.powShot = POWER_TYPES.shot.dur; }
+  else { s.fx = { type, t: POWER_TYPES[type].dur, dur: POWER_TYPES[type].dur }; }
+  spawnDust(s.x, s.y - SLIME_R, 12, POWER_TYPES[type].c);
+  Audio.click();
+}
+function powerTick(){
+  if (!G.powerMode) return;
+  if (--G.powTimer <= 0 && G.pows.length < 2){
+    powSpawn();
+    G.powTimer = 420 + (Math.random()*360|0);    // next drop in 7–13s
+  }
+  for (let i=G.pows.length-1; i>=0; i--){
+    const p = G.pows[i];
+    if (!p.landed){
+      p.y += p.vy; p.sway += 0.05;
+      p.x = clamp(p.x + Math.sin(p.sway)*0.8, 30, W-30);   // gentle drift on the way down
+      if (p.y >= GROUND-24){ p.y = GROUND-24; p.landed = true; }
+    } else if (--p.t <= 0){ G.pows.splice(i,1); continue; }
+    // collect on touch (generous radius)
+    for (const s of [G.p1, G.p2]){
+      if (Math.hypot(p.x-s.x, p.y-(s.y-slimeR(s)*0.5)) < slimeR(s)+22){
+        applyPow(s, p.type); G.pows.splice(i,1); break;
+      }
+    }
+  }
+}
+function clearPows(){ G.pows.length = 0; G.powTimer = 300 + (Math.random()*240|0); }
 
 function assignInputs(frozen){
   if (G.mode==='1p'){
@@ -1240,7 +1326,7 @@ function applyNetState(d){
    13. Rendering
    ---------------------------------------------------------------------------- */
 let crowdSeed = [];
-for (let i=0;i<300;i++) crowdSeed.push({ x:Math.random(), y:Math.random(), c:(Math.random()*6)|0, f:Math.random()*6.28 });
+for (let i=0;i<430;i++) crowdSeed.push({ x:Math.random(), y:Math.random(), c:(Math.random()*6)|0, f:Math.random()*6.28 });
 
 // modern in-canvas type (sporty broadcast look) — replaces the old pixel font
 function FONT(px, w){ return (w||800)+' '+px+"px Rubik, system-ui, -apple-system, sans-serif"; }
@@ -1255,6 +1341,7 @@ function render(){
   if (G.p1 && G.p2 && (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL)) drawCampZones();
   drawGoal(true);
   drawGoal(false);
+  if (G.powerMode && G.pows.length) drawPows();
   if (G.ball) drawBall(G.ball);
   if (G.p1) drawSlime(G.p1);
   if (G.p2) drawSlime(G.p2);
@@ -1281,24 +1368,24 @@ const AD_BOARDS = [
 ];
 
 function drawStadium(){
-  // night sky
+  // evening sky — lighter, warmer match-night blue
   const sky = ctx.createLinearGradient(0,0,0,GROUND);
-  sky.addColorStop(0,'#142048'); sky.addColorStop(0.55,'#22356f'); sky.addColorStop(1,'#324884');   // lighter WC-tinted night sky
+  sky.addColorStop(0,'#1c2b60'); sky.addColorStop(0.55,'#2e4489'); sky.addColorStop(1,'#4259a4');
   ctx.fillStyle=sky; ctx.fillRect(0,0,W,GROUND+6);
 
   // subtle WC 2026 colour sweeps across the upper stands (USA/Mexico/Canada: red · blue · green)
   const sweep=(yC, rad, col, a)=>{ ctx.save(); ctx.globalAlpha=a; ctx.strokeStyle=col; ctx.lineWidth=46;
     ctx.beginPath(); ctx.ellipse(CENTER, yC, W*0.62, rad, 0, Math.PI, 0); ctx.stroke(); ctx.restore(); };
-  sweep(GROUND*0.30, 150, '#e4002b', 0.06);    // red
-  sweep(GROUND*0.42, 120, '#1f6fff', 0.07);    // blue
-  sweep(GROUND*0.54,  96, '#00a64a', 0.06);    // green
+  sweep(GROUND*0.30, 150, '#e4002b', 0.09);    // red
+  sweep(GROUND*0.42, 120, '#1f6fff', 0.10);    // blue
+  sweep(GROUND*0.54,  96, '#00a64a', 0.09);    // green
 
   // curved stadium bowl: two tiers + a lit front rail (front-on bowl => "smile" curves)
   const band=(yEdge,yMid,h,col)=>{ ctx.fillStyle=col; ctx.beginPath();
     ctx.moveTo(0,yEdge); ctx.quadraticCurveTo(CENTER,yMid,W,yEdge);
     ctx.lineTo(W,yEdge+h); ctx.quadraticCurveTo(CENTER,yMid+h,0,yEdge+h); ctx.closePath(); ctx.fill(); };
-  band(70, 150, GROUND*0.34, '#0e1838');                 // upper tier
-  band(GROUND*0.52, GROUND*0.60, GROUND*0.40, '#0b1430'); // lower tier (closer/darker)
+  band(70, 150, GROUND*0.34, '#182552');                 // upper tier — lighter stand blue
+  band(GROUND*0.52, GROUND*0.60, GROUND*0.40, '#13204a'); // lower tier (closer/slightly darker)
   // roof edge + tier separation lines so the bowl reads clearly
   ctx.save(); ctx.lineWidth=2;
   ctx.strokeStyle='rgba(120,150,220,0.45)';
@@ -1307,12 +1394,12 @@ function drawStadium(){
   ctx.beginPath(); ctx.moveTo(0,GROUND*0.52); ctx.quadraticCurveTo(CENTER,GROUND*0.60,W,GROUND*0.52); ctx.stroke(); // tier gap
   ctx.restore();
 
-  // crowd: blue stands twinkling with orange (NL) + red/green/white (WC) accents
+  // crowd: lively WC stands — brighter fan colours, always clearly visible, gentle twinkle
   const t=G.frame*0.05;
-  const cols=['#26407e','#2f4a8c','#ff7a18','#34d17a','#ff5470','#ffffff'];   // 0,1 blue · 2 NL orange · 3 green · 4 red · 5 white
+  const cols=['#4a69b8','#5d7bcc','#ff8c33','#46e08c','#ff6b85','#ffffff'];   // 0,1 light blue · 2 NL orange · 3 green · 4 red · 5 white
   for (const s of crowdSeed){
     const cx=s.x*W, cy=72 + s.y*(GROUND-150);
-    const tw=0.55+0.45*Math.sin(t+s.f);
+    const tw=0.72+0.28*Math.sin(t+s.f);
     ctx.globalAlpha=tw; ctx.fillStyle=cols[s.c]; ctx.fillRect(cx,cy,4,4);
   }
   ctx.globalAlpha=1;
@@ -1388,7 +1475,7 @@ function drawGoal(left){
 }
 
 function drawSlime(s){
-  const r = SLIME_R;
+  const r = slimeR(s);                                  // 💪 mega power-up grows the dome
   const sx = 1 + s.squash*0.6, sy = 1 - s.squash*0.6;
   // schaduw
   ctx.fillStyle='rgba(0,0,0,0.28)';
@@ -1428,6 +1515,47 @@ function drawSlime(s){
   ctx.fillStyle='#0a0a16'; ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.fill();
   ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(px-2, py-2, 1.8, 0, 7); ctx.fill();
   // (the no-camping warning is drawn on the ground via drawCampZones, like the original)
+
+  // power-up state: icy shell when frozen; active-effect icon + remaining-time bar above
+  if (s.frozen > 0){
+    ctx.fillStyle='rgba(155,208,248,0.42)';
+    ctx.beginPath(); ctx.arc(s.x, s.y, r+3, Math.PI, 0); ctx.closePath(); ctx.fill();
+  }
+  const badges = [];
+  if (s.fx)        badges.push({ e:POWER_TYPES[s.fx.type].e, c:POWER_TYPES[s.fx.type].c, f:s.fx.t/s.fx.dur });
+  if (s.powShot>0) badges.push({ e:POWER_TYPES.shot.e,       c:POWER_TYPES.shot.c,       f:s.powShot/POWER_TYPES.shot.dur });
+  if (s.frozen>0)  badges.push({ e:POWER_TYPES.freeze.e,     c:POWER_TYPES.freeze.c,     f:s.frozen/POWER_TYPES.freeze.dur });
+  if (badges.length){
+    const by = s.y - r - 26;
+    badges.forEach((b,i)=>{
+      const bx = s.x + (i - (badges.length-1)/2) * 34;
+      ctx.font='15px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(b.e, bx, by);
+      ctx.fillStyle='rgba(8,10,24,0.7)'; ctx.fillRect(bx-13, by+11, 26, 4);
+      ctx.fillStyle=b.c;                 ctx.fillRect(bx-13, by+11, 26*Math.max(0,Math.min(1,b.f)), 4);
+    });
+    ctx.textBaseline='alphabetic';
+  }
+}
+
+// power-up pickups: glowing orb + emoji, gentle bob once landed, blink before despawn
+function drawPows(){
+  for (const p of G.pows){
+    if (p.landed && p.t < 120 && (G.frame>>3 & 1)) continue;     // blink when about to fade
+    const def = POWER_TYPES[p.type];
+    const y = p.y + (p.landed ? Math.sin(G.frame*0.1)*3 : 0);
+    const pulse = 1 + 0.08*Math.sin(G.frame*0.15);
+    const g = ctx.createRadialGradient(p.x, y, 4, p.x, y, 34);
+    g.addColorStop(0, def.c+'66'); g.addColorStop(1, def.c+'00');
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x, y, 34, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.94)';
+    ctx.beginPath(); ctx.arc(p.x, y, 16*pulse, 0, 7); ctx.fill();
+    ctx.strokeStyle = def.c; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(p.x, y, 16*pulse, 0, 7); ctx.stroke();
+    ctx.font = '17px system-ui, sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(def.e, p.x, y+1);
+    ctx.textBaseline='alphabetic';
+  }
 }
 
 // goal-hanging zones marked on the pitch near each goal; they light up when a slime camps
@@ -1521,11 +1649,11 @@ function drawScoreboard(){
       const sec=Math.max(0,Math.ceil(G.matchTime/60));
       const txt=(sec/60|0)+':'+String(sec%60).padStart(2,'0');
       ctx.font=FONT(16*SC,800); ctx.fillStyle = sec<=10 ? '#ff5470' : '#ffae3b';
-      ctx.fillText(txt, CENTER, y+h+15*SC);
+      ctx.fillText(txt + (G.powerMode?' ⚡':''), CENTER, y+h+15*SC);
     }
   } else {
     ctx.font=FONT(11*SC,700); ctx.fillStyle='#9a9ad0';
-    ctx.fillText('FIRST TO '+G.toWin, CENTER, y+h+13*SC);
+    ctx.fillText('FIRST TO '+G.toWin + (G.powerMode?' · ⚡ POWER-UPS':''), CENTER, y+h+13*SC);
   }
 }
 
@@ -1571,11 +1699,11 @@ function drawPaused(){
 }
 
 function drawCRT(){
-  ctx.globalAlpha=0.10; ctx.fillStyle='#000';
+  ctx.globalAlpha=0.07; ctx.fillStyle='#000';
   for (let y=0;y<H;y+=3) ctx.fillRect(0,y,W,1);
   ctx.globalAlpha=1;
   const v=ctx.createRadialGradient(CENTER,H/2,H*0.3,CENTER,H/2,H*0.8);
-  v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,0.45)');
+  v.addColorStop(0,'rgba(0,0,0,0)'); v.addColorStop(1,'rgba(0,0,0,0.30)');
   ctx.fillStyle=v; ctx.fillRect(0,0,W,H);
 }
 
@@ -2418,6 +2546,7 @@ function refreshToggles(){
   setT('tCrt',   t('crt'),   settings.crt?t('on'):t('off'));
   setT('tMode',  t('matchType'), settings.matchMode==='time'?t('matchTime'):t('goals'));
   setT('tWin',   settings.matchMode==='time'?t('matchLenMin'):t('firstTo'), settings.matchMode==='time'?settings.matchMin:settings.toWin);
+  setT('tPower', t('powerups'), settings.powerups?t('on'):t('off'));
   setT('tDiff',  t('computerLevel'), aiLabel(settings.diff));
   setT('tLang',  t('language'), settings.lang==='nl'?'NL':'EN');
   const vr=$('volRange'); if(vr) vr.value=Math.round(settings.volume*100);
@@ -2438,6 +2567,7 @@ function shareGame(){
   else prompt('Copy this link:', url);
 }
 function toggleCrt(){ settings.crt=!settings.crt; store.save('crt',settings.crt); refreshToggles(); }
+function togglePower(){ settings.powerups=!settings.powerups; store.save('powerups',settings.powerups); refreshToggles(); renderMenuPills(); }
 function toggleMode(){ settings.matchMode = settings.matchMode==='time'?'goals':'time'; store.save('matchMode',settings.matchMode); refreshToggles(); }
 function cycleWin(){
   if (settings.matchMode==='time'){ const o=[1,2,4,8]; settings.matchMin=o[(o.indexOf(settings.matchMin)+1)%o.length]; store.save('matchMin',settings.matchMin); }
@@ -2456,6 +2586,8 @@ function renderMenuPills(){
              `<span class="pill-sep"></span>`;
   if (isGoals) html += [3,5,7].map(n=>`<button class="pill${settings.toWin===n?' active':''}" data-win="${n}">${n}</button>`).join('');
   else         html += [1,2,4].map(n=>`<button class="pill${settings.matchMin===n?' active':''}" data-min="${n}">${n}m</button>`).join('');
+  html += `<span class="pill-sep"></span>`+
+          `<button class="pill${settings.powerups?' active':''}" data-pow="1" title="${t('powerupsHint')}">⚡</button>`;
   row.innerHTML = html;
   row.querySelectorAll('.pill').forEach(p=>{
     p.onclick=()=>{ Audio.unlock(); Audio.click();
@@ -2463,6 +2595,7 @@ function renderMenuPills(){
       else if (p.dataset.set==='time'){ settings.matchMode='time'; store.save('matchMode','time'); }
       else if (p.dataset.win){ settings.toWin=+p.dataset.win; store.save('toWin',settings.toWin); G.toWin=settings.toWin; }
       else if (p.dataset.min){ settings.matchMin=+p.dataset.min; store.save('matchMin',settings.matchMin); }
+      else if (p.dataset.pow){ settings.powerups=!settings.powerups; store.save('powerups',settings.powerups); }
       renderMenuPills();
     };
   });
@@ -2519,6 +2652,7 @@ wire('lbSend', submitScore);
 wire('tSound', toggleSound);
 wire('tCrt', toggleCrt);
 wire('tWin', cycleWin);
+wire('tPower', togglePower);
 wire('tDiff', cycleDiff);
 
 // PeerJS aanwezig?
