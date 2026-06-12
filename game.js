@@ -12,12 +12,21 @@ const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
 
 const W = 1160, H = 600;             // logical resolution (longer field; goals are edge-anchored so this is safe)
-// Hi-DPI backing store: render at device pixel ratio (capped at 2) so the HUD,
-// flags and score come out crisp instead of nearest-neighbour upscaled.
-const DPR = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
-canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
-ctx.scale(DPR, DPR);
-ctx.imageSmoothingEnabled = false;
+// Hi-DPI, display-matched backing store: the canvas renders at its on-screen size ×
+// device pixel ratio, so the pitch, slime ART and HUD stay crisp at ANY field size
+// (desktop 1×/1.5×/Fill, phones, tablets) instead of being CSS up/down-scaled.
+function resizeCanvas(){
+  if (typeof canvas.getBoundingClientRect !== 'function') return;       // headless/test stub
+  const r = canvas.getBoundingClientRect();
+  if (!r.width || !r.height) return;
+  const dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 2));
+  const bw = Math.round(r.width * dpr), bh = Math.round(r.height * dpr);
+  if (canvas.width  !== bw) canvas.width  = bw;
+  if (canvas.height !== bh) canvas.height = bh;
+  ctx.setTransform(bw / W, 0, 0, bh / H, 0, 0);                          // map logical 1160×600 onto the backing store
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high';  // smooth slime art / flags when scaled
+}
+resizeCanvas();
 
 const GROUND   = H - 52;             // ground level (y of the pitch surface)
 const CENTER   = W / 2;
@@ -1888,6 +1897,7 @@ function applyDeskSize(){
   document.body.classList.toggle('dsize-l', m==='l');
   document.body.classList.toggle('dsize-full', m==='full');
   const b=$('stageSize'); if (b) b.textContent = m==='full' ? '🗗' : '⤢';
+  requestAnimationFrame(resizeCanvas);                 // field size changed → re-match the backing store
 }
 function cycleStageSize(){
   const o=['m','l','full']; settings.deskSize = o[(o.indexOf(settings.deskSize||'m')+1)%o.length];
@@ -2854,8 +2864,8 @@ if (IS_TOUCH){ const b=$('btn2p'); if(b){ b.style.display='none'; } }
 startAttract();
 showOverlay('menuScreen');
 updateTouchVisibility();
-addEventListener('resize', ()=>{ updateRotateHint(); refreshBtnZones(); });
-addEventListener('orientationchange', ()=>setTimeout(()=>{ updateRotateHint(); refreshBtnZones(); }, 200));
+addEventListener('resize', ()=>{ resizeCanvas(); updateRotateHint(); refreshBtnZones(); });
+addEventListener('orientationchange', ()=>setTimeout(()=>{ resizeCanvas(); updateRotateHint(); refreshBtnZones(); }, 200));
 initFromURL();   // invite link ?j=CODE (PeerJS lazy-loads on demand)
 
 // expose for debugging / tests — only on localhost or with ?debug=1 (keeps prod clean)

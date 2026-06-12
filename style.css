@@ -94,8 +94,14 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
   width:  min(100vw, calc((100dvh - var(--padb)) * 1160 / 600));
   height: min(calc(100dvh - var(--padb)), calc(100vw * 600 / 1160));
   background: #2a3f86;   /* matches the in-game sky so the first frame doesn't flash dark */
-  box-shadow: 0 0 0 2px rgba(130,160,255,.22), 0 0 44px rgba(64,120,255,.22), 0 16px 56px rgba(0,0,0,.55);
-  border-radius: 10px;
+  /* designed "stadium screen" bezel: dark inner frame + light rim + depth + soft glow */
+  box-shadow:
+    inset 0 0 0 2px rgba(255,255,255,.05),
+    0 0 0 3px #0d1530,
+    0 0 0 5px rgba(125,155,240,.45),
+    0 18px 50px rgba(0,0,0,.6),
+    0 0 72px rgba(64,120,255,.20);
+  border-radius: 16px;
 }
 /* Desktop play view: pitch at the TOP of the screen, with a title row above it
    (Slime Soccer icon · title · SlimeScore.com link), Pause/Quit overlaid in the
@@ -481,56 +487,55 @@ body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { displa
 #pad2     { right: max(10vw, calc(env(safe-area-inset-right) + 56px)); }
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
 body.m2p #padAct1 { left: max(10vw, calc(env(safe-area-inset-left) + 56px)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
-/* compact, beveled Head Ball-style keys — small footprint, glossy 3D, embossed icon */
+/* small, glossy Head Ball-style keys — compact footprint (roomy pitch), forgiving hit zones in JS */
 .tbtn {
-  width: 72px; height: 58px; border-radius: 16px;
+  width: 58px; height: 46px; border-radius: 13px;
   background: linear-gradient(180deg, #5cb8f0, #2a78c8);
   border: none;
-  box-shadow: 0 5px 0 #163d68, 0 8px 9px rgba(0,0,0,.40), inset 0 2px 0 rgba(255,255,255,.38), inset 0 -3px 6px rgba(0,0,0,.18);
-  color: #fff; font-size: 24px; font-weight: 800; text-shadow: 0 2px 2px rgba(0,0,0,.4);
+  box-shadow: 0 4px 0 #163d68, 0 6px 8px rgba(0,0,0,.40), inset 0 2px 0 rgba(255,255,255,.38), inset 0 -3px 5px rgba(0,0,0,.18);
+  color: #fff; font-size: 20px; font-weight: 800; text-shadow: 0 2px 2px rgba(0,0,0,.4);
   display: flex; align-items: center; justify-content: center;
   touch-action: none; pointer-events: none; user-select: none;
   transition: filter .06s ease, transform .06s ease, box-shadow .06s ease;
 }
-.tbtn.pressed { transform: translateY(4px); filter: brightness(1.12);
+.tbtn.pressed { transform: translateY(3px); filter: brightness(1.12);
   box-shadow: 0 1px 0 #163d68, 0 2px 4px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.30); }
 .tbtn.catch { background: linear-gradient(180deg, #5cb8f0, #2a78c8); }
 /* directional keys: orange (move) / green (jump) with a crisp embossed arrow pointing OUTWARD */
 .tbtn.dir { font-size: 0; }
 .tbtn.dir.left, .tbtn.dir.right {
   background: linear-gradient(180deg, #ffc15a, #ef7d18);
-  box-shadow: 0 5px 0 #a8500c, 0 8px 9px rgba(0,0,0,.40), inset 0 2px 0 rgba(255,255,255,.42), inset 0 -3px 6px rgba(0,0,0,.18);
+  box-shadow: 0 4px 0 #a8500c, 0 6px 8px rgba(0,0,0,.40), inset 0 2px 0 rgba(255,255,255,.42), inset 0 -3px 5px rgba(0,0,0,.18);
 }
 .tbtn.dir.up {
   background: linear-gradient(180deg, #6fe6a2, #1f9f56);
-  box-shadow: 0 5px 0 #0c5a2e, 0 8px 9px rgba(0,0,0,.40), inset 0 2px 0 rgba(255,255,255,.42), inset 0 -3px 6px rgba(0,0,0,.18);
+  box-shadow: 0 4px 0 #0c5a2e, 0 6px 8px rgba(0,0,0,.40), inset 0 2px 0 rgba(255,255,255,.42), inset 0 -3px 5px rgba(0,0,0,.18);
 }
 .tbtn.dir::before { content: ''; width: 0; height: 0; filter: drop-shadow(0 1.5px 0 rgba(0,0,0,.30)); }
-.tbtn.dir.left::before  { border-top: 13px solid transparent; border-bottom: 13px solid transparent; border-right: 18px solid #fff; margin-right: 3px; }
-.tbtn.dir.right::before { border-top: 13px solid transparent; border-bottom: 13px solid transparent; border-left:  18px solid #fff; margin-left: 3px; }
-.tbtn.dir.up::before    { border-left: 13px solid transparent; border-right: 13px solid transparent; border-bottom: 18px solid #fff; margin-bottom: 3px; }
+.tbtn.dir.left::before  { border-top: 11px solid transparent; border-bottom: 11px solid transparent; border-right: 15px solid #fff; margin-right: 2px; }
+.tbtn.dir.right::before { border-top: 11px solid transparent; border-bottom: 11px solid transparent; border-left:  15px solid #fff; margin-left: 2px; }
+.tbtn.dir.up::before    { border-left: 11px solid transparent; border-right: 11px solid transparent; border-bottom: 15px solid #fff; margin-bottom: 2px; }
 .tbtn.dir.left.pressed, .tbtn.dir.right.pressed { box-shadow: 0 1px 0 #a8500c, 0 2px 4px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.35); }
 .tbtn.dir.up.pressed { box-shadow: 0 1px 0 #0c5a2e, 0 2px 4px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.35); }
-/* reserve a strip below the pitch on touch so the compact keys sit under it (never over the slimes) */
+/* reserve a small strip below the pitch on touch so the keys sit under it (never over the slimes) */
 @media (pointer: coarse){
-  :root { --padb: 92px; }
+  :root { --padb: 74px; }   /* trimmed for a roomier pitch */
   #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
 }
 /* Slightly bigger keys on real tablets only. Gate on height too: a phone in LANDSCAPE is
    wide (>760) but short (<600), so this keeps the compact phone keys there. */
 @media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
-  :root { --padb: 132px; }
-  .tbtn { width: 100px; height: 80px; font-size: 32px; border-radius: 20px; }
+  :root { --padb: 108px; }
+  .tbtn { width: 80px; height: 64px; font-size: 26px; border-radius: 17px; }
   /* tablets are held by the bottom corners — keep the keys near those corners and
      lifted into the natural thumb arc (not floating far inward / jammed at the edge) */
-  .pad { bottom: max(30px, calc(env(safe-area-inset-bottom) + 24px)); }
+  .pad { bottom: max(28px, calc(env(safe-area-inset-bottom) + 22px)); gap: 18px; }
   #padMove1 { left:  max(3.5vw, calc(env(safe-area-inset-left) + 30px)); }
   #padAct1, #pad2 { right: max(3.5vw, calc(env(safe-area-inset-right) + 30px)); }
-  .tbtn.dir.left::before  { border-top: 18px solid transparent; border-bottom: 18px solid transparent; border-right: 25px solid #fff; }
-  .tbtn.dir.right::before { border-top: 18px solid transparent; border-bottom: 18px solid transparent; border-left:  25px solid #fff; }
-  .tbtn.dir.up::before    { border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 25px solid #fff; }
-  .pad { gap: 20px; }
-  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 116px); }
+  .tbtn.dir.left::before  { border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-right: 20px solid #fff; }
+  .tbtn.dir.right::before { border-top: 15px solid transparent; border-bottom: 15px solid transparent; border-left:  20px solid #fff; }
+  .tbtn.dir.up::before    { border-left: 15px solid transparent; border-right: 15px solid transparent; border-bottom: 20px solid #fff; }
+  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 100px); }
 }
 
 /* ---- Rotate device hint (zichtbaarheid via JS: alleen tijdens het spelen) ---- */
