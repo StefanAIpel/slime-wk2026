@@ -1689,19 +1689,23 @@ function drawPows(){
   }
 }
 
-// top-left play-screen sticker telling you power-ups are live (sits below the corner buttons)
+// big top-left play-screen panel telling you power-ups are live (label row + icon row)
 function drawPowerSticker(){
-  const ic = Object.keys(POWER_TYPES), pad=12, h=34, x=14, y=108;
+  const ic = Object.keys(POWER_TYPES), pad=16, x=16, y=104, gap=32;
   ctx.save();
-  ctx.font=FONT(12,900);
+  ctx.font=FONT(18,900);
   const tw = ctx.measureText('POWER-UPS').width;
-  const w = pad + tw + 14 + ic.length*20 + pad-6;
-  roundRect(x,y,w,h,10); ctx.fillStyle='rgba(10,14,30,0.86)'; ctx.fill();
-  ctx.lineWidth=2; ctx.strokeStyle='rgba(255,210,90,0.92)'; roundRect(x,y,w,h,10); ctx.stroke();
-  ctx.fillStyle='#ffd23b'; ctx.textAlign='left'; ctx.textBaseline='middle';
-  ctx.fillText('POWER-UPS', x+pad, y+h/2+1);
-  let gx = x+pad+tw+16;
-  for (const k of ic){ drawPowGlyph(k, gx, y+h/2, 7.5, POWER_TYPES[k].c); gx+=20; }
+  const w = pad*2 + Math.max(tw + 24, ic.length*gap);
+  const h = 66;
+  roundRect(x,y,w,h,13); ctx.fillStyle='rgba(10,14,30,0.9)'; ctx.fill();
+  ctx.lineWidth=3; ctx.strokeStyle='rgba(255,210,90,0.95)'; roundRect(x,y,w,h,13); ctx.stroke();
+  // label row: a bolt + "POWER-UPS"
+  drawPowGlyph('turbo', x+pad+9, y+21, 10, '#ffd23b');
+  ctx.fillStyle='#ffd23b'; ctx.font=FONT(18,900); ctx.textAlign='left'; ctx.textBaseline='middle';
+  ctx.fillText('POWER-UPS', x+pad+24, y+22);
+  // icon row: every power, larger
+  let gx = x+pad+16;
+  for (const k of ic){ drawPowGlyph(k, gx, y+48, 12, POWER_TYPES[k].c); gx+=gap; }
   ctx.textBaseline='alphabetic';
   ctx.restore();
 }
