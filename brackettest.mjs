@@ -176,6 +176,14 @@ ok(kit('GER')==='#edeef2', 'Germany home kit is white');
 ok(kit('POR')==='#c8102e', 'Portugal home kit is red');
 ok(kit('JPN')==='#1f4fb0', 'Japan home kit is blue');
 
+// Netherlands has hand-drawn character art (Virgil slime); rendering a NED slime is safe headless
+const ned = TEAMS.find(t=>t.code==='NED');
+ok(ned && ned.art && /ned-right\.webp/.test(ned.art.right) && /ned-left\.webp/.test(ned.art.left), 'Netherlands team carries left/right character art');
+let nedDrawErr=null;
+try { G.wkMode=false; G.wk=null; G.mode='1p'; G.screen=SCREEN.PLAY; G.p1.team=ned; G.p2.team=ned; T.render(); }
+catch(e){ nedDrawErr=e; }
+ok(!nedDrawErr, 'renders a Netherlands (art) slime without throwing'+(nedDrawErr?(' — '+nedDrawErr.message):''));
+
 // ---- 8. new gameplay rules: real WC teams, kickoff, full-field, steal -------
 console.log('Gameplay rules:');
 ok(!TEAMS.some(t=>t.code==='ITA') && TEAMS.some(t=>t.code==='EGY'), 'Italy replaced by a real WC2026 team (Egypt)');

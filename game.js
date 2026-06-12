@@ -45,7 +45,8 @@ const BALL_MAX    = 22;              // speed limit
    ---------------------------------------------------------------------------- */
 const TEAMS = [
   { code:'NED', name:'Netherlands', color:'#ff7a18', trim:'#ffffff', strength:86, stripes:['#ae1c28','#ffffff','#21468b'], featured:true,
-    flag:'linear-gradient(#ae1c28 33%,#fff 33% 66%,#21468b 66%)' },
+    flag:'linear-gradient(#ae1c28 33%,#fff 33% 66%,#21468b 66%)',
+    art:{ right:'assets/slimes/ned-right.webp', left:'assets/slimes/ned-left.webp' } },   // hand-drawn character art (Virgil)
   { code:'ARG', name:'Argentina',   color:'#7cc0ee', trim:'#ffffff', strength:92, stripes:['#74acdf','#ffffff','#74acdf'],
     flag:'linear-gradient(#74acdf 33%,#fff 33% 66%,#74acdf 66%)' },
   { code:'BRA', name:'Brazil',      color:'#ffd400', trim:'#1f8f3a', strength:90, stripes:['#1f8f3a','#ffd400','#2a47a8'],
@@ -1524,12 +1525,32 @@ function drawGoal(left){
   ctx.restore();
 }
 
+// lazy image cache for slime character art (and any other in-canvas images)
+const _imgCache = {};
+function gameImg(src){
+  if (typeof Image==='undefined') return { complete:false };     // headless/test: fall back to procedural
+  let im=_imgCache[src]; if(!im){ im=new Image(); im.decoding='async'; im.src=src; _imgCache[src]=im; } return im;
+}
+
 function drawSlime(s){
   const r = slimeR(s);                                  // 💪 mega power-up grows the dome
   const sx = 1 + s.squash*0.6, sy = 1 - s.squash*0.6;
   // schaduw
   ctx.fillStyle='rgba(0,0,0,0.28)';
   ctx.beginPath(); ctx.ellipse(s.x, GROUND+5, r*0.85, 9, 0, 0, 7); ctx.fill();
+
+  // hand-drawn character art (e.g. the Netherlands "Virgil" slime), if the team has it
+  if (s.team.art){
+    const art = gameImg(s.side==='left' ? s.team.art.right : s.team.art.left);   // face toward the centre
+    if (art.complete && art.naturalWidth){
+      const w = r*2.42, h = w*(art.naturalHeight/art.naturalWidth);
+      ctx.save(); ctx.translate(s.x, s.y); ctx.scale(sx, sy);
+      ctx.drawImage(art, -w/2, -h + r*0.10, w, h);      // baseline of the art sits on the slime's foot
+      ctx.restore();
+      drawSlimeFx(s, r);
+      return;
+    }
+  }
 
   ctx.save();
   ctx.translate(s.x, s.y); ctx.scale(sx,sy);
@@ -1566,7 +1587,12 @@ function drawSlime(s){
   ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.beginPath(); ctx.arc(px-2, py-2, 1.8, 0, 7); ctx.fill();
   // (the no-camping warning is drawn on the ground via drawCampZones, like the original)
 
-  // power-up state: icy shell when frozen; active-effect icon + remaining-time bar above
+  drawSlimeFx(s, r);
+}
+
+// power-up state drawn on top of a slime (procedural OR character art): icy shell when
+// frozen, plus active-effect icon + remaining-time bars floating above.
+function drawSlimeFx(s, r){
   if (s.frozen > 0){
     ctx.fillStyle='rgba(155,208,248,0.42)';
     ctx.beginPath(); ctx.arc(s.x, s.y, r+3, Math.PI, 0); ctx.closePath(); ctx.fill();
@@ -1575,17 +1601,16 @@ function drawSlime(s){
   if (s.fx)        badges.push({ k:s.fx.type, c:POWER_TYPES[s.fx.type].c, f:s.fx.t/s.fx.dur });
   if (s.powShot>0) badges.push({ k:'shot',    c:POWER_TYPES.shot.c,       f:s.powShot/POWER_TYPES.shot.dur });
   if (s.frozen>0)  badges.push({ k:'freeze',  c:POWER_TYPES.freeze.c,     f:s.frozen/POWER_TYPES.freeze.dur });
-  if (badges.length){
-    const by = s.y - r - 28;
-    badges.forEach((b,i)=>{
-      const bx = s.x + (i - (badges.length-1)/2) * 34;
-      ctx.fillStyle='rgba(8,10,24,0.78)'; roundRect(bx-15, by-15, 30, 30, 8); ctx.fill();
-      ctx.strokeStyle=b.c; ctx.lineWidth=2; roundRect(bx-15, by-15, 30, 30, 8); ctx.stroke();
-      drawPowGlyph(b.k, bx, by-1, 8, b.c);
-      ctx.fillStyle='rgba(8,10,24,0.7)'; ctx.fillRect(bx-13, by+12, 26, 4);
-      ctx.fillStyle=b.c;                 ctx.fillRect(bx-13, by+12, 26*Math.max(0,Math.min(1,b.f)), 4);
-    });
-  }
+  if (!badges.length) return;
+  const by = s.y - r - 28;
+  badges.forEach((b,i)=>{
+    const bx = s.x + (i - (badges.length-1)/2) * 34;
+    ctx.fillStyle='rgba(8,10,24,0.78)'; roundRect(bx-15, by-15, 30, 30, 8); ctx.fill();
+    ctx.strokeStyle=b.c; ctx.lineWidth=2; roundRect(bx-15, by-15, 30, 30, 8); ctx.stroke();
+    drawPowGlyph(b.k, bx, by-1, 8, b.c);
+    ctx.fillStyle='rgba(8,10,24,0.7)'; ctx.fillRect(bx-13, by+12, 26, 4);
+    ctx.fillStyle=b.c;                 ctx.fillRect(bx-13, by+12, 26*Math.max(0,Math.min(1,b.f)), 4);
+  });
 }
 
 // recognisable vector icon for each power-up, centred at (x,y), drawn in `col`
