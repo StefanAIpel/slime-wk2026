@@ -35,6 +35,7 @@
 
   <!-- pitch -->
   <div id="stage">
+    <div class="stage-aurora" aria-hidden="true"></div>
     <div id="stageTitle">
       <span class="stage-side-icon stage-side-icon-left" aria-hidden="true"><img src="assets/icons/app-icon-soccer-wc26-v2-192.webp" width="128" height="128" alt="" loading="lazy" decoding="async"></span>
       <div class="title stage-title">SLIME<span class="accent">WORLD CUP &rsquo;26</span></div>
@@ -47,6 +48,7 @@
         <button id="stageQuit" class="btn secondary small" data-i18n="quitBtn2">✕ Quit</button>
       </div>
       <div class="stage-corner tr">
+        <button id="stageSize" class="corner-ic" aria-label="Field size">⤢</button>
         <button id="stageRules" class="corner-ic" aria-label="How to play">❓</button>
         <button id="stageMute" class="corner-ic" aria-label="sound on/off">🔊</button>
       </div>
@@ -290,19 +292,19 @@
   <!-- ======================= TOUCH CONTROLS ======================= -->
   <div id="touch">
     <div class="pad" id="padMove1">
-      <div class="tbtn" id="btnL" role="button" aria-label="move left">◀</div>
-      <div class="tbtn" id="btnR" role="button" aria-label="move right">▶</div>
+      <div class="tbtn dir left" id="btnL" role="button" aria-label="move left">◀</div>
+      <div class="tbtn dir right" id="btnR" role="button" aria-label="move right">▶</div>
     </div>
     <div class="pad" id="padAct1">
       <div class="tbtn catch" id="btnC" role="button" aria-label="catch / hold ball">🤲</div>
-      <div class="tbtn jump" id="btnJ" role="button" aria-label="jump">▲</div>
+      <div class="tbtn dir up" id="btnJ" role="button" aria-label="jump">▲</div>
     </div>
     <!-- player 2 (local 2P only) -->
     <div class="pad" id="pad2" style="display:none;">
-      <div class="tbtn" id="btn2L" role="button" aria-label="player 2 move left">◀</div>
-      <div class="tbtn" id="btn2R" role="button" aria-label="player 2 move right">▶</div>
+      <div class="tbtn dir left" id="btn2L" role="button" aria-label="player 2 move left">◀</div>
+      <div class="tbtn dir right" id="btn2R" role="button" aria-label="player 2 move right">▶</div>
       <div class="tbtn catch" id="btn2C" role="button" aria-label="player 2 catch / hold ball">🤲</div>
-      <div class="tbtn jump" id="btn2J" role="button" aria-label="player 2 jump">▲</div>
+      <div class="tbtn dir up" id="btn2J" role="button" aria-label="player 2 jump">▲</div>
     </div>
   </div>
 
