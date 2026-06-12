@@ -2,7 +2,7 @@
    Network-first zodat nieuwe deploys ALTIJD direct zichtbaar zijn online;
    cache dient alleen als offline-fallback. Cross-origin (PeerJS/fonts/Supabase)
    wordt niet onderschept. */
-const CACHE = 'wcslime-v13-stage-icons';
+const CACHE = 'wcslime-v14-ned-slime';
 const ASSETS = [
   './', './index.html', './404.html', './style.css', './game.js', './leaderboard.js', './manifest.webmanifest',
   './favicon.png', './assets/audio/bg-music.mp3', './assets/audio/whistle.mp3',
@@ -10,6 +10,7 @@ const ASSETS = [
   './assets/icons/app-icon-soccer-wc26-v2-180.png', './assets/icons/app-icon-soccer-wc26-v2-192.png',
   './assets/icons/app-icon-soccer-wc26-v2-512.png', './assets/icons/app-icon-soccer-wc26-v2-maskable-512.png',
   './assets/icons/slimescore-app-icon-v2-192.png', './assets/icons/slimescore-app-icon-v2-512.png',
+  './assets/slimes/ned-left.webp', './assets/slimes/ned-right.webp',
   './assets/ikea-maintenance-slime.png', './assets/slimescore-wk-poule-banner.webp', './assets/slime-volley-banner-3to1.webp'
 ];
 
