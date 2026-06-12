@@ -519,8 +519,13 @@ body.m2p #padAct1 { left: max(10vw, calc(env(safe-area-inset-left) + 56px)); rig
 /* Slightly bigger keys on real tablets only. Gate on height too: a phone in LANDSCAPE is
    wide (>760) but short (<600), so this keeps the compact phone keys there. */
 @media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
-  :root { --padb: 116px; }
+  :root { --padb: 132px; }
   .tbtn { width: 100px; height: 80px; font-size: 32px; border-radius: 20px; }
+  /* tablets are held by the bottom corners — keep the keys near those corners and
+     lifted into the natural thumb arc (not floating far inward / jammed at the edge) */
+  .pad { bottom: max(30px, calc(env(safe-area-inset-bottom) + 24px)); }
+  #padMove1 { left:  max(3.5vw, calc(env(safe-area-inset-left) + 30px)); }
+  #padAct1, #pad2 { right: max(3.5vw, calc(env(safe-area-inset-right) + 30px)); }
   .tbtn.dir.left::before  { border-top: 18px solid transparent; border-bottom: 18px solid transparent; border-right: 25px solid #fff; }
   .tbtn.dir.right::before { border-top: 18px solid transparent; border-bottom: 18px solid transparent; border-left:  25px solid #fff; }
   .tbtn.dir.up::before    { border-left: 18px solid transparent; border-right: 18px solid transparent; border-bottom: 25px solid #fff; }
