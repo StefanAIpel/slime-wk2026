@@ -76,7 +76,8 @@ const TEAMS = [
   { code:'CAN', name:'Canada',      color:'#d52b1e', trim:'#ffffff', strength:72, stripes:['#d80621','#ffffff','#d80621'],
     flag:'linear-gradient(90deg,#d80621 28%,#fff 28% 72%,#d80621 72%)' },
   { code:'BEL', name:'Belgium',     color:'#e2231a', trim:'#f3d02f', strength:83, stripes:['#000000','#fdda24','#ef3340'],
-    flag:'linear-gradient(90deg,#000 33%,#fdda24 33% 66%,#ef3340 66%)' },
+    flag:'linear-gradient(90deg,#000 33%,#fdda24 33% 66%,#ef3340 66%)',
+    art:{ right:'assets/slimes/bel-right.webp', left:'assets/slimes/bel-left.webp' } },   // hand-drawn character art (De Bruyne)
   { code:'URU', name:'Uruguay',     color:'#5aa0e0', trim:'#ffffff', strength:82, stripes:['#7bb0e0','#ffffff','#7bb0e0'],
     flag:'repeating-linear-gradient(#7bb0e0 0 11%, #fff 11% 22%)' },
   { code:'SEN', name:'Senegal',     color:'#1f8f3a', trim:'#ffce00', strength:79, stripes:['#00853f','#fdef42','#e31b23'],
