@@ -168,6 +168,7 @@ const settings = {
   wkDiff:    store.load('wkDiff', 'rising'),        // World Cup: 'rising' | easy|normal|hard|worldcup
   lang:      store.load('lang', 'en'),             // UI language: 'en' | 'nl'
   powerups:  store.load('powerups', false),        // Friendly bonus mode: power-ups drop onto the pitch
+  deskSize:  store.load('deskSize', 'm'),          // desktop play-field size: 'm' (1×) | 'l' (1.5×) | 'full'
 };
 function clamp01(v){ v=+v; return isNaN(v)?0.7:(v<0?0:v>1?1:v); }
 // drop retired longest modes (8 min / 10 goals) from any older saved settings
@@ -448,17 +449,20 @@ function refreshBtnZones(){
   btnZones = [];
   const layer = document.getElementById('touch');
   if (!layer || !layer.classList.contains('show')) return;
-  const EG = 22, vw = window.innerWidth, vh = window.innerHeight, EGB = 26;   // keep hit zones off the iOS edge-gesture strips (sides + bottom home-indicator)
+  const EG = 40, vw = window.innerWidth, vh = window.innerHeight, EGB = 30;   // bigger keep-out off the browser/iOS edge-swipe strips (sides + bottom home-indicator)
   layer.querySelectorAll('.pad').forEach(pad=>{
     if (pad.offsetParent === null) return;            // skip hidden pads (pad2 in 1P)
     pad.querySelectorAll('.tbtn').forEach(b=>{
       if (!BTN_PROP[b.id]) return;
       const r = b.getBoundingClientRect();
       if (!r.width) return;
-      // VERY forgiving tap zone — scales with the button, extra-tall so a press
-      // just above/below the (larger, on tablets) button still registers.
-      const padX = Math.max(44, r.width*0.75), padY = Math.max(100, r.height*2.2);   /* very forgiving, esp. above/below */
-      btnZones.push({ id:b.id, l:Math.max(EG, r.left-padX), r:Math.min(vw-EG, r.right+padX),
+      // forgiving tap zone — generous toward the pitch (up) but trimmed toward the
+      // nearer screen edge so a thumb can't slide off the button into an edge-swipe.
+      const padIn = Math.max(40, r.width*0.7), padOut = 18, padY = Math.max(96, r.height*1.9);
+      const left = r.left < vw/2;                     // pad nearer the left edge?
+      btnZones.push({ id:b.id,
+                      l:Math.max(EG, r.left-(left?padOut:padIn)),
+                      r:Math.min(vw-EG, r.right+(left?padIn:padOut)),
                       t:r.top-padY, b:Math.min(vh-EGB, r.bottom+padY),
                       cx:(r.left+r.right)/2, cy:(r.top+r.bottom)/2 });
     });
@@ -1852,10 +1856,30 @@ requestAnimationFrame(frame);
 const $ = id => document.getElementById(id);
 function hideAllOverlays(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('show')); }
 function showOverlay(id){ hideAllOverlays(); $(id).classList.add('show'); }
+/* desktop play-field size: 1× → 1.5× → Fill (Fill also requests browser fullscreen) */
+function applyDeskSize(){
+  const m = settings.deskSize || 'm';
+  document.body.classList.toggle('dsize-l', m==='l');
+  document.body.classList.toggle('dsize-full', m==='full');
+  const b=$('stageSize'); if (b) b.textContent = m==='full' ? '🗗' : '⤢';
+}
+function cycleStageSize(){
+  const o=['m','l','full']; settings.deskSize = o[(o.indexOf(settings.deskSize||'m')+1)%o.length];
+  store.save('deskSize', settings.deskSize); applyDeskSize();
+  try {
+    const el=document.documentElement;
+    if (settings.deskSize==='full'){ if (el.requestFullscreen && !document.fullscreenElement) el.requestFullscreen().catch(()=>{}); }
+    else if (document.fullscreenElement && document.exitFullscreen){ document.exitFullscreen().catch(()=>{}); }
+  } catch(e){}
+}
+document.addEventListener('fullscreenchange', ()=>{   // leaving fullscreen (Esc) drops back to the 1.5× window
+  if (!document.fullscreenElement && settings.deskSize==='full'){ settings.deskSize='l'; store.save('deskSize','l'); applyDeskSize(); }
+});
 function updateTouchVisibility(){
   const inGame = (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL) && !G.paused;
-  // desktop: windowed play frame (title + ~half-screen pitch + Pause/Quit) while a match is on screen
+  // desktop: windowed play frame (title + pitch + Pause/Quit) while a match is on screen
   document.body.classList.toggle('deskgame', !IS_TOUCH && (G.screen===SCREEN.PLAY||G.screen===SCREEN.COUNT||G.screen===SCREEN.GOAL));
+  applyDeskSize();
   $('touch').classList.toggle('show', IS_TOUCH && inGame);
   $('pad2').style.display = (G.mode==='2p') ? 'flex' : 'none';
   document.body.classList.toggle('m2p', G.mode==='2p');
@@ -2744,6 +2768,7 @@ wire('btnSettings', openSettings);
 wire('pauseResume', resumeGame);
 wire('pauseQuit', ()=>askEndWK(backToMenu, ()=>showOverlay('pauseScreen')));   // confirm before abandoning a WC run
 wire('setupPlay', startTeamSelect);
+wire('stageSize', cycleStageSize);
 wire('setupPowerToggle', ()=>{ settings.powerups=!settings.powerups; store.save('powerups',settings.powerups); Audio.click(); renderSetupPills(); refreshToggles(); });
 wire('setupBack', backToMenu);
 wire('btnRules', ()=>openRules('menu'));

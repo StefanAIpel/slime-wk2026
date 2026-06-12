@@ -51,10 +51,20 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
     linear-gradient(180deg, #18234c 0%, #141d42 48%, #101633 100%);
   overflow: hidden;
 }
-/* two soft colour blobs drifting very slowly behind the pitch — dynamic, not distracting */
+/* slow WC-colour aurora sweeping behind the pitch — alive but calm, never distracting */
+.stage-aurora {
+  position: absolute; inset: -35%; z-index: 0; pointer-events: none; opacity: .5;
+  background: conic-gradient(from 0deg at 50% 50%,
+    rgba(43,111,255,.20), rgba(228,0,43,.12), rgba(52,209,122,.16),
+    rgba(255,140,51,.16), rgba(43,111,255,.20));
+  filter: blur(46px); will-change: transform;
+  animation: auroraSpin 90s linear infinite;
+}
+@keyframes auroraSpin { to { transform: rotate(360deg); } }
+/* two soft colour blobs drifting very slowly behind the pitch — adds depth over the aurora */
 #stage::before, #stage::after {
-  content: ''; position: absolute; width: 62vmax; height: 62vmax; border-radius: 50%;
-  pointer-events: none; opacity: .55; will-change: transform;
+  content: ''; position: absolute; z-index: 0; width: 60vmax; height: 60vmax; border-radius: 50%;
+  pointer-events: none; opacity: .5; will-change: transform;
 }
 #stage::before {
   left: -22vmax; top: -26vmax;
@@ -70,8 +80,9 @@ input, textarea { -webkit-user-select: text; user-select: text; -webkit-touch-ca
   from { transform: translate(0, 0) scale(1); }
   to   { transform: translate(9vmax, 6vmax) scale(1.14); }
 }
+#stageTitle, #stageWrap, #stageHint { position: relative; z-index: 1; }   /* keep content above the aurora */
 @media (prefers-reduced-motion: reduce){
-  #stage::before, #stage::after { animation: none; }
+  .stage-aurora, #stage::before, #stage::after { animation: none; }
 }
 #game {
   position: relative; z-index: 1;       /* above the drifting backdrop blobs */
@@ -116,10 +127,22 @@ body.deskgame #stageTitle { display: flex; }                /* icons BESIDE the 
 body.deskgame .stage-side-icon { display: block; }
 body.deskgame .stage-corner { display: flex; }
 body.deskgame .stage-hint { display: block; }
-body.deskgame #game {                                       /* smaller field, leaving room for the title above + hint below */
+body.deskgame #game {                                       /* size 1× (default): room for the title above + hint below */
   width:  min(54vw, calc(58vh * 1160 / 600));
   height: min(58vh, calc(54vw * 600 / 1160));
 }
+/* desktop field-size steps (⤢ button cycles 1× → 1.5× → Fill) */
+body.deskgame.dsize-l #game {
+  width:  min(74vw, calc(76vh * 1160 / 600));
+  height: min(76vh, calc(74vw * 600 / 1160));
+}
+body.deskgame.dsize-full #game {
+  width:  min(98vw, calc(96vh * 1160 / 600));
+  height: min(96vh, calc(98vw * 600 / 1160));
+}
+body.deskgame.dsize-full #stageTitle,
+body.deskgame.dsize-full .stage-hint { display: none; }      /* fill mode: maximise the pitch */
+body.deskgame.dsize-full #stage { padding-top: 0; gap: 6px; }
 body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { display: none; }   /* replaced by the corner + title-icon controls */
 
 /* ---- Generic overlay (menus) ---- */
@@ -449,42 +472,54 @@ body.deskgame #quitBtn, body.deskgame #rulesBtn, body.deskgame #muteBtn { displa
 #touch { position: fixed; inset: 0; z-index: 12; display: none; pointer-events: none; }
 #touch.show { display: block; }
 .pad {
-  position: absolute; bottom: max(20px, calc(env(safe-area-inset-bottom) + 12px));   /* sit in the reserved strip BELOW the pitch, clear of the iOS bottom-edge swipe */
-  pointer-events: none; display: flex; gap: 13px;       /* tighter pair; hit-testing is coordinate-based */
+  position: absolute; bottom: max(18px, calc(env(safe-area-inset-bottom) + 12px));   /* in the reserved strip BELOW the pitch, clear of the iOS bottom-edge swipe */
+  pointer-events: none; display: flex; gap: 16px;
 }
-#padMove1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); }    /* pulled inward, out of the bottom corners */
-#padAct1  { right: max(8vw, calc(env(safe-area-inset-right) + 34px)); }
-#pad2     { right: max(8vw, calc(env(safe-area-inset-right) + 34px)); }
+/* pulled well inward so a reaching thumb doesn't graze the browser edge-swipe strips */
+#padMove1 { left: max(10vw, calc(env(safe-area-inset-left) + 56px)); }
+#padAct1  { right: max(10vw, calc(env(safe-area-inset-right) + 56px)); }
+#pad2     { right: max(10vw, calc(env(safe-area-inset-right) + 56px)); }
 /* 2 players: player 1 fully on the left (move + actions), player 2 fully on the right */
-body.m2p #padAct1 { left: max(8vw, calc(env(safe-area-inset-left) + 34px)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
+body.m2p #padAct1 { left: max(10vw, calc(env(safe-area-inset-left) + 56px)); right: auto; bottom: calc(max(16px, env(safe-area-inset-bottom)) + 84px); }
+/* base = chunky beveled action key (catch); directional keys are wedge-shaped below */
 .tbtn {
-  width: 97px; height: 49px; border-radius: 12px;       /* phone pads; hit zone is enlarged in JS for forgiving taps */
-  /* solid-ish tinted buttons — they sit BELOW the pitch now, so no need to see through them */
-  background: linear-gradient(180deg, rgba(86,58,22,.92), rgba(54,36,16,.94));
-  border: 1.5px solid rgba(255,198,112,.95);
-  box-shadow: 0 3px 10px rgba(0,0,0,.40), inset 0 1px 0 rgba(255,255,255,.10);
-  color: #fff; font-size: 24px; font-weight: 700; text-shadow: 0 1px 3px rgba(0,0,0,.75);
+  width: 100px; height: 64px; border-radius: 16px;
+  background: linear-gradient(180deg, #57b6f0, #2a78c8);
+  border: none;
+  box-shadow: 0 4px 0 #143a64, 0 7px 9px rgba(0,0,0,.40), inset 0 2px 0 rgba(255,255,255,.22);
+  color: #fff; font-size: 27px; font-weight: 800; text-shadow: 0 2px 3px rgba(0,0,0,.45);
   display: flex; align-items: center; justify-content: center;
-  touch-action: none; pointer-events: none;
-  transition: filter .06s ease, transform .06s ease, background .08s ease;
+  touch-action: none; pointer-events: none; user-select: none;
+  transition: filter .06s ease, transform .06s ease;
 }
-.tbtn.pressed { background: linear-gradient(180deg, rgba(255,170,60,.75), rgba(255,122,24,.6)); filter: brightness(1.2); transform: translateY(1px); }   /* fill in on touch */
-.tbtn.jump  { background: linear-gradient(180deg, rgba(24,74,44,.92), rgba(14,48,30,.94)); border-color: rgba(96,236,162,.95); }
-.tbtn.catch { background: linear-gradient(180deg, rgba(26,54,82,.92), rgba(16,36,58,.94)); border-color: rgba(155,208,248,.95); }
+.tbtn.pressed { filter: brightness(1.18); transform: translateY(3px);
+  box-shadow: 0 1px 0 #143a64, 0 2px 4px rgba(0,0,0,.4), inset 0 2px 0 rgba(255,255,255,.22); }
+.tbtn.catch { background: linear-gradient(180deg, #57b6f0, #2a78c8); }
+/* Head Ball-style directional wedge keys — the shape itself is the arrow */
+.tbtn.dir { width: 112px; height: 66px; border-radius: 0; font-size: 0;
+  box-shadow: none; filter: drop-shadow(0 4px 0 #a04e0c) drop-shadow(0 6px 7px rgba(0,0,0,.42)); }
+.tbtn.dir.left,
+.tbtn.dir.right { background: linear-gradient(180deg, #ffb24d, #ef7d18); }
+.tbtn.dir.left  { clip-path: polygon(0% 50%, 44% 0%, 100% 0%, 100% 100%, 44% 100%); }
+.tbtn.dir.right { clip-path: polygon(100% 50%, 56% 0%, 0% 0%, 0% 100%, 56% 100%); }
+.tbtn.dir.up    { background: linear-gradient(180deg, #6fe6a2, #1f9f56); clip-path: polygon(50% 0%, 100% 46%, 100% 100%, 0% 100%, 0% 46%);
+  filter: drop-shadow(0 4px 0 #0c5a2e) drop-shadow(0 6px 7px rgba(0,0,0,.42)); }
+.tbtn.dir.pressed { transform: translateY(3px); filter: brightness(1.2) drop-shadow(0 2px 0 rgba(0,0,0,.4)); }
 /* reserve a strip below the pitch on touch so the buttons sit under it (follow the ball clearly) */
 @media (pointer: coarse){
   /* tiny reserved strip so the pitch fills more of the screen; the flat buttons
      overlap its bottom edge and read as a low HUD bar */
-  :root { --padb: 92px; }   /* reserved strip below the pitch (pads live here, never over the slimes); trimmed so the field is a touch bigger */
+  :root { --padb: 104px; }   /* reserved strip below the pitch (the taller wedge keys live here, never over the slimes) */
   #stage { align-items: flex-start; padding-top: max(4px, env(safe-area-inset-top)); }
 }
 /* Bigger pads on real tablets only. Gate on height too: a phone in LANDSCAPE is
    wide (>760) but short (<600), so this keeps the small phone pads there. */
 @media (pointer: coarse) and (min-width: 760px) and (min-height: 600px){
-  :root { --padb: 112px; }
-  .tbtn { width: 140px; height: 60px; font-size: 28px; border-radius: 15px; }   /* tablet: still big & forgiving */
-  .pad { gap: 26px; }
-  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 112px); }
+  :root { --padb: 128px; }
+  .tbtn { width: 144px; height: 86px; font-size: 34px; border-radius: 20px; }   /* tablet: still big & forgiving */
+  .tbtn.dir { width: 160px; height: 90px; }
+  .pad { gap: 22px; }
+  body.m2p #padAct1 { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 124px); }
 }
 
 /* ---- Rotate device hint (zichtbaarheid via JS: alleen tijdens het spelen) ---- */
