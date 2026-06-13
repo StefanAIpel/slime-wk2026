@@ -28,7 +28,7 @@ const SRC = {
   CUW: `${B}/01_venezuela_slime_transparent_1024.png`,
 };
 
-const CW = 512, CH = 512, TARGET_W = 430, BASE_Y = 500, THRESH = 40;
+const CW = 512, CH = 512, TARGET_W = 430, BASE_Y = 500, THRESH = 40, MAX_ASPECT = 0.52;
 const outDir = path.join(import.meta.dirname, 'assets', 'slimes');
 fs.mkdirSync(outDir, { recursive: true });
 
@@ -39,7 +39,7 @@ await pg.goto('about:blank');
 async function process(srcPath){
   const b64 = fs.readFileSync(srcPath).toString('base64');
   const ext = /\.webp$/i.test(srcPath) ? 'webp' : 'png';
-  return await pg.evaluate(async ({ b64, ext, CW, CH, TARGET_W, BASE_Y, THRESH })=>{
+  return await pg.evaluate(async ({ b64, ext, CW, CH, TARGET_W, BASE_Y, THRESH, MAX_ASPECT })=>{
     const img = new Image();
     await new Promise((res,rej)=>{ img.onload=res; img.onerror=rej; img.src=`data:image/${ext};base64,${b64}`; });
     const W=img.naturalWidth, H=img.naturalHeight;
@@ -50,19 +50,23 @@ async function process(srcPath){
     let x0=W,y0=H,x1=-1,y1=-1;
     for (let y=0;y<H;y++) for (let x=0;x<W;x++){ if (d[(y*W+x)*4+3]>THRESH){ if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
     const bw=x1-x0+1, bh=y1-y0+1, bcx=(x0+x1)/2, bbot=y1;
-    const scale=TARGET_W/bw;
+    // width sets the (uniform) horizontal scale; height is CAPPED to a flat aspect so the
+    // tall-haired slimes get squashed down to ~Virgil's proportions (flat ones are left alone)
+    const sx=TARGET_W/bw;
+    const natAsp=bh/bw, tgtAsp=Math.min(natAsp, MAX_ASPECT);
+    const sy=sx*(tgtAsp/natAsp);
     // render normalised, right-facing
     const out=document.createElement('canvas'); out.width=CW; out.height=CH;
     const oc=out.getContext('2d'); oc.imageSmoothingQuality='high';
-    const dx=CW/2 - bcx*scale, dy=BASE_Y - bbot*scale;
-    oc.drawImage(t, 0,0,W,H, dx,dy, W*scale, H*scale);
+    const dx=CW/2 - bcx*sx, dy=BASE_Y - bbot*sy;
+    oc.drawImage(t, 0,0,W,H, dx,dy, W*sx, H*sy);
     // mirrored, left-facing
     const lf=document.createElement('canvas'); lf.width=CW; lf.height=CH;
     const lc=lf.getContext('2d'); lc.imageSmoothingQuality='high';
     lc.translate(CW,0); lc.scale(-1,1); lc.drawImage(out,0,0);
     return { right: out.toDataURL('image/webp',0.9), left: lf.toDataURL('image/webp',0.9),
-             info:{ srcW:W, srcH:H, bw, bh, aspect:+(bh/bw).toFixed(2), scale:+scale.toFixed(3) } };
-  }, { b64, ext, CW, CH, TARGET_W, BASE_Y, THRESH });
+             info:{ srcW:W, srcH:H, bw, bh, aspect:+(bh/bw).toFixed(2), nat:+natAsp.toFixed(2), tgt:+tgtAsp.toFixed(2), sy:+(sy/sx).toFixed(2) } };
+  }, { b64, ext, CW, CH, TARGET_W, BASE_Y, THRESH, MAX_ASPECT });
 }
 
 const save=(url,f)=>{ const buf=Buffer.from(url.split(',')[1],'base64'); fs.writeFileSync(f,buf); return buf.length; };
