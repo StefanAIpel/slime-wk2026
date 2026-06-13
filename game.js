@@ -57,33 +57,42 @@ const TEAMS = [
     flag:'linear-gradient(#ae1c28 33%,#fff 33% 66%,#21468b 66%)',
     art:{ right:'assets/slimes/ned-right.webp', left:'assets/slimes/ned-left.webp' } },   // hand-drawn character art (Virgil)
   { code:'ARG', name:'Argentina',   color:'#7cc0ee', trim:'#ffffff', strength:92, stripes:['#74acdf','#ffffff','#74acdf'],
-    flag:'linear-gradient(#74acdf 33%,#fff 33% 66%,#74acdf 66%)' },
+    flag:'linear-gradient(#74acdf 33%,#fff 33% 66%,#74acdf 66%)',
+    art:{ right:'assets/slimes/arg-right.webp', left:'assets/slimes/arg-left.webp' } },
   { code:'BRA', name:'Brazil',      color:'#ffd400', trim:'#1f8f3a', strength:90, stripes:['#1f8f3a','#ffd400','#2a47a8'],
-    flag:'linear-gradient(135deg,#1f8f3a 40%,#ffd400 40% 60%,#1f8f3a 60%)' },
+    flag:'linear-gradient(135deg,#1f8f3a 40%,#ffd400 40% 60%,#1f8f3a 60%)',
+    art:{ right:'assets/slimes/bra-right.webp', left:'assets/slimes/bra-left.webp' } },
   { code:'FRA', name:'France',      color:'#3a6ec0', trim:'#ffffff', strength:91, stripes:['#0055a4','#ffffff','#ef4135'],
-    flag:'linear-gradient(90deg,#0055a4 33%,#fff 33% 66%,#ef4135 66%)' },
+    flag:'linear-gradient(90deg,#0055a4 33%,#fff 33% 66%,#ef4135 66%)',
+    art:{ right:'assets/slimes/fra-right.webp', left:'assets/slimes/fra-left.webp' } },
   { code:'ENG', name:'England',     color:'#ededed', trim:'#d52b1e', strength:87, stripes:['#ffffff','#d52b1e','#ffffff'],
-    flag:'linear-gradient(#d52b1e,#d52b1e) center/100% 26% no-repeat, linear-gradient(#d52b1e,#d52b1e) center/26% 100% no-repeat, #fff' },
+    flag:'linear-gradient(#d52b1e,#d52b1e) center/100% 26% no-repeat, linear-gradient(#d52b1e,#d52b1e) center/26% 100% no-repeat, #fff',
+    art:{ right:'assets/slimes/eng-right.webp', left:'assets/slimes/eng-left.webp' } },
   { code:'ESP', name:'Spain',       color:'#d52b1e', trim:'#ffd400', strength:88, stripes:['#aa151b','#f1bf00','#aa151b'],
     flag:'linear-gradient(#aa151b 25%,#f1bf00 25% 75%,#aa151b 75%)' },
   { code:'GER', name:'Germany',     color:'#edeef2', trim:'#16161c', strength:85, stripes:['#000000','#dd0000','#ffce00'],
-    flag:'linear-gradient(#000 33%,#dd0000 33% 66%,#ffce00 66%)' },
+    flag:'linear-gradient(#000 33%,#dd0000 33% 66%,#ffce00 66%)',
+    art:{ right:'assets/slimes/ger-right.webp', left:'assets/slimes/ger-left.webp' } },
   { code:'POR', name:'Portugal',    color:'#c8102e', trim:'#0a5c2e', strength:86, stripes:['#006600','#006600','#ff0000'],
     flag:'linear-gradient(90deg,#006600 40%,#ff0000 40%)' },
   { code:'EGY', name:'Egypt',       color:'#d21034', trim:'#c8a45a', strength:78, stripes:['#ce1126','#ffffff','#000000'],
-    flag:'linear-gradient(#ce1126 33%,#fff 33% 66%,#000 66%)' },
+    flag:'linear-gradient(#ce1126 33%,#fff 33% 66%,#000 66%)',
+    art:{ right:'assets/slimes/egy-right.webp', left:'assets/slimes/egy-left.webp' } },
   { code:'CRO', name:'Croatia',     color:'#d52b1e', trim:'#ffffff', strength:82, stripes:['#ff0000','#ffffff','#171796'],
-    flag:'linear-gradient(#ff0000 50%,#171796 50%)' },
+    flag:'linear-gradient(#ff0000 50%,#171796 50%)',
+    art:{ right:'assets/slimes/cro-right.webp', left:'assets/slimes/cro-left.webp' } },
   { code:'MAR', name:'Morocco',     color:'#c1272d', trim:'#1f8f3a', strength:80, stripes:['#c1272d','#c1272d','#006233'],
     flag:'linear-gradient(#c1272d,#c1272d)' },
   { code:'JPN', name:'Japan',       color:'#1f4fb0', trim:'#ffffff', strength:78, stripes:['#ffffff','#bc002d','#ffffff'],
-    flag:'radial-gradient(circle at 50% 50%, #bc002d 22%, #fff 23%)' },
+    flag:'radial-gradient(circle at 50% 50%, #bc002d 22%, #fff 23%)',
+    art:{ right:'assets/slimes/jpn-right.webp', left:'assets/slimes/jpn-left.webp' } },
   { code:'MEX', name:'Mexico',      color:'#1f8f3a', trim:'#ffffff', strength:76, stripes:['#006847','#ffffff','#ce1126'],
     flag:'linear-gradient(90deg,#006847 33%,#fff 33% 66%,#ce1126 66%)' },
   { code:'USA', name:'USA',         color:'#3a4ea8', trim:'#ffffff', strength:74, stripes:['#3c3b6e','#ffffff','#b22234'],
     flag:'linear-gradient(#b22234 50%,#3c3b6e 50%)' },
   { code:'CAN', name:'Canada',      color:'#d52b1e', trim:'#ffffff', strength:72, stripes:['#d80621','#ffffff','#d80621'],
-    flag:'linear-gradient(90deg,#d80621 28%,#fff 28% 72%,#d80621 72%)' },
+    flag:'linear-gradient(90deg,#d80621 28%,#fff 28% 72%,#d80621 72%)',
+    art:{ right:'assets/slimes/can-right.webp', left:'assets/slimes/can-left.webp' } },
   { code:'BEL', name:'Belgium',     color:'#e2231a', trim:'#f3d02f', strength:83, stripes:['#000000','#fdda24','#ef3340'],
     flag:'linear-gradient(90deg,#000 33%,#fdda24 33% 66%,#ef3340 66%)',
     art:{ right:'assets/slimes/bel-right.webp', left:'assets/slimes/bel-left.webp' } },   // hand-drawn character art (De Bruyne)
@@ -94,13 +103,15 @@ const TEAMS = [
   { code:'SUI', name:'Switzerland', color:'#d52b1e', trim:'#ffffff', strength:77, stripes:['#d52b1e','#ffffff','#d52b1e'],
     flag:'linear-gradient(#fff,#fff) center/100% 30% no-repeat, linear-gradient(#fff,#fff) center/30% 100% no-repeat, #d52b1e' },
   { code:'COL', name:'Colombia',    color:'#fcd116', trim:'#003893', strength:80, stripes:['#fcd116','#003893','#ce1126'],
-    flag:'linear-gradient(#fcd116 50%,#003893 50% 75%,#ce1126 75%)' },
+    flag:'linear-gradient(#fcd116 50%,#003893 50% 75%,#ce1126 75%)',
+    art:{ right:'assets/slimes/col-right.webp', left:'assets/slimes/col-left.webp' } },
   { code:'RSA', name:'South Africa', color:'#eef1ee', trim:'#138a43', strength:73, stripes:['#de3831','#007a4d','#002395'],
     flag:'linear-gradient(#de3831 0 33%,#007a4d 33% 66%,#002395 66%)' },
   { code:'SWE', name:'Sweden',      color:'#fecc00', trim:'#1f5fa6', strength:80, stripes:['#006aa7','#fecc00','#006aa7'],
     flag:'linear-gradient(#fecc00,#fecc00) center/100% 30% no-repeat, linear-gradient(#fecc00,#fecc00) 34% 50%/16% 100% no-repeat, #006aa7' },
   { code:'CUW', name:'Curaçao',     color:'#2a6fd6', trim:'#f7d417', strength:68, stripes:['#0b3fb5','#f9d90f','#ffffff'] },
-  { code:'ALG', name:'Algeria',     color:'#0b5d34', trim:'#ffffff', strength:81, stripes:['#006233','#ffffff','#d21034'] },
+  { code:'ALG', name:'Algeria',     color:'#0b5d34', trim:'#ffffff', strength:81, stripes:['#006233','#ffffff','#d21034'],
+    art:{ right:'assets/slimes/alg-right.webp', left:'assets/slimes/alg-left.webp' } },
 ];
 const teamByCode = c => TEAMS.find(t => t.code === c) || TEAMS[0];
 
@@ -1549,13 +1560,14 @@ function drawSlime(s){
   ctx.fillStyle='rgba(0,0,0,0.28)';
   ctx.beginPath(); ctx.ellipse(s.x, GROUND+5, r*0.85, 9, 0, 0, 7); ctx.fill();
 
-  // hand-drawn character art (e.g. the Netherlands "Virgil" slime), if the team has it
+  // hand-drawn character art (per team), if present — all sprites are uniformly normalised
+  // (512×512, fixed character width, baseline at the bottom) so every country renders the SAME size
   if (s.team.art){
     const art = gameImg(s.side==='left' ? s.team.art.right : s.team.art.left);   // face toward the centre
     if (art.complete && art.naturalWidth){
-      const w = r*2.42, h = w*(art.naturalHeight/art.naturalWidth);
+      const w = r*2.98, h = w;                          // square sprite; character width ≈ 2.5·r
       ctx.save(); ctx.translate(s.x, s.y); ctx.scale(sx, sy);
-      ctx.drawImage(art, -w/2, -h + r*0.10, w, h);      // baseline of the art sits on the slime's foot
+      ctx.drawImage(art, -w/2, -h*0.977, w, h);         // baseline (0.977 of the sprite) sits on the foot
       ctx.restore();
       drawSlimeFx(s, r);
       return;
