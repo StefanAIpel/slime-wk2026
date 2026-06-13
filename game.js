@@ -109,7 +109,8 @@ const TEAMS = [
     flag:'linear-gradient(#de3831 0 33%,#007a4d 33% 66%,#002395 66%)' },
   { code:'SWE', name:'Sweden',      color:'#fecc00', trim:'#1f5fa6', strength:80, stripes:['#006aa7','#fecc00','#006aa7'],
     flag:'linear-gradient(#fecc00,#fecc00) center/100% 30% no-repeat, linear-gradient(#fecc00,#fecc00) 34% 50%/16% 100% no-repeat, #006aa7' },
-  { code:'CUW', name:'Curaçao',     color:'#2a6fd6', trim:'#f7d417', strength:68, stripes:['#0b3fb5','#f9d90f','#ffffff'] },
+  { code:'CUW', name:'Curaçao',     color:'#2a6fd6', trim:'#f7d417', strength:68, stripes:['#0b3fb5','#f9d90f','#ffffff'],
+    art:{ right:'assets/slimes/cuw-right.webp', left:'assets/slimes/cuw-left.webp' } },
   { code:'ALG', name:'Algeria',     color:'#0b5d34', trim:'#ffffff', strength:81, stripes:['#006233','#ffffff','#d21034'],
     art:{ right:'assets/slimes/alg-right.webp', left:'assets/slimes/alg-left.webp' } },
 ];
