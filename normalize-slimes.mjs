@@ -24,6 +24,8 @@ const SRC = {
   EGY: `${B}/05_egypt_slime_transparent_1024.png`,
   CRO: `${B}/06_croatia_slime_transparent_1024.png`,
   JPN: `${B}/07_japan_slime_transparent_1024.png`,
+  // the pack labels this "venezuela", but blue + white stars + gold trim = Curaçao (CUW is the real team)
+  CUW: `${B}/01_venezuela_slime_transparent_1024.png`,
 };
 
 const CW = 512, CH = 512, TARGET_W = 430, BASE_Y = 500, THRESH = 40;
